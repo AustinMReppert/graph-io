@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " p ",
+    " e ",
+    " s "
+  ],
+  "key": {
+    "p": {
+      "item": "minecraft:paper"
+    },
+    "e": {
+      "item": "minecraft:ender_pearl"
+    },
+    "s": {
+      "item": "minecraft:soul_torch"
+    }
+  },
+  "result": {
+    "item": "graphio:identifier"
+  }
+}
