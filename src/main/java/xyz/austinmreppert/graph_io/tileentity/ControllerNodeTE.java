@@ -20,6 +20,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -96,6 +97,14 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
                     break;
                   }
                 }
+              }
+            });
+          });
+          inputTE.getCapability(CapabilityEnergy.ENERGY, input.getFace()).ifPresent(inputCapability -> {
+            outputTE.getCapability(CapabilityEnergy.ENERGY, output.getFace()).ifPresent(outputCapability -> {
+              if(inputCapability.canExtract() && outputCapability.canReceive()) {
+                int extracted = outputCapability.receiveEnergy(inputCapability.extractEnergy(inputCapability.getEnergyStored(), true), true);
+                outputCapability.receiveEnergy(inputCapability.extractEnergy(extracted, false), false);
               }
             });
           });

@@ -41,15 +41,6 @@ public class Mapping {
       }
     }
 
-/*    System.out.println("Inputs:");
-    for(NodeInfo ni : inputs) {
-      System.out.println("\t" + ni.getIdentifier() + "." + (ni.getFace() != null ? ni.getFace() : "null"));
-    }
-    System.out.println("Outputs:");
-    for(NodeInfo ni : outputs) {
-      System.out.println("\t" + ni.getIdentifier() + "."+ (ni.getFace() != null ? ni.getFace() : "null"));
-    }*/
-
   }
 
   public String getRaw() {
