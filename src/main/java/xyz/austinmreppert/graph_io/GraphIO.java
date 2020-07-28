@@ -1,9 +1,13 @@
 package xyz.austinmreppert.graph_io;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
@@ -15,6 +19,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.client.gui.Screens;
 import xyz.austinmreppert.graph_io.network.PacketHander;
 
@@ -43,6 +48,7 @@ public class GraphIO {
   }
 
   private void setup(final FMLCommonSetupEvent event) {
+    Capabilities.register();
     PacketHander.init();
   }
 
@@ -62,8 +68,8 @@ public class GraphIO {
   private void processIMC(final InterModProcessEvent event) {
     // some example code to receive and process InterModComms from other mods
     LOGGER.info("Got IMC {}", event.getIMCStream().
-        map(m -> m.getMessageSupplier().get()).
-        collect(Collectors.toList()));
+      map(m -> m.getMessageSupplier().get()).
+      collect(Collectors.toList()));
   }
 
   // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -83,6 +89,7 @@ public class GraphIO {
       // register a new block here
       LOGGER.info("HELLO from Register Block");
     }
+
 
   }
 

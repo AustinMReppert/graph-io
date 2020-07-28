@@ -3,6 +3,7 @@ package xyz.austinmreppert.graph_io.container;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.ChestContainer;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.Slot;
@@ -39,7 +40,6 @@ public class ControllerNodeContainer extends Container {
     for (int row = 0; row < 3; ++row)
       for (int column = 0; column < 9; ++column)
         this.addSlot(new Slot(inv, column + row * 9 + 9, INVENTORY_X + column * SLOT_SIZE, INVENTORY_Y + row * SLOT_SIZE));
-
   }
 
   public ControllerNodeContainer(int windowId, PlayerInventory inv, ControllerNodeTE controllerNodeTE) {

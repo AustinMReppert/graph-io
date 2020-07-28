@@ -33,14 +33,38 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private ArrayList<TextFieldWidget> mappings;
   protected TextFieldWidget inputField;
 
-  private final int MAX_SCROLL = 200;
-  private final int SCROLL_BAR_X = 94;
+  private final int SCROLL_BAR_TEXTURE_X = 276;
+  private final int SCROLL_BAR_TEXTURE_Y = 0;
+  private final int SCROLL_BAR_INACTIVE_TEXTURE_X = 282;
+  private final int SCROLL_BAR_INACTIVE_TEXTURE_Y = 0;
+  private final int SCROLL_BAR_X = 262;
   private final int SCROLL_BAR_Y = 18;
   private final int SCROLL_BAR_WIDTH = 6;
   private final int SCROLL_BAR_HEIGHT = 27;
-  private final int SCROLL_AREA_HEIGHT = 230;
-  private final int MAPPINGS_PER_PAGE = 9;
 
+  private final int SCROLL_AREA_X = SCROLL_BAR_X;
+  private final int SCROLL_AREA_Y = SCROLL_BAR_Y;
+  private final int SCROLL_AREA_HEIGHT = 140;
+  private final int SCROLL_AREA_WIDTH = SCROLL_BAR_WIDTH;
+
+  private final int MAPPINGS_AREA_X = 5;
+  private final int MAPPINGS_AREA_Y = SCROLL_BAR_Y;
+  private final int MAPPINGS_AREA_WIDTH = 256;
+  private final int MAPPINGS_AREA_HEIGHT = SCROLL_AREA_HEIGHT;
+
+  private final int MAPPING_X = MAPPINGS_AREA_X + 1;
+  private final int MAPPING_Y = MAPPINGS_AREA_Y + 1;
+  private final int MAPPING_HEIGHT = 12;
+  private final int MAPPING_WIDTH = MAPPINGS_AREA_WIDTH - 2;
+
+  private final int MAX_SCROLL = SCROLL_BAR_Y + SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT;
+  private final int MAPPINGS_PER_PAGE = 8;
+
+
+  private final int BACKGROUND_TEXTURE_X = 0;
+  private final int BACKGROUND_TEXTURE_Y = 0;
+  private final int BACKGROUND_TEXTURE_WIDTH = 276;
+  private final int BACKGROUND_TEXTURE_HEIGHT = 256;
 
   private boolean locked = false;
 
@@ -54,12 +78,12 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     width = 276;
     height = 256;
     // Inventory start
-    field_238745_s_ = 162;
-    field_238744_r_ = 107;
+    playerInventoryTitleX = 107;
+    playerInventoryTitleY = 162;
     mappings = new ArrayList<>();
   }
 
-  private void onType(String p_214075_1_) {
+  private void onTextChanged(String text) {
     if (locked) return;
     ArrayList<String> mappingStrings = new ArrayList<>(mappings.size());
     for (int i = 0; i < mappings.size(); ++i) {
@@ -84,13 +108,13 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       for (int i = 0; i < mappings.size(); ++i) {
         mappings.get(i).setFocused2(false);
       }
-      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + 5, guiTop + SCROLL_BAR_Y * font.FONT_HEIGHT * 3, 80, 12, new TranslationTextComponent("container.repair"));
+      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y * (font.FONT_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
       mapping.setCanLoseFocus(true);
       mapping.setTextColor(Color.func_240745_a_("#FFFFFF").func_240742_a_());
       mapping.setDisabledTextColour(-1);
       mapping.setEnableBackgroundDrawing(true);
       mapping.setMaxStringLength(40);
-      mapping.setResponder(this::onType);
+      mapping.setResponder(this::onTextChanged);
       mapping.setText("");
       mapping.setVisible(false);
       mapping.setEnabled(true);
@@ -102,10 +126,19 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       mappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocused2(true);
-      setFocused(mapping);
+      setListener(mapping);
       return true;
-    } else if (getFocused() != null && getFocused() instanceof TextFieldWidget && ((TextFieldWidget) getFocused()).canWrite()) {
-      return getFocused().keyPressed(keyCode, scanCode, modifiers);
+    } else if (keyCode == GLFW.GLFW_KEY_DELETE && !locked && getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
+      if (mappings.size() < 1) return true;
+      int index = mappings.indexOf(getListener());
+      currentScroll = (currentScroll * mappings.size() - 1) / (mappings.size() - 1);
+      mappings.remove(index);
+      children.remove(getListener());
+      scrollTo(currentScroll);
+      onTextChanged("");
+      return true;
+    } else if (getListener() != null && !locked && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
+      return getListener().keyPressed(keyCode, scanCode, modifiers);
     }
     return super.keyPressed(keyCode, scanCode, modifiers);
   }
@@ -116,36 +149,38 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     func_230459_a_(matrixStack, mouseX, mouseY);
 
     for (TextFieldWidget mapping : mappings)
-      mapping.render(matrixStack, mouseX, mouseY + 100, partialTicks);
+      mapping.render(matrixStack, mouseX, mouseY, partialTicks);
   }
 
   public void renderScrollbar(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
     if (canScroll(mappings.size()))
-      blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), 276.0F, 0.0F, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
     else
-      blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), 282.0F, 0.0F, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
   }
 
   @Override
   public void init() {
     super.init();
+    locked = true;
     mappings.clear();
     for (int i = 0; i < container.getControllerNodeTE().getMappings().size(); ++i) {
-      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + 6, guiTop + SCROLL_BAR_Y + (i % 5) * font.FONT_HEIGHT * 3, 86, 12, new TranslationTextComponent("container.repair"));
+      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y + (i % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
       mapping.setCanLoseFocus(true);
       mapping.setTextColor(Color.func_240745_a_("#FFFFFF").func_240742_a_());
       mapping.setDisabledTextColour(-1);
       mapping.setEnableBackgroundDrawing(true);
-      mapping.setResponder(this::onType);
+      mapping.setResponder(this::onTextChanged);
       mapping.setMaxStringLength(40);
       mapping.setEnabled(true);
-      mapping.setText(container.getControllerNodeTE().getMappings().get(i));
+      mapping.setText(container.getControllerNodeTE().getMappings().get(i).getRaw());
       if (i >= MAPPINGS_PER_PAGE)
         mapping.setVisible(false);
       children.add(mapping);
       mappings.add(mapping);
     }
     scrollTo(currentScroll);
+    locked = false;
   }
 
   public boolean mouseDragged(double mouseX, double mouseY, int p_231045_5_, double dragX, double dragY) {
@@ -171,7 +206,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     for (int mappingNum = 0; mappingNum < mappings.size(); ++mappingNum) {
       TextFieldWidget mapping = mappings.get(mappingNum);
       if (mappingNum >= discreteTop && mappingNum < discreteTop + MAPPINGS_PER_PAGE) {
-        mapping.y = guiTop + SCROLL_BAR_Y + (mappingNum - discreteTop) * font.FONT_HEIGHT * 3;
+        mapping.y = (int) (guiTop + MAPPING_Y + (mappingNum - discreteTop) * (MAPPING_HEIGHT + 6));
         mapping.setVisible(true);
       } else
         mapping.setVisible(false);
@@ -191,19 +226,18 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     return super.mouseReleased(mouseX, mouseY, button);
   }
 
-  // RenderBackground
   @Override
-  protected void func_230450_a_(MatrixStack matrixStack, float partialTicks, int x, int y) {
+  protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y) {
     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     minecraft.getTextureManager().bindTexture(BACKGROUND);
-    blit(matrixStack, guiLeft, guiTop, getBlitOffset(), 0.0F, 0.0F, 276, 256, 256, 512);
+    blit(matrixStack, guiLeft, guiTop, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
     renderScrollbar(matrixStack, x, y, partialTicks);
   }
 
   // RenderForeground
   @Override
-  protected void func_230451_b_(MatrixStack matrixStack, int x, int y) {
-    font.func_238422_b_(matrixStack, playerInventory.getDisplayName(), (float) field_238744_r_, (float) field_238745_s_, 4210752);
+  protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
+    font.func_238422_b_(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
   }
 
 

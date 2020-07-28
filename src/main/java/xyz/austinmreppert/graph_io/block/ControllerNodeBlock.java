@@ -3,8 +3,8 @@ package xyz.austinmreppert.graph_io.block;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ContainerBlock;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -15,15 +15,20 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.network.NetworkHooks;
 import xyz.austinmreppert.graph_io.tileentity.ControllerNodeTE;
 import xyz.austinmreppert.graph_io.tileentity.TileEntityTypes;
 
 import javax.annotation.Nullable;
 
-public class ControllerNodeBlock extends Block {
+public class ControllerNodeBlock extends ContainerBlock {
 
   public ControllerNodeBlock() {
     super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> {
@@ -66,5 +71,22 @@ public class ControllerNodeBlock extends Block {
         NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, pos);
     }
     return ActionResultType.SUCCESS;
+  }
+
+  @Nullable
+  @Override
+  public TileEntity createNewTileEntity(IBlockReader blockReader) {
+    return TileEntityTypes.CONTROLLER_NODE.create();
+  }
+
+  @Override
+  public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
+    Vector3d playerEyePos = player.getPositionVec().add(0, player.getEyeHeight(), 0);
+    Vector3d lookVec = playerEyePos.add(player.getLookVec().scale(5.0F));
+    BlockRayTraceResult res = worldIn.rayTraceBlocks(new RayTraceContext(playerEyePos, lookVec, RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.ANY, player));
+    if (res.getType() == RayTraceResult.Type.BLOCK) {
+      System.out.println(res.getFace());
+    }
+    super.onBlockHarvested(worldIn, pos, state, player);
   }
 }

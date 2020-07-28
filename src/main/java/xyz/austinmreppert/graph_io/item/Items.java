@@ -14,13 +14,13 @@ import xyz.austinmreppert.graph_io.item_group.ItemGroups;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Items {
 
-  public static final Item IDENTIFIER = register(new Item(new Item.Properties().group(ItemGroups.GRAPH_IO)), "identifier");
+  public static final Item IDENTIFIER = register(new IdentifierItem(new Item.Properties().group(ItemGroups.GRAPH_IO)), "identifier");
 
   @SubscribeEvent
   public static void onRegisterItems(RegistryEvent.Register<Item> itemRegistryEvent) {
     itemRegistryEvent.getRegistry().registerAll(
       IDENTIFIER,
-      register(new BlockItem(Blocks.CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)),"controller_node_block" )
+      register(new BlockItem(Blocks.CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)), "controller_node_block")
     );
 
   }

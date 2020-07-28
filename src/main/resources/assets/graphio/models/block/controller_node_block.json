@@ -2,7 +2,7 @@
   "ambientocclusion": false,
   "textures": {
     "particle": "minecraft:block/glass",
-    "glass": "minecraft:block/glass",
+    "glass": "graphio:block/glass",
     "beacon": "graphio:block/controller_node_block"
   },
   "elements": [
