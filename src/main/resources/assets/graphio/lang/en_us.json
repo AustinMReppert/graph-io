@@ -2,7 +2,7 @@
   "item.graphio.identifier": "Identifier",
   "itemGroup.graphio": "Graph IO",
   "block.graphio.controller_node_block": "Controller Node",
-  "gui.graphio.distribute_equally":  "Distribute Equally",
-  "gui.graphio.priority":  "Priority",
-  "gui.graphio.round_robin":  "Round Robin"
+  "gui.graphio.natural":  "Natural",
+  "gui.graphio.random":  "Random",
+  "gui.graphio.cyclic":  "Cyclic"
 }

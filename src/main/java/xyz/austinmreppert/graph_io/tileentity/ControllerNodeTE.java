@@ -32,6 +32,7 @@ import xyz.austinmreppert.graph_io.item.Items;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class ControllerNodeTE extends LockableLootTileEntity implements ITickableTileEntity, INamedContainerProvider {
 
@@ -42,12 +43,14 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   private int maxItemTransfersPerTick = 64;
   private int maxFluidTransfersPerTick = 1000;
   private int maxEnergyTransfersPerTick = 4000;
+  private Random random;
 
   public ControllerNodeTE() {
     super(TileEntityTypes.CONTROLLER_NODE);
     mappings = new ArrayList<>();
     identifiers = new HashMap<>();
     ticks = 0;
+    random = new Random(System.currentTimeMillis());
   }
 
   @Override
@@ -56,6 +59,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     ticks = 0;
     for (Mapping mapping : mappings) {
       if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;
+
+      System.out.println("(" + mapping.currentInputIndex + "," + mapping.currentOutputIndex + ")");
+      System.out.println("sizes (" + mapping.getInputs().size() + "," + mapping.getOutputs().size() + ")");
 
       final NodeInfo inputNodeInfo = mapping.getInputs().get(mapping.currentInputIndex);
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
@@ -125,9 +131,20 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
       });
 
-      if (mapping.getDistributionScheme() == Mapping.DistributionScheme.ROUND_ROBIN) {
+      if (mapping.getDistributionScheme() == Mapping.DistributionScheme.CYCLIC) {
         mapping.currentInputIndex = (mapping.currentInputIndex + 1) % Math.max(mapping.getInputs().size(), 1);
         mapping.currentOutputIndex = (mapping.currentOutputIndex + 1) % Math.max(mapping.getOutputs().size(), 1);
+      } else if (mapping.getDistributionScheme() == Mapping.DistributionScheme.NATURAL) {
+        ++mapping.currentOutputIndex;
+        if (mapping.currentOutputIndex >= mapping.getOutputs().size()) {
+          mapping.currentOutputIndex = 0;
+          ++mapping.currentInputIndex;
+          if (mapping.currentInputIndex >= mapping.getInputs().size())
+            mapping.currentInputIndex = 0;
+        }
+      } else if (mapping.getDistributionScheme() == Mapping.DistributionScheme.RANDOM) {
+        mapping.currentInputIndex = random.nextInt(mapping.getInputs().size());
+        mapping.currentOutputIndex = random.nextInt(mapping.getOutputs().size());
       }
     }
   }
@@ -174,15 +191,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   private CompoundNBT getNBTFromMappings(CompoundNBT compound) {
-    ListNBT list = new ListNBT();
-    for (Mapping mapping : mappings) {
-      CompoundNBT mappingNBT = new CompoundNBT();
-      mappingNBT.putString("mapping", mapping.getRaw());
-      mappingNBT.putInt("distributionScheme", mapping.getDistributionSchemeOrdinal());
-      list.add(mappingNBT);
-    }
-    compound.put("mappings", list);
-    return compound;
+    return Mapping.toNBT(mappings, compound);
   }
 
   @Override

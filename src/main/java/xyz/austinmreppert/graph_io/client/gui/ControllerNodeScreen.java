@@ -74,9 +74,9 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/controller_node_gui.png");
   private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/round_robin.png");
 
-  private ToggleImageButton roundRobinButton;
-  private ToggleImageButton priorityButton;
-  private ToggleImageButton distributeEquallyButton;
+  private ToggleImageButton distributeRandomlyButton;
+  private ToggleImageButton distributeCyclicallyButton;
+  private ToggleImageButton distributeNaturallyButton;
   private int lastFocusedMapping;
 
   public ControllerNodeScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
@@ -97,45 +97,40 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   }
 
   private void updateMappingGUI() {
-    if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+    if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) {
+      distributeNaturallyButton.setEnabled(false);
+      distributeCyclicallyButton.setEnabled(false);
+      distributeRandomlyButton.setEnabled(false);
+      return;
+    }
     Mapping mapping = mappingsCopy.get(lastFocusedMapping);
     Mapping.DistributionScheme mappingDistributionScheme = mapping.getDistributionScheme();
-    if (mappingDistributionScheme == Mapping.DistributionScheme.DISTRIBUTE_EQUALLY) {
-      distributeEquallyButton.setEnabled(true);
-      priorityButton.setEnabled(false);
-      roundRobinButton.setEnabled(false);
-    } else if (mappingDistributionScheme == Mapping.DistributionScheme.PRIORITY) {
-      distributeEquallyButton.setEnabled(false);
-      priorityButton.setEnabled(true);
-      roundRobinButton.setEnabled(false);
-    } else if (mappingDistributionScheme == Mapping.DistributionScheme.ROUND_ROBIN) {
-      distributeEquallyButton.setEnabled(false);
-      priorityButton.setEnabled(false);
-      roundRobinButton.setEnabled(true);
+    if (mappingDistributionScheme == Mapping.DistributionScheme.NATURAL) {
+      distributeNaturallyButton.setEnabled(true);
+      distributeCyclicallyButton.setEnabled(false);
+      distributeRandomlyButton.setEnabled(false);
+    } else if (mappingDistributionScheme == Mapping.DistributionScheme.CYCLIC) {
+      distributeNaturallyButton.setEnabled(false);
+      distributeCyclicallyButton.setEnabled(true);
+      distributeRandomlyButton.setEnabled(false);
+    } else if (mappingDistributionScheme == Mapping.DistributionScheme.RANDOM) {
+      distributeNaturallyButton.setEnabled(false);
+      distributeCyclicallyButton.setEnabled(false);
+      distributeRandomlyButton.setEnabled(true);
     } else {
-      distributeEquallyButton.setEnabled(false);
-      priorityButton.setEnabled(false);
-      roundRobinButton.setEnabled(false);
+      distributeNaturallyButton.setEnabled(false);
+      distributeCyclicallyButton.setEnabled(false);
+      distributeRandomlyButton.setEnabled(false);
     }
   }
 
   private void updateMappings() {
-
-    CompoundNBT mappingsNBT = new CompoundNBT();
-    ListNBT list = new ListNBT();
-    for (Mapping mapping : mappingsCopy) {
-      CompoundNBT mappingNBT = new CompoundNBT();
-      mappingNBT.putString("mapping", mapping.getRaw());
-      mappingNBT.putInt("distributionScheme", mapping.getDistributionSchemeOrdinal());
-      list.add(mappingNBT);
-    }
-    mappingsNBT.put("mappings", list);
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(container.getControllerNodeTE().getPos(), mappingsNBT));
+    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(container.getControllerNodeTE().getPos(), Mapping.toNBT(mappingsCopy)));
   }
 
   @Override
   public boolean charTyped(char p_231042_1_, int p_231042_2_) {
-    if(getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
+    if (getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
       TextFieldWidget listener = (TextFieldWidget) getListener();
       int index = rawMappings.indexOf(listener);
       boolean pressed = listener.charTyped(p_231042_1_, p_231042_2_);
@@ -170,7 +165,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       else
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       children.add(mapping);
-      mappingsCopy.add(new Mapping("", (Mapping.DistributionScheme) null));
+      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocused2(true);
@@ -180,13 +175,16 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     } else if (keyCode == GLFW.GLFW_KEY_DELETE && !locked && getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
       if (rawMappings.size() < 1) return true;
       int index = rawMappings.indexOf(getListener());
-      if(index != -1) {
-        currentScroll = (currentScroll * rawMappings.size() - 1) / (rawMappings.size() - 1);
+      if (index != -1) {
+        //currentScroll = (currentScroll * rawMappings.size() - 1) / (rawMappings.size() - 1);
         rawMappings.remove(index);
         mappingsCopy.remove(index);
         children.remove(getListener());
+        setListener(null);
         scrollTo(currentScroll);
+        lastFocusedMapping = -1;
         updateMappings();
+        updateMappingGUI();
       }
       return true;
     } else if (getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
@@ -254,29 +252,29 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     }
     scrollTo(currentScroll);
 
-    this.addButton(distributeEquallyButton = new ToggleImageButton(this.guiLeft + MAPPING_X, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(distributeNaturallyButton = new ToggleImageButton(this.guiLeft + MAPPING_X, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
-      mapping.setDistributionScheme(Mapping.DistributionScheme.DISTRIBUTE_EQUALLY);
+      mapping.setDistributionScheme(Mapping.DistributionScheme.NATURAL);
       updateMappingGUI();
       updateMappings();
-    }, new TranslationTextComponent("gui.graphio.distribute_equally"), this));
+    }, new TranslationTextComponent("gui.graphio.natural"), this));
 
-    this.addButton(priorityButton = new ToggleImageButton(this.guiLeft + MAPPING_X + 24, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(distributeCyclicallyButton = new ToggleImageButton(this.guiLeft + MAPPING_X + 24, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
-      mapping.setDistributionScheme(Mapping.DistributionScheme.PRIORITY);
+      mapping.setDistributionScheme(Mapping.DistributionScheme.CYCLIC);
       updateMappingGUI();
       updateMappings();
-    }, new TranslationTextComponent("gui.graphio.priority"), this));
+    }, new TranslationTextComponent("gui.graphio.cyclic"), this));
 
-    this.addButton(roundRobinButton = new ToggleImageButton(this.guiLeft + MAPPING_X + 24 * 2, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(distributeRandomlyButton = new ToggleImageButton(this.guiLeft + MAPPING_X + 24 * 2, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
-      mapping.setDistributionScheme(Mapping.DistributionScheme.ROUND_ROBIN);
+      mapping.setDistributionScheme(Mapping.DistributionScheme.RANDOM);
       updateMappingGUI();
       updateMappings();
-    }, new TranslationTextComponent("gui.graphio.round_robin"), this));
+    }, new TranslationTextComponent("gui.graphio.random"), this));
 
   }
 
