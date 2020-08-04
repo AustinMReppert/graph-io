@@ -12,25 +12,7 @@ public class NodeInfo {
   private Direction face;
   private boolean valid;
 
-  public NodeInfo(String raw, Set<String> identifiers) {
-    String[] aa = raw.split("\\.");
-    if (aa.length == 2) {
-      identifier = aa[0];
-      if (aa[1].equals("north")) face = Direction.NORTH;
-      else if (aa[1].equals("east")) face = Direction.EAST;
-      else if (aa[1].equals("south")) face = Direction.SOUTH;
-      else if (aa[1].equals("west")) face = Direction.WEST;
-      else if (aa[1].equals("up")) face = Direction.UP;
-      else if (aa[1].equals("down")) face = Direction.DOWN;
-      if (face != null) valid = true;
-    } else if (aa.length == 1) {
-      valid = true;
-      identifier = aa[0];
-    }
-  }
-
   private NodeInfo() {
-
   }
 
   public NodeInfo(String identifier, Direction face, boolean valid) {

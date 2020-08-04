@@ -1,5 +1,8 @@
 {
   "item.graphio.identifier": "Identifier",
   "itemGroup.graphio": "Graph IO",
-  "block.graphio.controller_node_block": "Controller Node"
+  "block.graphio.controller_node_block": "Controller Node",
+  "gui.graphio.distribute_equally":  "Distribute Equally",
+  "gui.graphio.priority":  "Priority",
+  "gui.graphio.round_robin":  "Round Robin"
 }

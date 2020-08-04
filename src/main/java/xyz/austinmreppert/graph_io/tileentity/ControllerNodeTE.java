@@ -39,6 +39,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   private HashMap<String, BlockPos> identifiers;
   private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
   private int ticks;
+  private int maxItemTransfersPerTick = 64;
+  private int maxFluidTransfersPerTick = 1000;
+  private int maxEnergyTransfersPerTick = 4000;
 
   public ControllerNodeTE() {
     super(TileEntityTypes.CONTROLLER_NODE);
@@ -47,68 +50,84 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     ticks = 0;
   }
 
-  // chest -> *
-  // chest -> furnace
-  // chest.back -> furnace.side
-  // chest -> *.*
   @Override
   public void tick() {
-    if (world == null || world.isRemote) return;
-    ++ticks;
-    if (ticks < 20) return;
+    if (world == null || world.isRemote || ++ticks < 20) return;
     ticks = 0;
     for (Mapping mapping : mappings) {
-      for (NodeInfo input : mapping.getInputs()) {
-        for (NodeInfo output : mapping.getOutputs()) {
-          BlockPos inputPos = identifiers.get(input.getIdentifier());
-          BlockPos outputPos = identifiers.get(output.getIdentifier());
-          if (inputPos == null || outputPos == null || inputPos.equals(outputPos)) continue;
-          TileEntity inputTE = world.getTileEntity(inputPos);
-          TileEntity outputTE = world.getTileEntity(outputPos);
-          if (inputTE == null || outputTE == null) return;
-          inputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, input.getFace()).ifPresent(chestCapability -> {
-            outputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, output.getFace()).ifPresent(furnaceCapability -> {
-              for (int i = 0; i < chestCapability.getSlots(); ++i) {
-                ItemStack is = chestCapability.getStackInSlot(i);
-                for (int j = 0; j < furnaceCapability.getSlots(); ++j) {
-                  ItemStack is2 = furnaceCapability.getStackInSlot(j);
-                  if (furnaceCapability.isItemValid(j, is) && !is.isEmpty() && is2.isEmpty() || (is.getItem() == is2.getItem() && is2.getCount() < is2.getMaxStackSize())) {
-                    furnaceCapability.insertItem(j, chestCapability.extractItem(i, MathHelper.clamp(is.getCount(), 0, is2.getMaxStackSize() - is2.getCount()), false), false);
-                    inputTE.markDirty();
-                    outputTE.markDirty();
-                    break;
-                  }
-                }
+      if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;
+
+      final NodeInfo inputNodeInfo = mapping.getInputs().get(mapping.currentInputIndex);
+      final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
+      final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier());
+      final BlockPos outputPos = identifiers.get(outputNodeInfo.getIdentifier());
+      if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
+        continue;
+
+      final TileEntity inputTE = world.getTileEntity(inputPos);
+      final TileEntity outputTE = world.getTileEntity(outputPos);
+      if (inputTE == null || outputTE == null) return;
+
+      inputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler -> {
+        outputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
+          int transferredItems = 0;
+          for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
+            final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
+            for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
+              if (transferredItems >= maxItemTransfersPerTick) return;
+              final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
+              if (outputItemHandler.isItemValid(outputSlotIndex, inputStack) && !inputStack.isEmpty() && outputStack.isEmpty() || (!inputStack.isEmpty() && inputStack.getItem() == outputStack.getItem() && outputStack.getCount() < outputStack.getMaxStackSize())) {
+                final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(inputSlotIndex, MathHelper.clamp(inputStack.getCount(), 0, maxItemTransfersPerTick - transferredItems), true);
+                final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
+                final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
+                final ItemStack insertedIS = outputItemHandler.insertItem(outputSlotIndex, extractedIS, false);
+                transferredItems += extractedIS.getCount() - insertedIS.getCount();
+                inputTE.markDirty();
+                outputTE.markDirty();
               }
-            });
-          });
-          inputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, input.getFace()).ifPresent(inputCapability -> {
-            outputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, output.getFace()).ifPresent(outputCapability -> {
-              for (int i = 0; i < inputCapability.getTanks(); ++i) {
-                FluidStack is = inputCapability.getFluidInTank(i);
-                for (int j = 0; j < outputCapability.getTanks(); ++j) {
-                  FluidStack is2 = outputCapability.getFluidInTank(j);
-                  if (outputCapability.isFluidValid(j, is)) {
-                    int original = is.getAmount();
-                    int filled = outputCapability.fill(inputCapability.drain(is.getAmount(), IFluidHandler.FluidAction.SIMULATE), IFluidHandler.FluidAction.SIMULATE);
-                    outputCapability.fill(inputCapability.drain(filled, IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                    inputTE.markDirty();
-                    outputTE.markDirty();
-                    break;
-                  }
-                }
+            }
+          }
+        });
+      });
+
+      inputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler -> {
+        outputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
+          int transferredFluids = 0;
+          for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
+            final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
+            for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
+              if (transferredFluids >= maxFluidTransfersPerTick) return;
+              final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
+              if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
+                final FluidStack simulatedDrainedFS = inputFluidHandler.drain(MathHelper.clamp(inputStack.getAmount(), 0, maxFluidTransfersPerTick - transferredFluids), IFluidHandler.FluidAction.SIMULATE);
+                final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
+                final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
+                transferredFluids += outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
+                inputTE.markDirty();
+                outputTE.markDirty();
+                break;
               }
-            });
-          });
-          inputTE.getCapability(CapabilityEnergy.ENERGY, input.getFace()).ifPresent(inputCapability -> {
-            outputTE.getCapability(CapabilityEnergy.ENERGY, output.getFace()).ifPresent(outputCapability -> {
-              if(inputCapability.canExtract() && outputCapability.canReceive()) {
-                int extracted = outputCapability.receiveEnergy(inputCapability.extractEnergy(inputCapability.getEnergyStored(), true), true);
-                outputCapability.receiveEnergy(inputCapability.extractEnergy(extracted, false), false);
-              }
-            });
-          });
-        }
+            }
+          }
+        });
+      });
+
+      inputTE.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler -> {
+        outputTE.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
+          int transferredEnergy = 0;
+          if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
+            final int simulatedExtracted = inputEnergyHandler.extractEnergy(MathHelper.clamp(inputEnergyHandler.getEnergyStored(), 0, maxEnergyTransfersPerTick - transferredEnergy), true);
+            final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
+            final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
+            transferredEnergy += outputEnergyHandler.receiveEnergy(extracted, false);
+          }
+        });
+
+      });
+
+      if (mapping.getDistributionScheme() == Mapping.DistributionScheme.ROUND_ROBIN) {
+        mapping.currentInputIndex = (mapping.currentInputIndex + 1) % Math.max(mapping.getInputs().size(), 1);
+        mapping.currentOutputIndex = (mapping.currentOutputIndex + 1) % Math.max(mapping.getOutputs().size(), 1);
       }
     }
   }
@@ -159,6 +178,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     for (Mapping mapping : mappings) {
       CompoundNBT mappingNBT = new CompoundNBT();
       mappingNBT.putString("mapping", mapping.getRaw());
+      mappingNBT.putInt("distributionScheme", mapping.getDistributionSchemeOrdinal());
       list.add(mappingNBT);
     }
     compound.put("mappings", list);
@@ -200,7 +220,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     mappings.clear();
     for (int i = 0; i < list.size(); ++i) {
       CompoundNBT mapping = list.getCompound(i);
-      mappings.add(new Mapping(mapping.getString("mapping"), identifiers.keySet()));
+      mappings.add(new Mapping(mapping.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mapping.getInt("distributionScheme"))));
     }
   }
 
@@ -234,9 +254,27 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   @Override
-  public void setInventorySlotContents(int index, ItemStack is) {
-    checkForIdentifier(is);
-    super.setInventorySlotContents(index, is);
+  public ItemStack removeStackFromSlot(int index) {
+    System.out.println("REMOVED");
+    identifiers.clear();
+    for (ItemStack is : inventory)
+      checkForIdentifier(is);
+    return super.removeStackFromSlot(index);
+  }
+
+  @Override
+  public ItemStack decrStackSize(int index, int count) {
+    System.out.println("DECREADSR");
+    return super.decrStackSize(index, count);
+  }
+
+  @Override
+  public void setInventorySlotContents(int index, ItemStack itemStack) {
+    identifiers.clear();
+    for (ItemStack is : inventory)
+      checkForIdentifier(is);
+    checkForIdentifier(itemStack);
+    super.setInventorySlotContents(index, itemStack);
   }
 
   private void checkForIdentifier(ItemStack is) {
@@ -249,8 +287,10 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   @Override
   protected void setItems(NonNullList<ItemStack> itemsIn) {
+    identifiers.clear();
     for (ItemStack is : itemsIn)
       checkForIdentifier(is);
     this.inventory = itemsIn;
   }
+
 }
