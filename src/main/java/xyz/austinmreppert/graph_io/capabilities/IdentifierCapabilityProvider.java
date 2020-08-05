@@ -12,12 +12,10 @@ import javax.annotation.Nullable;
 
 public class IdentifierCapabilityProvider implements ICapabilitySerializable {
 
-  private final ItemStack itemStack;
   private final IIdentifierCapability identifierCapability;
   private final LazyOptional<IIdentifierCapability> identifierCapabilityLO;
 
   public IdentifierCapabilityProvider(ItemStack itemStack) {
-    this.itemStack = itemStack;
     identifierCapability = new IdentifierCapability();
     identifierCapabilityLO = LazyOptional.of(() -> identifierCapability);
   }
@@ -25,11 +23,8 @@ public class IdentifierCapabilityProvider implements ICapabilitySerializable {
   @Nonnull
   @Override
   public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction side) {
-    if (capability == Capabilities.IDENTIFIER_CAPABILITY)
-      return identifierCapabilityLO.cast();
-    return LazyOptional.empty();
+    return Capabilities.IDENTIFIER_CAPABILITY.orEmpty(capability, identifierCapabilityLO);
   }
-
 
   @Override
   public INBT serializeNBT() {
