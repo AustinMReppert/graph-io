@@ -83,13 +83,13 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
           for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
             final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
             boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
-            for(int i = 0; i < filterInventory.getSizeInventory(); ++i) {
-              if(filterInventory.getStackInSlot(i).getItem() == inputStack.getItem()) {
+            for (int i = 0; i < filterInventory.getSizeInventory(); ++i) {
+              if (filterInventory.getStackInSlot(i).getItem() == inputStack.getItem()) {
                 filtered = !filtered;
                 break;
               }
             }
-            if(filtered) continue;
+            if (filtered) continue;
             for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
               if (transferredItems >= maxItemTransfersPerTick) return;
               final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
@@ -113,13 +113,13 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
           for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
             final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
             boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
-            for(int i = 0; i < filterInventory.getSizeInventory(); ++i) {
-              if(inputStack.isFluidEqual(filterInventory.getStackInSlot(i))) {
+            for (int i = 0; i < filterInventory.getSizeInventory(); ++i) {
+              if (inputStack.isFluidEqual(filterInventory.getStackInSlot(i))) {
                 filtered = !filtered;
                 break;
               }
             }
-            if(filtered) continue;
+            if (filtered) continue;
             for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
               if (transferredFluids >= maxFluidTransfersPerTick) return;
               final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
@@ -195,6 +195,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   @Override
   public CompoundNBT write(CompoundNBT compound) {
+    compound.putInt("filterSize", filterSize);
     getNBTFromMappings(compound);
     getNBTFromInventory(compound);
     return super.write(compound);
@@ -214,9 +215,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   @Override
   public void read(BlockState stateIn, CompoundNBT nbtIn) {
-    // swaped
+    filterSize = nbtIn.getInt("filterSize");
     getInventoryFromNBT(nbtIn);
-    getMappingsFromNBT(nbtIn);
+    mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, filterSize);
     super.read(stateIn, nbtIn);
   }
 
@@ -232,41 +233,28 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   @Override
   public CompoundNBT getUpdateTag() {
     CompoundNBT mappingsNBT = super.getUpdateTag();
+    mappingsNBT.putInt("filterSize", filterSize);
     getNBTFromMappings(mappingsNBT);
     return mappingsNBT;
   }
 
   @Override
   public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-    getMappingsFromNBT(tag);
+    mappings = Mapping.getMappingsFromNBT(tag, identifiers, tag.getInt("filterSize"));
     super.handleUpdateTag(state, tag);
-  }
-
-  public void getMappingsFromNBT(CompoundNBT tag) {
-    ListNBT list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
-    mappings.clear();
-    for (int i = 0; i < list.size(); ++i) {
-      CompoundNBT mappingNBT = list.getCompound(i);
-      Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")), Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize);
-      ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
-      for(int j = 0; j < filterItemsNBT.size(); ++j) {
-        CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
-        ItemStack is = ItemStack.read(itemStackNBT);
-        mapping.getFilterInventory().setInventorySlotContents(j, is);
-      }
-      mappings.add(mapping);
-    }
   }
 
   @Override
   public SUpdateTileEntityPacket getUpdatePacket() {
     CompoundNBT nbtTag = new CompoundNBT();
-    return new SUpdateTileEntityPacket(getPos(), -1, getNBTFromMappings(nbtTag));
+    nbtTag.putInt("filterSize", filterSize);
+    getNBTFromMappings(nbtTag);
+    return new SUpdateTileEntityPacket(getPos(), -1, nbtTag);
   }
 
   @Override
   public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-    getMappingsFromNBT(pkt.getNbtCompound());
+    mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, filterSize);
   }
 
   public void setMappings(ArrayList<Mapping> mappings) {
@@ -289,7 +277,6 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   @Override
   public ItemStack removeStackFromSlot(int index) {
-    System.out.println("REMOVED");
     identifiers.clear();
     for (ItemStack is : inventory)
       checkForIdentifier(is);
@@ -298,7 +285,6 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   @Override
   public ItemStack decrStackSize(int index, int count) {
-    System.out.println("DECREADSR");
     return super.decrStackSize(index, count);
   }
 
@@ -329,6 +315,10 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   public int getFilterSize() {
     return filterSize;
+  }
+
+  public void getMappingsFromNBT(CompoundNBT controllerNodeTENBT) {
+    mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, controllerNodeTENBT.getInt("filterSize"));
   }
 
 }

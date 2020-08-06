@@ -31,6 +31,7 @@ public class SetMappingsPacket {
         TileEntity te = context.get().getSender().getEntityWorld().getTileEntity(packet.blockPos);
         if (te instanceof ControllerNodeTE) {
           ControllerNodeTE controllerNodeTE = (ControllerNodeTE) te;
+          packet.controllerNodeTENBT.putInt("filterSize", controllerNodeTE.getFilterSize());
           controllerNodeTE.getMappingsFromNBT(packet.controllerNodeTENBT);
           controllerNodeTE.markDirty();
         }
@@ -39,6 +40,8 @@ public class SetMappingsPacket {
         TileEntity te = Minecraft.getInstance().world.getTileEntity(packet.blockPos);
         if (te instanceof ControllerNodeTE) {
           ControllerNodeTE controllerNodeTE = (ControllerNodeTE) te;
+          System.out.println("FILTER SIZE IN PACKET " + packet.controllerNodeTENBT.getInt("filterSize"));
+          System.out.println("FILTER SIZE IN PACKET " + controllerNodeTE.getFilterSize());
           controllerNodeTE.getMappingsFromNBT(packet.controllerNodeTENBT);
           controllerNodeTE.markDirty();
         }

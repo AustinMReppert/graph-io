@@ -1,10 +1,14 @@
 package xyz.austinmreppert.graph_io.tileentity;
 
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.Constants;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 
 public class Mapping {
@@ -46,14 +50,6 @@ public class Mapping {
           return;
       this.outputs.addAll(tmp);
     }
-
-    System.out.println("Inputs: ");
-    for (NodeInfo info : this.inputs)
-      System.out.println("\t" + info.getIdentifier());
-
-    System.out.println("Outputs: ");
-    for (NodeInfo info : this.outputs)
-      System.out.println("\t" + info.getIdentifier());
     valid = true;
   }
 
@@ -97,6 +93,23 @@ public class Mapping {
     }
     nbt.put("mappings", list);
     return nbt;
+  }
+
+  public static ArrayList<Mapping> getMappingsFromNBT(CompoundNBT tag, HashMap<String, BlockPos> identifiers, int filterSize) {
+    ListNBT list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
+    ArrayList<Mapping> mappings = new ArrayList<>(list.size());
+    for (int i = 0; i < list.size(); ++i) {
+      CompoundNBT mappingNBT = list.getCompound(i);
+      Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")), Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize);
+      ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
+      for(int j = 0; j < filterItemsNBT.size(); ++j) {
+        CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
+        ItemStack is = ItemStack.read(itemStackNBT);
+        mapping.getFilterInventory().setInventorySlotContents(j, is);
+      }
+      mappings.add(mapping);
+    }
+    return mappings;
   }
 
   public DistributionScheme getDistributionScheme() {
