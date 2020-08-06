@@ -85,7 +85,8 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private boolean locked = false;
 
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/controller_node_gui.png");
-  private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/round_robin.png");
+  private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/cyclic_button.png");
+  private static final ResourceLocation FILTER_SCHEME_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/filter_scheme_button.png");
 
   private ToggleImageButton distributeRandomlyButton;
   private ToggleImageButton distributeCyclicallyButton;
@@ -319,7 +320,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.random"), this));
 
-    this.addButton(filterSchemeButton = new ToggleImageButton(this.guiLeft - 20, guiTop + INVENTORY_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(filterSchemeButton = new ToggleImageButton(this.guiLeft - 20, guiTop + INVENTORY_Y, 20, 18, 0, 0, 19, FILTER_SCHEME_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       if (filterSchemeButton.isEnabled())

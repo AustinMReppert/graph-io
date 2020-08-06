@@ -23,6 +23,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -111,6 +112,14 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
           int transferredFluids = 0;
           for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
             final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
+            boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
+            for(int i = 0; i < filterInventory.getSizeInventory(); ++i) {
+              if(inputStack.isFluidEqual(filterInventory.getStackInSlot(i))) {
+                filtered = !filtered;
+                break;
+              }
+            }
+            if(filtered) continue;
             for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
               if (transferredFluids >= maxFluidTransfersPerTick) return;
               final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
