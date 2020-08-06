@@ -28,7 +28,13 @@ public class ToggleImageButton extends ImageButton {
   private final int textureHeight;
   private boolean enabled;
   private ITextComponent toolTip;
+  private ITextComponent enabledToolTip;
   private Screen screen;
+
+  public ToggleImageButton(int x, int y, int width, int height, int xTexStart, int yTexStart, int yDiffText, ResourceLocation resourceLocation, int textureWidth, int textureHeight, IPressable onPress, ITextComponent toolTip, ITextComponent enabledToolTip, Screen screen) {
+    this(x, y, width, height, xTexStart, yTexStart, yDiffText, resourceLocation, textureWidth, textureHeight, onPress, toolTip, screen);
+    this.enabledToolTip = enabledToolTip;
+  }
 
   public ToggleImageButton(int xIn, int yIn, int widthIn, int heightIn, int xTexStart, int yTexStart, int yDiffText, ResourceLocation resourceLocationIn, int textureWidth, int textureHeight, IPressable onPressIn, ITextComponent toolTip, Screen screen) {
     super(xIn, yIn, widthIn, heightIn, xTexStart, yTexStart, yDiffText, resourceLocationIn, textureWidth, textureHeight, onPressIn, toolTip);
@@ -63,7 +69,10 @@ public class ToggleImageButton extends ImageButton {
   @Override
   public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY) {
     List<ITextComponent> list = Lists.newArrayList();
-    list.add(toolTip);
+    if (enabled && enabledToolTip != null)
+      list.add(enabledToolTip);
+    else
+      list.add(toolTip);
 
     FontRenderer font = Minecraft.getInstance().fontRenderer;
     net.minecraftforge.fml.client.gui.GuiUtils.drawHoveringText(matrixStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);

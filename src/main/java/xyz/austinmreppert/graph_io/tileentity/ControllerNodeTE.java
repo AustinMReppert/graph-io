@@ -4,6 +4,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.inventory.container.ChestContainer;
 import net.minecraft.inventory.container.Container;
@@ -31,6 +32,7 @@ import xyz.austinmreppert.graph_io.container.ControllerNodeContainer;
 import xyz.austinmreppert.graph_io.item.Items;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -43,6 +45,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   private int maxItemTransfersPerTick = 64;
   private int maxFluidTransfersPerTick = 1000;
   private int maxEnergyTransfersPerTick = 4000;
+  private int filterSize = 10;
   private Random random;
 
   public ControllerNodeTE() {
@@ -58,10 +61,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     if (world == null || world.isRemote || ++ticks < 20) return;
     ticks = 0;
     for (Mapping mapping : mappings) {
+      Inventory filterInventory = mapping.getFilterInventory();
+      Mapping.FilterScheme filterScheme = mapping.getFilterScheme();
       if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;
-
-      System.out.println("(" + mapping.currentInputIndex + "," + mapping.currentOutputIndex + ")");
-      System.out.println("sizes (" + mapping.getInputs().size() + "," + mapping.getOutputs().size() + ")");
 
       final NodeInfo inputNodeInfo = mapping.getInputs().get(mapping.currentInputIndex);
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
@@ -79,6 +81,14 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
           int transferredItems = 0;
           for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
             final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
+            boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
+            for(int i = 0; i < filterInventory.getSizeInventory(); ++i) {
+              if(filterInventory.getStackInSlot(i).getItem() == inputStack.getItem()) {
+                filtered = !filtered;
+                break;
+              }
+            }
+            if(filtered) continue;
             for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
               if (transferredItems >= maxItemTransfersPerTick) return;
               final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
@@ -186,7 +196,6 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     if (!this.checkLootAndWrite(compound)) {
       ItemStackHelper.saveAllItems(compound, inventory);
     }
-
     return compound;
   }
 
@@ -228,8 +237,15 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     ListNBT list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
     mappings.clear();
     for (int i = 0; i < list.size(); ++i) {
-      CompoundNBT mapping = list.getCompound(i);
-      mappings.add(new Mapping(mapping.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mapping.getInt("distributionScheme"))));
+      CompoundNBT mappingNBT = list.getCompound(i);
+      Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")), Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize);
+      ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
+      for(int j = 0; j < filterItemsNBT.size(); ++j) {
+        CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
+        ItemStack is = ItemStack.read(itemStackNBT);
+        mapping.getFilterInventory().setInventorySlotContents(j, is);
+      }
+      mappings.add(mapping);
     }
   }
 
@@ -300,6 +316,10 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     for (ItemStack is : itemsIn)
       checkForIdentifier(is);
     this.inventory = itemsIn;
+  }
+
+  public int getFilterSize() {
+    return filterSize;
   }
 
 }

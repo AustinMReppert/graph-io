@@ -7,8 +7,11 @@ import net.minecraft.client.gui.IHasContainer;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.container.ClickType;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.IContainerListener;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -36,6 +39,12 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private ArrayList<TextFieldWidget> rawMappings;
   private ArrayList<Mapping> mappingsCopy;
   protected TextFieldWidget inputField;
+
+  private final int HOTBAR_X = 108;
+  private final int HOTBAR_Y = 232;
+  private final int INVENTORY_X = 108;
+  private final int INVENTORY_Y = 174;
+  private final int SLOT_SIZE = 18;
 
   private final int SCROLL_BAR_TEXTURE_X = 276;
   private final int SCROLL_BAR_TEXTURE_Y = 0;
@@ -69,6 +78,10 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private final int BACKGROUND_TEXTURE_WIDTH = 276;
   private final int BACKGROUND_TEXTURE_HEIGHT = 256;
 
+  private final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
+  private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y;
+
+
   private boolean locked = false;
 
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/controller_node_gui.png");
@@ -77,6 +90,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private ToggleImageButton distributeRandomlyButton;
   private ToggleImageButton distributeCyclicallyButton;
   private ToggleImageButton distributeNaturallyButton;
+  private ToggleImageButton filterSchemeButton;
   private int lastFocusedMapping;
 
   public ControllerNodeScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
@@ -122,6 +136,13 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       distributeCyclicallyButton.setEnabled(false);
       distributeRandomlyButton.setEnabled(false);
     }
+
+    Mapping.FilterScheme mappingFilterScheme = mapping.getFilterScheme();
+    if (mappingFilterScheme == Mapping.FilterScheme.BLACK_LIST) {
+      filterSchemeButton.setEnabled(false);
+    } else if (mappingFilterScheme == Mapping.FilterScheme.WHITE_LIST) {
+      filterSchemeButton.setEnabled(true);
+    }
   }
 
   private void updateMappings() {
@@ -165,7 +186,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       else
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       children.add(mapping);
-      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL));
+      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST, container.getControllerNodeTE().getFilterSize()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocused2(true);
@@ -222,8 +243,30 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     if (index != -1) {
       lastFocusedMapping = index;
       updateMappingGUI();
+      for (int i = 0; i < container.getControllerNodeTE().getFilterSize(); ++i) {
+        Mapping mapping = mappingsCopy.get(index);
+        Inventory tmpFilterInventory = container.getTmpFilterInventory();
+        Inventory filterInventory = mapping.getFilterInventory();
+        tmpFilterInventory.setInventorySlotContents(i, filterInventory.getStackInSlot(i));
+      }
     }
     super.setListener(listener);
+  }
+
+  @Override
+  protected void handleMouseClick(Slot slotIn, int slotId, int mouseButton, ClickType type) {
+    if (slotIn != null && slotIn instanceof FilterSlot && lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
+      super.handleMouseClick(slotIn, slotId, mouseButton, type);
+      for (int i = 0; i < container.getControllerNodeTE().getFilterSize(); ++i) {
+        Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+        Inventory tmpFilterInventory = container.getTmpFilterInventory();
+        Inventory filterInventory = mapping.getFilterInventory();
+        filterInventory.setInventorySlotContents(i, tmpFilterInventory.getStackInSlot(i));
+      }
+      updateMappings();
+    } else if (!(slotIn instanceof FilterSlot)) {
+      super.handleMouseClick(slotIn, slotId, mouseButton, type);
+    }
   }
 
   @Override
@@ -234,7 +277,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     ArrayList<Mapping> mappings = container.getControllerNodeTE().getMappings();
     mappingsCopy = new ArrayList<Mapping>(mappings.size());
     for (Mapping mapping : mappings)
-      mappingsCopy.add(new Mapping(mapping.getRaw(), mapping.getDistributionScheme()));
+      mappingsCopy.add(new Mapping(mapping));
     for (int i = 0; i < mappingsCopy.size(); ++i) {
       TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y + (i % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
       mapping.setCanLoseFocus(true);
@@ -252,7 +295,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     }
     scrollTo(currentScroll);
 
-    this.addButton(distributeNaturallyButton = new ToggleImageButton(this.guiLeft + MAPPING_X, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(distributeNaturallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X, guiTop + DISTRIBUTION_BUTTONS_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.setDistributionScheme(Mapping.DistributionScheme.NATURAL);
@@ -260,7 +303,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.natural"), this));
 
-    this.addButton(distributeCyclicallyButton = new ToggleImageButton(this.guiLeft + MAPPING_X + 24, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(distributeCyclicallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24, guiTop + DISTRIBUTION_BUTTONS_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.setDistributionScheme(Mapping.DistributionScheme.CYCLIC);
@@ -268,13 +311,24 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.cyclic"), this));
 
-    this.addButton(distributeRandomlyButton = new ToggleImageButton(this.guiLeft + MAPPING_X + 24 * 2, guiTop + MAPPINGS_AREA_HEIGHT + MAPPINGS_AREA_Y + 4, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(distributeRandomlyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24 * 2, guiTop + DISTRIBUTION_BUTTONS_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.setDistributionScheme(Mapping.DistributionScheme.RANDOM);
       updateMappingGUI();
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.random"), this));
+
+    this.addButton(filterSchemeButton = new ToggleImageButton(this.guiLeft - 20, guiTop + INVENTORY_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      if (filterSchemeButton.isEnabled())
+        mapping.setFilterScheme(Mapping.FilterScheme.BLACK_LIST);
+      else
+        mapping.setFilterScheme(Mapping.FilterScheme.WHITE_LIST);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.black_list"), new TranslationTextComponent("gui.graphio.white_list"), this));
 
   }
 
@@ -313,6 +367,11 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     if (canScroll(rawMappings.size()) && mouseX > (double) (guiLeft + SCROLL_BAR_X) && mouseX < (double) (guiLeft + SCROLL_BAR_X + SCROLL_BAR_WIDTH) && mouseY > (double) (guiTop + SCROLL_BAR_Y) && mouseY <= (double) (guiTop + SCROLL_BAR_Y + SCROLL_AREA_HEIGHT))
       isScrolling = true;
     return super.mouseClicked(mouseX, mouseY, button);
+  }
+
+  @Override
+  protected boolean itemStackMoved(int keyCode, int scanCode) {
+    return false;
   }
 
   @Override

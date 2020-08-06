@@ -4,5 +4,7 @@
   "block.graphio.controller_node_block": "Controller Node",
   "gui.graphio.natural":  "Natural",
   "gui.graphio.random":  "Random",
-  "gui.graphio.cyclic":  "Cyclic"
+  "gui.graphio.cyclic":  "Cyclic",
+  "gui.graphio.black_list":  "Black List",
+  "gui.graphio.white_list":  "White List"
 }
