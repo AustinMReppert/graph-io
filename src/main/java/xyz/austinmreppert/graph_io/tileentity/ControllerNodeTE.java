@@ -59,6 +59,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     if (world == null || world.isRemote || ++ticks < 20) return;
     ticks = 0;
     for (Mapping mapping : mappings) {
+      if(mapping.isValid())
+        continue;
+
       Inventory filterInventory = mapping.getFilterInventory();
       Mapping.FilterScheme filterScheme = mapping.getFilterScheme();
       if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;

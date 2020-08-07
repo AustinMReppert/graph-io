@@ -19,7 +19,7 @@ public class Mapping {
   private boolean valid;
   private DistributionScheme distributionScheme;
   private FilterScheme filterScheme;
-  private Inventory filterInventory;
+  private final Inventory filterInventory;
   public int currentInputIndex;
   public int currentOutputIndex;
 
@@ -31,11 +31,22 @@ public class Mapping {
     String[] components = raw.split("->");
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
-    if (components.length != 2) {
+    if (components.length != 2)
       return;
-    }
-    String[] inputs = components[0].split(",");
-    String[] outputs = components[1].split(",");
+    String[] inputsTmp = components[0].split(",");
+    String[] outputsTmp = components[1].split(",");
+    ArrayList<String> inputs = new ArrayList<>();
+    ArrayList<String> outputs = new ArrayList<>();
+
+    // Only parse unique inputs/outputs
+    for (String input : inputsTmp)
+      if (!inputs.contains(input))
+        inputs.add(input);
+    for (String output : outputsTmp)
+      if (!outputs.contains(output))
+        outputs.add(output);
+
+    // If any inputs or outputs are invalid, then the entire mapping is
     for (String input : inputs) {
       ArrayList<NodeInfo> tmp = NodeInfo.getNodeInfo(input, identifiers);
       for (NodeInfo inputNodeInfo : tmp)
@@ -50,6 +61,7 @@ public class Mapping {
           return;
       this.outputs.addAll(tmp);
     }
+
     valid = true;
   }
 
@@ -102,7 +114,7 @@ public class Mapping {
       CompoundNBT mappingNBT = list.getCompound(i);
       Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")), Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize);
       ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
-      for(int j = 0; j < filterItemsNBT.size(); ++j) {
+      for (int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
         int slot = itemStackNBT.getByte("slot");
         ItemStack is = ItemStack.read(itemStackNBT);
@@ -153,6 +165,10 @@ public class Mapping {
 
   public FilterScheme getFilterScheme() {
     return filterScheme;
+  }
+
+  public boolean isValid() {
+    return valid;
   }
 
   public enum DistributionScheme {
