@@ -9,13 +9,15 @@ import net.minecraft.network.PacketBuffer;
 import xyz.austinmreppert.graph_io.client.gui.FilterSlot;
 import xyz.austinmreppert.graph_io.tileentity.ControllerNodeTE;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 
 public class ControllerNodeContainer extends Container {
 
-  private ControllerNodeTE controllerNodeTE;
-  private ArrayList<FilterSlot> filterSlots;
-  private Inventory tmpFilterInventory;
+  private final ControllerNodeTE controllerNodeTE;
+  private final ArrayList<FilterSlot> filterSlots;
+  private final Inventory tmpFilterInventory;
 
   private final int HOTBAR_X = 108;
   private final int HOTBAR_Y = 232;
@@ -50,45 +52,51 @@ public class ControllerNodeContainer extends Container {
   }
 
   @Override
-  public boolean canDragIntoSlot(Slot slotIn) {
-    if (slotIn instanceof FilterSlot) return false;
-    return super.canDragIntoSlot(slotIn);
+  @ParametersAreNonnullByDefault
+  public boolean canDragIntoSlot(Slot slot) {
+    if (slot instanceof FilterSlot) return false;
+    return super.canDragIntoSlot(slot);
   }
 
   @Override
+  @Nonnull
+  @ParametersAreNonnullByDefault
   public ItemStack slotClick(int slotId, int dragType, ClickType clickType, PlayerEntity player) {
     Slot slot = slotId < 0 ? null : getSlot(slotId);
     if (slot instanceof FilterSlot) {
-      if (clickType == ClickType.PICKUP && player.inventory.getItemStack().isEmpty()) {
+      if (clickType == ClickType.PICKUP && player.inventory.getItemStack().isEmpty())
         slot.putStack(ItemStack.EMPTY);
-      } else {
+      else
         slot.putStack(player.inventory.getItemStack().isEmpty() ? ItemStack.EMPTY : player.inventory.getItemStack().copy());
-      }
       return player.inventory.getItemStack();
     } else
       return super.slotClick(slotId, dragType, clickType, player);
   }
 
   @Override
+  @Nonnull
+  @ParametersAreNonnullByDefault
   public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
     return ItemStack.EMPTY;
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void onContainerClosed(PlayerEntity player) {
     super.onContainerClosed(player);
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public boolean canInteractWith(PlayerEntity player) {
     return true;
   }
 
   @Override
+  @Nonnull
   public ContainerType<?> getType() {
     return ContainerTypes.CONTROLLER_NODE_CONTAINER;
   }
-
 
   public ControllerNodeTE getControllerNodeTE() {
     return controllerNodeTE;
@@ -101,4 +109,5 @@ public class ControllerNodeContainer extends Container {
   public Inventory getTmpFilterInventory() {
     return tmpFilterInventory;
   }
+
 }

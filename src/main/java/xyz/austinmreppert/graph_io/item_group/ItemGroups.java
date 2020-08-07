@@ -1,6 +1,5 @@
 package xyz.austinmreppert.graph_io.item_group;
 
-import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;

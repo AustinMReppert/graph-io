@@ -1,7 +1,6 @@
 package xyz.austinmreppert.graph_io.tileentity;
 
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -25,7 +24,6 @@ public class NodeInfo {
     ArrayList<NodeInfo> nodeInfos = new ArrayList<>();
     if (raw.matches("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?")) {
       String[] nodeInfoComponents = raw.split("\\.");
-      NodeInfo tmp = new NodeInfo();
       if (nodeInfoComponents.length == 2) {
         Direction face = null;
         if (nodeInfoComponents[1].equals("north")) face = Direction.NORTH;

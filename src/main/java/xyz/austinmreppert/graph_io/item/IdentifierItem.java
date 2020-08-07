@@ -6,7 +6,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -19,7 +18,9 @@ import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.IdentifierCapabilityProvider;
 import xyz.austinmreppert.graph_io.client.render.Highlighter;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 public class IdentifierItem extends Item {
 
@@ -28,6 +29,8 @@ public class IdentifierItem extends Item {
   }
 
   @Override
+  @Nonnull
+  @ParametersAreNonnullByDefault
   public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
     Vector3d playerEyePos = playerIn.getPositionVec().add(0, playerIn.getEyeHeight(), 0);
     Vector3d lookVec = playerEyePos.add(playerIn.getLookVec().scale(5.0F));
@@ -36,7 +39,7 @@ public class IdentifierItem extends Item {
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
       if (playerIn.isSneaking() && res.getType() == RayTraceResult.Type.BLOCK) {
         // TODO: SYNC from server to client
-        if(worldIn.isRemote) {
+        if (worldIn.isRemote) {
           if (identifierCapability.getBlockPos() != null)
             Highlighter.unhighlightBlock(identifierCapability.getBlockPos());
         }

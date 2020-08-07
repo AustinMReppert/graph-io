@@ -2,10 +2,11 @@ package xyz.austinmreppert.graph_io.client.gui;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
-import xyz.austinmreppert.graph_io.container.ControllerNodeContainer;
+
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 public class FilterSlot extends Slot {
 
@@ -14,16 +15,19 @@ public class FilterSlot extends Slot {
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public boolean canTakeStack(PlayerEntity playerIn) {
     return false;
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public boolean isItemValid(ItemStack stack) {
     return true;
   }
 
   @Override
+  @Nonnull
   public ItemStack decrStackSize(int amount) {
     return ItemStack.EMPTY;
   }
@@ -31,7 +35,7 @@ public class FilterSlot extends Slot {
   @Override
   public void putStack(ItemStack stack) {
     ItemStack is = stack.copy();
-    if(!is.isEmpty())
+    if (!is.isEmpty())
       is.setCount(1);
     super.putStack(is);
   }
@@ -42,12 +46,15 @@ public class FilterSlot extends Slot {
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public int getItemStackLimit(ItemStack stack) {
     return 1;
   }
 
   @Override
+  @Nonnull
   public ItemStack getStack() {
     return inventory.getStackInSlot(getSlotIndex());
   }
+
 }

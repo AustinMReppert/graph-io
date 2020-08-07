@@ -13,8 +13,6 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.IContainerListener;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
@@ -29,6 +27,7 @@ import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
 import xyz.austinmreppert.graph_io.tileentity.Mapping;
 
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 
 public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContainer> implements IHasContainer<ControllerNodeContainer>, IContainerListener {
@@ -108,7 +107,6 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   }
 
   private void onTextChanged(String text) {
-    if (locked) return;
   }
 
   private void updateMappingGUI() {
@@ -222,6 +220,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     return super.keyPressed(keyCode, scanCode, modifiers);
   }
 
+  @ParametersAreNonnullByDefault
   public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
     renderBackground(matrixStack);
     super.render(matrixStack, mouseX, mouseY, partialTicks);
@@ -231,7 +230,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       mapping.render(matrixStack, mouseX, mouseY, partialTicks);
   }
 
-  public void renderScrollbar(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+  public void renderScrollbar(MatrixStack matrixStack) {
     if (canScroll(rawMappings.size()))
       blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
     else
@@ -255,8 +254,9 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   }
 
   @Override
-  protected void handleMouseClick(Slot slotIn, int slotId, int mouseButton, ClickType type) {
-    if (slotIn != null && slotIn instanceof FilterSlot && lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
+  @ParametersAreNonnullByDefault
+  protected void handleMouseClick(@Nullable Slot slotIn, int slotId, int mouseButton, ClickType type) {
+    if (slotIn instanceof FilterSlot && lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
       super.handleMouseClick(slotIn, slotId, mouseButton, type);
       for (int i = 0; i < container.getControllerNodeTE().getFilterSize(); ++i) {
         Mapping mapping = mappingsCopy.get(lastFocusedMapping);
@@ -265,9 +265,8 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
         filterInventory.setInventorySlotContents(i, tmpFilterInventory.getStackInSlot(i));
       }
       updateMappings();
-    } else if (!(slotIn instanceof FilterSlot)) {
+    } else if (!(slotIn instanceof FilterSlot))
       super.handleMouseClick(slotIn, slotId, mouseButton, type);
-    }
   }
 
   @Override
@@ -276,7 +275,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     lastFocusedMapping = -1;
     rawMappings.clear();
     ArrayList<Mapping> mappings = container.getControllerNodeTE().getMappings();
-    mappingsCopy = new ArrayList<Mapping>(mappings.size());
+    mappingsCopy = new ArrayList<>(mappings.size());
     for (Mapping mapping : mappings)
       mappingsCopy.add(new Mapping(mapping));
     for (int i = 0; i < mappingsCopy.size(); ++i) {
@@ -356,7 +355,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     for (int mappingNum = 0; mappingNum < rawMappings.size(); ++mappingNum) {
       TextFieldWidget mapping = rawMappings.get(mappingNum);
       if (mappingNum >= discreteTop && mappingNum < discreteTop + MAPPINGS_PER_PAGE) {
-        mapping.y = (int) (guiTop + MAPPING_Y + (mappingNum - discreteTop) * (MAPPING_HEIGHT + 6));
+        mapping.y = guiTop + MAPPING_Y + (mappingNum - discreteTop) * (MAPPING_HEIGHT + 6);
         mapping.setVisible(true);
       } else
         mapping.setVisible(false);
@@ -382,15 +381,16 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y) {
     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     minecraft.getTextureManager().bindTexture(BACKGROUND);
     blit(matrixStack, guiLeft, guiTop, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
-    renderScrollbar(matrixStack, x, y, partialTicks);
+    renderScrollbar(matrixStack);
   }
 
-  // RenderForeground
   @Override
+  @ParametersAreNonnullByDefault
   protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
     font.func_238422_b_(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
   }
@@ -409,14 +409,17 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList) {
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack) {
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue) {
   }
 

@@ -1,7 +1,6 @@
 package xyz.austinmreppert.graph_io.tileentity;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -11,7 +10,6 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.*;
@@ -20,10 +18,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -32,8 +28,9 @@ import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.container.ControllerNodeContainer;
 import xyz.austinmreppert.graph_io.item.Items;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -47,7 +44,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   private int maxFluidTransfersPerTick = 1000;
   private int maxEnergyTransfersPerTick = 4000;
   private int filterSize = 10;
-  private Random random;
+  private final Random random;
 
   public ControllerNodeTE() {
     super(TileEntityTypes.CONTROLLER_NODE);
@@ -77,7 +74,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
       final TileEntity outputTE = world.getTileEntity(outputPos);
       if (inputTE == null || outputTE == null) return;
 
-      inputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler -> {
+      inputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
         outputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
           int transferredItems = 0;
           for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
@@ -104,10 +101,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
               }
             }
           }
-        });
-      });
+        }));
 
-      inputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler -> {
+      inputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler ->
         outputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
           int transferredFluids = 0;
           for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
@@ -134,10 +130,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
               }
             }
           }
-        });
-      });
+        }));
 
-      inputTE.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler -> {
+      inputTE.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler ->
         outputTE.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
           int transferredEnergy = 0;
           if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
@@ -146,9 +141,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
             final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
             transferredEnergy += outputEnergyHandler.receiveEnergy(extracted, false);
           }
-        });
-
-      });
+        }));
 
       if (mapping.getDistributionScheme() == Mapping.DistributionScheme.CYCLIC) {
         mapping.currentInputIndex = (mapping.currentInputIndex + 1) % Math.max(mapping.getInputs().size(), 1);
@@ -169,31 +162,32 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   @Override
+  @Nonnull
   public ITextComponent getDisplayName() {
     return new TranslationTextComponent(Blocks.CONTROLLER_NODE_BLOCK.getTranslationKey());
   }
 
   @Override
+  @Nonnull
   protected ITextComponent getDefaultName() {
-    return null;
+    return Blocks.CONTROLLER_NODE_BLOCK.getTranslatedName();
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public Container createMenu(int windowID, PlayerInventory inventory, PlayerEntity p_createMenu_3_) {
     return p_createMenu_3_.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new ControllerNodeContainer(windowID, inventory, this);
   }
 
   @Override
+  @Nonnull
+  @ParametersAreNonnullByDefault
   protected Container createMenu(int windowID, PlayerInventory inventory) {
-    if (Minecraft.getInstance().player.isSneaking()) {
-      return ChestContainer.createGeneric9X6(windowID, inventory, this);
-    } else {
-      ControllerNodeContainer controllerNodeContainer = new ControllerNodeContainer(windowID, inventory, this);
-      return controllerNodeContainer;
-    }
+    return inventory.player.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new ControllerNodeContainer(windowID, inventory, this);
   }
 
   @Override
+  @Nonnull
   public CompoundNBT write(CompoundNBT compound) {
     compound.putInt("filterSize", filterSize);
     getNBTFromMappings(compound);
@@ -201,19 +195,18 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     return super.write(compound);
   }
 
-  public CompoundNBT getNBTFromInventory(CompoundNBT compound) {
+  public void getNBTFromInventory(CompoundNBT compound) {
     super.write(compound);
-    if (!this.checkLootAndWrite(compound)) {
+    if (!this.checkLootAndWrite(compound))
       ItemStackHelper.saveAllItems(compound, inventory);
-    }
-    return compound;
   }
 
-  private CompoundNBT getNBTFromMappings(CompoundNBT compound) {
-    return Mapping.toNBT(mappings, compound);
+  private void getNBTFromMappings(CompoundNBT compound) {
+    Mapping.toNBT(mappings, compound);
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void read(BlockState stateIn, CompoundNBT nbtIn) {
     filterSize = nbtIn.getInt("filterSize");
     getInventoryFromNBT(nbtIn);
@@ -231,6 +224,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   @Override
+  @Nonnull
   public CompoundNBT getUpdateTag() {
     CompoundNBT mappingsNBT = super.getUpdateTag();
     mappingsNBT.putInt("filterSize", filterSize);
@@ -257,10 +251,6 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, filterSize);
   }
 
-  public void setMappings(ArrayList<Mapping> mappings) {
-    this.mappings = mappings;
-  }
-
   public ArrayList<Mapping> getMappings() {
     return mappings;
   }
@@ -271,11 +261,13 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   @Override
+  @Nonnull
   protected NonNullList<ItemStack> getItems() {
     return inventory;
   }
 
   @Override
+  @Nonnull
   public ItemStack removeStackFromSlot(int index) {
     identifiers.clear();
     for (ItemStack is : inventory)
@@ -284,11 +276,13 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   @Override
+  @Nonnull
   public ItemStack decrStackSize(int index, int count) {
     return super.decrStackSize(index, count);
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void setInventorySlotContents(int index, ItemStack itemStack) {
     identifiers.clear();
     for (ItemStack is : inventory)
@@ -298,11 +292,9 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   private void checkForIdentifier(ItemStack is) {
-    if (is.getItem() == Items.IDENTIFIER) {
-      is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability -> {
-        identifiers.put(is.getDisplayName().getString(), identifierCapability.getBlockPos());
-      });
-    }
+    if (is.getItem() == Items.IDENTIFIER)
+      is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
+        identifiers.put(is.getDisplayName().getString(), identifierCapability.getBlockPos()));
   }
 
   @Override

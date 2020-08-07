@@ -15,8 +15,4 @@ public class TileEntities {
     tileEntityRegistryEvent.getRegistry().registerAll(TileEntityTypes.CONTROLLER_NODE);
   }
 
-  public static TileEntityType<?> register() {
-    return null;
-  }
-
 }
