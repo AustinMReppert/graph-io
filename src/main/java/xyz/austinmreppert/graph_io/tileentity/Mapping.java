@@ -83,7 +83,7 @@ public class Mapping {
       for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i) {
         if (!mapping.filterInventory.getStackInSlot(i).isEmpty()) {
           CompoundNBT compoundnbt = new CompoundNBT();
-          compoundnbt.putByte("Slot", (byte) i);
+          compoundnbt.putByte("slot", (byte) i);
           mapping.filterInventory.getStackInSlot(i).write(compoundnbt);
           filterNBT.add(compoundnbt);
         }
@@ -104,8 +104,9 @@ public class Mapping {
       ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
       for(int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
+        int slot = itemStackNBT.getByte("slot");
         ItemStack is = ItemStack.read(itemStackNBT);
-        mapping.getFilterInventory().setInventorySlotContents(j, is);
+        mapping.getFilterInventory().setInventorySlotContents(slot, is);
       }
       mappings.add(mapping);
     }

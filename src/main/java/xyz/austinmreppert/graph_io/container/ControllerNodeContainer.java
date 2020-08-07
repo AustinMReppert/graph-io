@@ -46,7 +46,7 @@ public class ControllerNodeContainer extends Container {
 
     // Draw the filter slots
     for (int i = 0; i < tmpFilterInventory.getSizeInventory(); ++i)
-      filterSlots.add((FilterSlot) addSlot(new FilterSlot(tmpFilterInventory, i, 6 + (i % 5) * SLOT_SIZE, INVENTORY_Y + (i >= 5 ? SLOT_SIZE : 0))));
+      filterSlots.add((FilterSlot) addSlot(new FilterSlot(tmpFilterInventory, i, 5 + (i % 5) * SLOT_SIZE, INVENTORY_Y + (i >= 5 ? SLOT_SIZE : 0))));
   }
 
   @Override
