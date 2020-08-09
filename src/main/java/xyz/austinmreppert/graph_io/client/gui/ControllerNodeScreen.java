@@ -6,6 +6,7 @@ import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.IHasContainer;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.ClickType;
@@ -77,20 +78,36 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private final int BACKGROUND_TEXTURE_WIDTH = 276;
   private final int BACKGROUND_TEXTURE_HEIGHT = 256;
 
+  private final int SLOT_TEXTURE_X = 288;
+  private final int SLOT_TEXTURE_Y = 0;
+  private final int SLOT_TEXTURE_WIDTH = 18;
+  private final int SLOT_TEXTURE_HEIGHT = 18;
+
   private final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
   private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y;
 
-
   private boolean locked = false;
+
+  private ITextComponent ITEMS_PER_TICK = new TranslationTextComponent("graphio.gui.items_per_tick");
+  private ITextComponent BUCKETS_PER_TICK = new TranslationTextComponent("graphio.gui.buckets_per_tick");
+  private ITextComponent ENERGY_PER_TICK = new TranslationTextComponent("graphio.gui.energy_per_tick");
 
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/controller_node_gui.png");
   private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/cyclic_button.png");
   private static final ResourceLocation FILTER_SCHEME_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/filter_scheme_button.png");
+  private static final ResourceLocation MINUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/decrease_stack_size_button.png");
+  private static final ResourceLocation PLUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/increase_stack_size_button.png");
 
   private ToggleImageButton distributeRandomlyButton;
   private ToggleImageButton distributeCyclicallyButton;
   private ToggleImageButton distributeNaturallyButton;
   private ToggleImageButton filterSchemeButton;
+  private ImageButton decreaseStackSizeButton;
+  private ImageButton increaseStackSizeButton;
+  private ImageButton decreaseBucketsButton;
+  private ImageButton increaseBucketsButton;
+  private ImageButton decreaseEnergyButton;
+  private ImageButton increaseEnergyButton;
   private int lastFocusedMapping;
 
   public ControllerNodeScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
@@ -185,7 +202,7 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       else
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       children.add(mapping);
-      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST, container.getControllerNodeTE().getFilterSize()));
+      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST, container.getControllerNodeTE().getFilterSize(), container.getControllerNodeTE().getMaxItemsPerTick(), container.getControllerNodeTE().getMaxBucketsPerTick(), container.getControllerNodeTE().getMaxEnergyPerTick(), container.getControllerNodeTE().getMaxItemsPerTick(), container.getControllerNodeTE().getMaxBucketsPerTick(), container.getControllerNodeTE().getMaxEnergyPerTick()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocused2(true);
@@ -330,6 +347,54 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.black_list"), new TranslationTextComponent("gui.graphio.white_list"), this));
 
+    this.addButton(decreaseStackSizeButton = new ImageButton(this.guiLeft - 80, guiTop + 28, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeItemsPerTick(-1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(increaseStackSizeButton = new ImageButton(this.guiLeft - 50, guiTop + 28, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeItemsPerTick(1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(decreaseBucketsButton = new ImageButton(this.guiLeft - 80, guiTop + 60, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeBucketsPerTick(-1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(increaseBucketsButton = new ImageButton(this.guiLeft - 50, guiTop + 60, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeBucketsPerTick(1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(decreaseEnergyButton = new ImageButton(this.guiLeft - 80, guiTop + 91, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeEnergyPerTick(-1 * (hasShiftDown() ? 100 : 1));
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(increaseEnergyButton = new ImageButton(this.guiLeft - 50, guiTop + 91, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeEnergyPerTick(hasShiftDown() ? 100 : 1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
   }
 
   public boolean mouseDragged(double mouseX, double mouseY, int p_231045_5_, double dragX, double dragY) {
@@ -386,15 +451,37 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     minecraft.getTextureManager().bindTexture(BACKGROUND);
     blit(matrixStack, guiLeft, guiTop, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
+    blit(matrixStack, guiLeft - 89, guiTop, getBlitOffset(), 276, 27, 89, 166, 256, 512);
     renderScrollbar(matrixStack);
+    if (lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
+      Mapping currentMapping = mappingsCopy.get(lastFocusedMapping);
+      // Draw the filter slots
+      for (int i = 0; i < currentMapping.getFilterInventory().getSizeInventory(); ++i)
+        blit(matrixStack, guiLeft + 4 + (i % 5) * SLOT_SIZE, guiTop + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 256, 512);
+    }
   }
 
   @Override
   @ParametersAreNonnullByDefault
   protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
     font.func_238422_b_(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
-  }
 
+    String itemsPerTickStr = "?";
+    String bucketsPerTickStr = "?";
+    String energyPerTickStr = "?";
+    if(lastFocusedMapping >= 0 && lastFocusedMapping <= mappingsCopy.size()) {
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      itemsPerTickStr = mapping.getItemsPerTick() + "";
+      bucketsPerTickStr = mapping.getBucketsPerTick()/1000 + "";
+      energyPerTickStr = mapping.getEnergyPerTick() + "";
+    }
+      font.func_238422_b_(matrixStack, ITEMS_PER_TICK, -80, 10, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+      font.drawString(matrixStack, itemsPerTickStr, -80, 19, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+      font.func_238422_b_(matrixStack, BUCKETS_PER_TICK, -80, 41, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+      font.drawString(matrixStack, bucketsPerTickStr, -80, 51, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+      font.func_238422_b_(matrixStack, ENERGY_PER_TICK, -80, 73, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+      font.drawString(matrixStack, energyPerTickStr, -80, 82, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+  }
 
   private boolean canScroll(int items) {
     return items > MAPPINGS_PER_PAGE;

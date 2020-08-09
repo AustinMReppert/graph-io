@@ -15,22 +15,26 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import xyz.austinmreppert.graph_io.GraphIO;
+import xyz.austinmreppert.graph_io.tileentity.ControllerNodeTE;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Blocks {
 
-  public static final Block CONTROLLER_NODE_BLOCK = register(new ControllerNodeBlock(), "controller_node_block");
+  public static final Block WOOD_CONTROLLER_NODE_BLOCK = register(new ControllerNodeBlock(ControllerNodeTE.Tier.WOOD), "wood_controller_node_block");
+  public static final Block IRON_CONTROLLER_NODE_BLOCK = register(new ControllerNodeBlock(ControllerNodeTE.Tier.IRON), "iron_controller_node_block");
 
   @SubscribeEvent
   public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
     blockRegistryEvent.getRegistry().registerAll(
-      CONTROLLER_NODE_BLOCK
+      WOOD_CONTROLLER_NODE_BLOCK,
+      IRON_CONTROLLER_NODE_BLOCK
     );
   }
 
   @SubscribeEvent
   public static void onClientSetupEvent(FMLClientSetupEvent event) {
-    RenderTypeLookup.setRenderLayer(CONTROLLER_NODE_BLOCK, RenderType.getCutout());
+    RenderTypeLookup.setRenderLayer(WOOD_CONTROLLER_NODE_BLOCK, RenderType.getCutout());
+    RenderTypeLookup.setRenderLayer(IRON_CONTROLLER_NODE_BLOCK, RenderType.getCutout());
   }
 
   public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final String name) {

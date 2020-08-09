@@ -40,26 +40,80 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   private HashMap<String, BlockPos> identifiers;
   private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
   private int ticks;
-  private int maxItemTransfersPerTick = 64;
-  private int maxFluidTransfersPerTick = 1000;
-  private int maxEnergyTransfersPerTick = 4000;
+  private int maxItemsPerTick = 64;
+  private int maxBucketsPerTick = 1000;
+  private int maxEnergyPerTick = 4000;
   private int filterSize = 10;
   private final Random random;
+  private Tier tier;
+
+  public int getMaxBucketsPerTick() {
+    return maxBucketsPerTick;
+  }
+
+  public int getMaxEnergyPerTick() {
+    return maxEnergyPerTick;
+  }
+
+  public enum Tier {
+    WOOD,
+    IRON,
+    GOLD,
+    DIAMOND;
+
+    public static ControllerNodeTE.Tier valueOf(int ordinal) {
+      if (ordinal == 0) return Tier.WOOD;
+      else if (ordinal == 1) return Tier.IRON;
+      else if (ordinal == 2) return Tier.GOLD;
+      else if (ordinal == 3) return Tier.DIAMOND;
+      else return null;
+    }
+
+  }
 
   public ControllerNodeTE() {
+    this(Tier.WOOD);
+  }
+
+  public ControllerNodeTE(Tier tier) {
     super(TileEntityTypes.CONTROLLER_NODE);
     mappings = new ArrayList<>();
     identifiers = new HashMap<>();
     ticks = 0;
     random = new Random(System.currentTimeMillis());
+    setTier(tier);
+
+  }
+
+  private void setTier(Tier tier) {
+    this.tier = tier;
+    if (tier == Tier.WOOD) {
+      maxItemsPerTick = 1;
+      maxBucketsPerTick = 1000;
+      maxEnergyPerTick = 400;
+      filterSize = 5;
+    } else if (tier == Tier.IRON) {
+      maxItemsPerTick = 16;
+      maxBucketsPerTick = 4000;
+      maxEnergyPerTick = 4000;
+      filterSize = 10;
+    } else if (tier == Tier.GOLD) {
+      maxItemsPerTick = 32;
+      maxBucketsPerTick = 8000;
+      maxEnergyPerTick = 40000;
+    } else if (tier == Tier.DIAMOND) {
+      maxItemsPerTick = 64;
+      maxBucketsPerTick = 16000;
+      maxEnergyPerTick = 400000;
+    }
   }
 
   @Override
   public void tick() {
-    if (world == null || world.isRemote || ++ticks < 20) return;
+    if (world == null || world.isRemote || ++ticks < 20*5) return;
     ticks = 0;
     for (Mapping mapping : mappings) {
-      if(mapping.isValid())
+      if (!mapping.isValid())
         continue;
 
       Inventory filterInventory = mapping.getFilterInventory();
@@ -91,10 +145,10 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
             }
             if (filtered) continue;
             for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
-              if (transferredItems >= maxItemTransfersPerTick) return;
+              if (transferredItems >= mapping.getItemsPerTick()) return;
               final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
               if (outputItemHandler.isItemValid(outputSlotIndex, inputStack) && !inputStack.isEmpty() && outputStack.isEmpty() || (!inputStack.isEmpty() && inputStack.getItem() == outputStack.getItem() && outputStack.getCount() < outputStack.getMaxStackSize())) {
-                final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(inputSlotIndex, MathHelper.clamp(inputStack.getCount(), 0, maxItemTransfersPerTick - transferredItems), true);
+                final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(inputSlotIndex, MathHelper.clamp(inputStack.getCount(), 0, mapping.getItemsPerTick() - transferredItems), true);
                 final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
                 final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
                 final ItemStack insertedIS = outputItemHandler.insertItem(outputSlotIndex, extractedIS, false);
@@ -120,10 +174,10 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
             }
             if (filtered) continue;
             for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
-              if (transferredFluids >= maxFluidTransfersPerTick) return;
+              if (transferredFluids >= mapping.getBucketsPerTick()) return;
               final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
               if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
-                final FluidStack simulatedDrainedFS = inputFluidHandler.drain(MathHelper.clamp(inputStack.getAmount(), 0, maxFluidTransfersPerTick - transferredFluids), IFluidHandler.FluidAction.SIMULATE);
+                final FluidStack simulatedDrainedFS = inputFluidHandler.drain(MathHelper.clamp(inputStack.getAmount(), 0, mapping.getBucketsPerTick() - transferredFluids), IFluidHandler.FluidAction.SIMULATE);
                 final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
                 final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
                 transferredFluids += outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
@@ -139,7 +193,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
         outputTE.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
           int transferredEnergy = 0;
           if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
-            final int simulatedExtracted = inputEnergyHandler.extractEnergy(MathHelper.clamp(inputEnergyHandler.getEnergyStored(), 0, maxEnergyTransfersPerTick - transferredEnergy), true);
+            final int simulatedExtracted = inputEnergyHandler.extractEnergy(MathHelper.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerTick() - transferredEnergy), true);
             final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
             final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
             transferredEnergy += outputEnergyHandler.receiveEnergy(extracted, false);
@@ -167,13 +221,22 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   @Override
   @Nonnull
   public ITextComponent getDisplayName() {
-    return new TranslationTextComponent(Blocks.CONTROLLER_NODE_BLOCK.getTranslationKey());
+    if (tier == Tier.WOOD) {
+      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
+    } else if (tier == Tier.IRON) {
+      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
+    } else if (tier == Tier.GOLD) {
+      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
+    } else if (tier == Tier.DIAMOND) {
+      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
+    }
+    return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
   }
 
   @Override
   @Nonnull
   protected ITextComponent getDefaultName() {
-    return Blocks.CONTROLLER_NODE_BLOCK.getTranslatedName();
+    return Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslatedName();
   }
 
   @Override
@@ -192,7 +255,7 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   @Override
   @Nonnull
   public CompoundNBT write(CompoundNBT compound) {
-    compound.putInt("filterSize", filterSize);
+    compound.putInt("tier", getTierOrdinal());
     getNBTFromMappings(compound);
     getNBTFromInventory(compound);
     return super.write(compound);
@@ -208,12 +271,17 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
     Mapping.toNBT(mappings, compound);
   }
 
+  public int getTierOrdinal() {
+    if(tier == null) return -1;
+    return tier.ordinal();
+  }
+
   @Override
   @ParametersAreNonnullByDefault
   public void read(BlockState stateIn, CompoundNBT nbtIn) {
-    filterSize = nbtIn.getInt("filterSize");
+    setTier(Tier.valueOf(nbtIn.getInt("tier")));
     getInventoryFromNBT(nbtIn);
-    mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, filterSize);
+    mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
     super.read(stateIn, nbtIn);
   }
 
@@ -230,28 +298,28 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   @Nonnull
   public CompoundNBT getUpdateTag() {
     CompoundNBT mappingsNBT = super.getUpdateTag();
-    mappingsNBT.putInt("filterSize", filterSize);
+    mappingsNBT.putInt("tier", getTierOrdinal());
     getNBTFromMappings(mappingsNBT);
     return mappingsNBT;
   }
 
   @Override
   public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-    mappings = Mapping.getMappingsFromNBT(tag, identifiers, tag.getInt("filterSize"));
+    mappings = Mapping.getMappingsFromNBT(tag, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
     super.handleUpdateTag(state, tag);
   }
 
   @Override
   public SUpdateTileEntityPacket getUpdatePacket() {
     CompoundNBT nbtTag = new CompoundNBT();
-    nbtTag.putInt("filterSize", filterSize);
+    nbtTag.putInt("tier", getTierOrdinal());
     getNBTFromMappings(nbtTag);
     return new SUpdateTileEntityPacket(getPos(), -1, nbtTag);
   }
 
   @Override
   public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-    mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, filterSize);
+    mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
   }
 
   public ArrayList<Mapping> getMappings() {
@@ -313,7 +381,10 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   public void getMappingsFromNBT(CompoundNBT controllerNodeTENBT) {
-    mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, controllerNodeTENBT.getInt("filterSize"));
+    mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
   }
 
+  public int getMaxItemsPerTick() {
+    return maxItemsPerTick;
+  }
 }

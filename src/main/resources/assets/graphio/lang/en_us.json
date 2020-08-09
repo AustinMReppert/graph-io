@@ -1,10 +1,16 @@
 {
   "item.graphio.identifier": "Identifier",
   "itemGroup.graphio": "Graph IO",
-  "block.graphio.controller_node_block": "Controller Node",
+  "block.graphio.wood_controller_node_block": "Wood Controller Node",
+  "block.graphio.iron_controller_node_block": "Iron Controller Node",
   "gui.graphio.natural":  "Natural",
   "gui.graphio.random":  "Random",
   "gui.graphio.cyclic":  "Cyclic",
   "gui.graphio.black_list":  "Black List",
-  "gui.graphio.white_list":  "White List"
+  "gui.graphio.white_list":  "White List",
+  "gui.graphio.decrease_stack_size": "Decrease Stack Size",
+  "gui.graphio.increase_stack_size": "Increase Stack Size",
+  "graphio.gui.items_per_tick": "Items/Tick:",
+  "graphio.gui.buckets_per_tick": "Buckets/Tick:",
+  "graphio.gui.energy_per_tick": "Energy/Tick:"
 }

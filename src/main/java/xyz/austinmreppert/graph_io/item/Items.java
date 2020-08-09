@@ -20,7 +20,8 @@ public class Items {
   public static void onRegisterItems(RegistryEvent.Register<Item> itemRegistryEvent) {
     itemRegistryEvent.getRegistry().registerAll(
       IDENTIFIER,
-      register(new BlockItem(Blocks.CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)), "controller_node_block")
+      register(new BlockItem(Blocks.WOOD_CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)), "wood_controller_node_block"),
+      register(new BlockItem(Blocks.IRON_CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)), "iron_controller_node_block")
     );
 
   }

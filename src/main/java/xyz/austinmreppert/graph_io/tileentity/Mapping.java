@@ -5,6 +5,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.util.Constants;
 
 import java.util.ArrayList;
@@ -22,11 +23,23 @@ public class Mapping {
   private final Inventory filterInventory;
   public int currentInputIndex;
   public int currentOutputIndex;
+  private int itemsPerTick;
+  private int bucketsPerTick;
+  private int energyPerTick;
+  private int maxItemsPerTick;
+  private int maxBucketsTick;
+  private int maxEnergyPerTick;
 
-  public Mapping(String raw, Set<String> identifiers, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize) {
+  public Mapping(String raw, Set<String> identifiers, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize, int itemsPerTick, int bucketsPerTick, int energyPerTick, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick) {
     this.raw = raw;
     this.distributionScheme = distributionScheme;
     this.filterScheme = filterScheme;
+    this.maxItemsPerTick = maxItemsPerTick;
+    this.maxBucketsTick = maxBucketsPerTick;
+    this.maxEnergyPerTick = maxEnergyPerTick;
+    this.itemsPerTick = MathHelper.clamp(itemsPerTick, 0, maxItemsPerTick);
+    this.bucketsPerTick = MathHelper.clamp(bucketsPerTick, 0, maxBucketsPerTick);
+    this.energyPerTick = MathHelper.clamp(energyPerTick, 0, maxEnergyPerTick);
     filterInventory = new Inventory(filterSize);
     String[] components = raw.split("->");
     inputs = new ArrayList<>();
@@ -65,15 +78,21 @@ public class Mapping {
     valid = true;
   }
 
-  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize) {
+  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize, int itemsPerTick, int bucketsPerTick, int energyPerTick, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick) {
     this.raw = raw;
     this.distributionScheme = distributionScheme;
     this.filterScheme = filterScheme;
     filterInventory = new Inventory(filterSize);
+    this.maxItemsPerTick = maxItemsPerTick;
+    this.maxBucketsTick = maxBucketsPerTick;
+    this.maxEnergyPerTick = maxEnergyPerTick;
+    this.itemsPerTick = MathHelper.clamp(itemsPerTick, 0, maxItemsPerTick);
+    this.bucketsPerTick = MathHelper.clamp(bucketsPerTick, 0, maxBucketsPerTick);
+    this.energyPerTick = MathHelper.clamp(energyPerTick, 0, maxEnergyPerTick);
   }
 
   public Mapping(Mapping mapping) {
-    this(mapping.getRaw(), mapping.distributionScheme, mapping.filterScheme, mapping.getFilterInventory().getSizeInventory());
+    this(mapping.raw, mapping.distributionScheme, mapping.filterScheme, mapping.filterInventory.getSizeInventory(), mapping.itemsPerTick, mapping.bucketsPerTick, mapping.energyPerTick, mapping.maxItemsPerTick, mapping.maxBucketsTick, mapping.maxEnergyPerTick);
     for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i)
       filterInventory.setInventorySlotContents(i, mapping.getFilterInventory().getStackInSlot(i).copy());
   }
@@ -90,6 +109,9 @@ public class Mapping {
       mappingNBT.putString("mapping", mapping.getRaw());
       mappingNBT.putInt("distributionScheme", mapping.getDistributionSchemeOrdinal());
       mappingNBT.putInt("filterScheme", mapping.getFilterSchemeOrdinal());
+      mappingNBT.putInt("itemsPerTick", mapping.itemsPerTick);
+      mappingNBT.putInt("bucketsPerTick", mapping.bucketsPerTick);
+      mappingNBT.putInt("energyPerTick", mapping.energyPerTick);
 
       ListNBT filterNBT = new ListNBT();
       for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i) {
@@ -107,12 +129,17 @@ public class Mapping {
     return nbt;
   }
 
-  public static ArrayList<Mapping> getMappingsFromNBT(CompoundNBT tag, HashMap<String, BlockPos> identifiers, int filterSize) {
+  public static ArrayList<Mapping> getMappingsFromNBT(CompoundNBT tag, HashMap<String, BlockPos> identifiers, int filterSize, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick) {
     ListNBT list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
     ArrayList<Mapping> mappings = new ArrayList<>(list.size());
     for (int i = 0; i < list.size(); ++i) {
       CompoundNBT mappingNBT = list.getCompound(i);
-      Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(), Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")), Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize);
+      Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(),
+        Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")),
+        Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize,
+        mappingNBT.getInt("itemsPerTick"),
+        mappingNBT.getInt("bucketsPerTick"),
+        mappingNBT.getInt("energyPerTick"), maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
       ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
       for (int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
@@ -171,6 +198,18 @@ public class Mapping {
     return valid;
   }
 
+  public void changeItemsPerTick(int amount) {
+    itemsPerTick = MathHelper.clamp(itemsPerTick + amount, 0, maxItemsPerTick);
+  }
+
+  public void changeBucketsPerTick(int amount) {
+    bucketsPerTick = MathHelper.clamp(bucketsPerTick + amount, 0, maxBucketsTick);
+  }
+
+  public void changeEnergyPerTick(int amount) {
+    energyPerTick = MathHelper.clamp(energyPerTick + amount, 0, maxEnergyPerTick);
+  }
+
   public enum DistributionScheme {
     NATURAL,
     RANDOM,
@@ -199,6 +238,18 @@ public class Mapping {
 
   public Inventory getFilterInventory() {
     return filterInventory;
+  }
+
+  public int getItemsPerTick() {
+    return itemsPerTick;
+  }
+
+  public int getBucketsPerTick() {
+    return bucketsPerTick;
+  }
+
+  public int getEnergyPerTick() {
+    return energyPerTick;
   }
 
 }

@@ -29,8 +29,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class ControllerNodeBlock extends ContainerBlock {
 
-  public ControllerNodeBlock() {
+  private ControllerNodeTE.Tier tier;
+
+  private ControllerNodeBlock() {
     super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15).hardnessAndResistance(3.0F).notSolid().setOpaque(ControllerNodeBlock::func_235436_b_));
+  }
+
+  public ControllerNodeBlock(ControllerNodeTE.Tier tier) {
+    this();
+    this.tier = tier;
   }
 
   private static boolean func_235436_b_(BlockState p_235436_0_, IBlockReader p_235436_1_, BlockPos p_235436_2_) {
@@ -53,7 +60,8 @@ public class ControllerNodeBlock extends ContainerBlock {
   @Override
   @Nullable
   public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-    return TileEntityTypes.CONTROLLER_NODE.create();
+    TileEntity controllerNodeTE = new ControllerNodeTE(tier);
+    return controllerNodeTE;
   }
 
   @Override
@@ -78,7 +86,8 @@ public class ControllerNodeBlock extends ContainerBlock {
   @Override
   @ParametersAreNonnullByDefault
   public TileEntity createNewTileEntity(IBlockReader blockReader) {
-    return TileEntityTypes.CONTROLLER_NODE.create();
+    TileEntity controllerNodeTE = new ControllerNodeTE(tier);
+    return controllerNodeTE;
   }
 
   @Override

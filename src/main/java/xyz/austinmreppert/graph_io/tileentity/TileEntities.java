@@ -11,7 +11,7 @@ public class TileEntities {
 
   @SubscribeEvent
   public static void registerTE(RegistryEvent.Register<TileEntityType<?>> tileEntityRegistryEvent) {
-    TileEntityTypes.CONTROLLER_NODE = (TileEntityType<ControllerNodeTE>) TileEntityType.Builder.create(ControllerNodeTE::new, Blocks.CONTROLLER_NODE_BLOCK).build(null).setRegistryName("example_block");
+    TileEntityTypes.CONTROLLER_NODE = (TileEntityType<ControllerNodeTE>) TileEntityType.Builder.create(ControllerNodeTE::new, Blocks.WOOD_CONTROLLER_NODE_BLOCK, Blocks.IRON_CONTROLLER_NODE_BLOCK).build(null).setRegistryName("example_block");
     tileEntityRegistryEvent.getRegistry().registerAll(TileEntityTypes.CONTROLLER_NODE);
   }
 

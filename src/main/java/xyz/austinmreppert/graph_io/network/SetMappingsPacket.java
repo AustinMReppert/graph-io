@@ -31,7 +31,6 @@ public class SetMappingsPacket {
         TileEntity te = context.get().getSender().getEntityWorld().getTileEntity(packet.blockPos);
         if (te instanceof ControllerNodeTE) {
           ControllerNodeTE controllerNodeTE = (ControllerNodeTE) te;
-          packet.controllerNodeTENBT.putInt("filterSize", controllerNodeTE.getFilterSize());
           controllerNodeTE.getMappingsFromNBT(packet.controllerNodeTENBT);
           controllerNodeTE.markDirty();
         }

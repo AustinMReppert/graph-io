@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "graphio:block/iron_controller_node_block"
+    }
+  }
+}
