@@ -7,15 +7,15 @@ import net.minecraft.inventory.container.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import xyz.austinmreppert.graph_io.client.gui.FilterSlot;
-import xyz.austinmreppert.graph_io.tileentity.ControllerNodeTE;
+import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 
-public class ControllerNodeContainer extends Container {
+public class RouterContainer extends Container {
 
-  private final ControllerNodeTE controllerNodeTE;
+  private final RouterTE routerTE;
   private final ArrayList<FilterSlot> filterSlots;
   private final Inventory tmpFilterInventory;
 
@@ -25,16 +25,16 @@ public class ControllerNodeContainer extends Container {
   private final int INVENTORY_Y = 174;
   private final int SLOT_SIZE = 18;
 
-  public ControllerNodeContainer(int windowId, PlayerInventory inv, PacketBuffer data) {
-    this(windowId, inv, (ControllerNodeTE) inv.player.world.getTileEntity(data.readBlockPos()));
+  public RouterContainer(int windowId, PlayerInventory inv, PacketBuffer data) {
+    this(windowId, inv, (RouterTE) inv.player.world.getTileEntity(data.readBlockPos()));
   }
 
-  public ControllerNodeContainer(int windowId, PlayerInventory inv, ControllerNodeTE controllerNodeTE) {
+  public RouterContainer(int windowId, PlayerInventory inv, RouterTE routerTE) {
     super(ContainerTypes.CONTROLLER_NODE_CONTAINER, windowId);
 
-    this.controllerNodeTE = controllerNodeTE;
+    this.routerTE = routerTE;
 
-    tmpFilterInventory = new Inventory(controllerNodeTE.getFilterSize());
+    tmpFilterInventory = new Inventory(routerTE.getFilterSize());
     filterSlots = new ArrayList<>();
 
     // Draw the hotbar
@@ -98,8 +98,8 @@ public class ControllerNodeContainer extends Container {
     return ContainerTypes.CONTROLLER_NODE_CONTAINER;
   }
 
-  public ControllerNodeTE getControllerNodeTE() {
-    return controllerNodeTE;
+  public RouterTE getControllerNodeTE() {
+    return routerTE;
   }
 
   public ArrayList<FilterSlot> getFilterSlots() {

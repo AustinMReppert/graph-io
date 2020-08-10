@@ -21,7 +21,7 @@ public class Screens {
 
   public static void register() {
     System.out.println("Screens Registered");
-    ScreenManager.registerFactory(ContainerTypes.CONTROLLER_NODE_CONTAINER, ControllerNodeScreen::new);
+    ScreenManager.registerFactory(ContainerTypes.CONTROLLER_NODE_CONTAINER, RouterScreen::new);
   }
 
 }

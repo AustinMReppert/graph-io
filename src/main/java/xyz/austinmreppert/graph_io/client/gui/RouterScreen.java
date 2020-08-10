@@ -22,7 +22,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import org.lwjgl.glfw.GLFW;
 import xyz.austinmreppert.graph_io.GraphIO;
-import xyz.austinmreppert.graph_io.container.ControllerNodeContainer;
+import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.network.PacketHander;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
 import xyz.austinmreppert.graph_io.tileentity.Mapping;
@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 
-public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContainer> implements IHasContainer<ControllerNodeContainer>, IContainerListener {
+public class RouterScreen extends ContainerScreen<RouterContainer> implements IHasContainer<RouterContainer>, IContainerListener {
 
   public int inventoryRows;
   private float currentScroll;
@@ -110,8 +110,8 @@ public class ControllerNodeScreen extends ContainerScreen<ControllerNodeContaine
   private ImageButton increaseEnergyButton;
   private int lastFocusedMapping;
 
-  public ControllerNodeScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
-    super((ControllerNodeContainer) screenContainer, inv, titleIn);
+  public RouterScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+    super((RouterContainer) screenContainer, inv, titleIn);
     passEvents = false;
     xSize = 276;
     ySize = 256;

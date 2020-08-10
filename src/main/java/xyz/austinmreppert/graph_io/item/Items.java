@@ -20,8 +20,10 @@ public class Items {
   public static void onRegisterItems(RegistryEvent.Register<Item> itemRegistryEvent) {
     itemRegistryEvent.getRegistry().registerAll(
       IDENTIFIER,
-      register(new BlockItem(Blocks.WOOD_CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)), "wood_controller_node_block"),
-      register(new BlockItem(Blocks.IRON_CONTROLLER_NODE_BLOCK, new Item.Properties().group(ItemGroups.GRAPH_IO)), "iron_controller_node_block")
+      register(new BlockItem(Blocks.BASIC_ROUTER, new Item.Properties().group(ItemGroups.GRAPH_IO)), "basic_router"),
+      register(new BlockItem(Blocks.ADVANCED_ROUTER, new Item.Properties().group(ItemGroups.GRAPH_IO)), "advanced_router"),
+      register(new BlockItem(Blocks.ELITE_ROUTER, new Item.Properties().group(ItemGroups.GRAPH_IO)), "elite_router"),
+      register(new BlockItem(Blocks.ULTIMATE_ROUTER, new Item.Properties().group(ItemGroups.GRAPH_IO)), "ultimate_router")
     );
 
   }

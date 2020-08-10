@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
-import xyz.austinmreppert.graph_io.tileentity.ControllerNodeTE;
+import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import java.util.function.Supplier;
 
@@ -29,18 +29,18 @@ public class SetMappingsPacket {
       if(context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
         ServerPlayerEntity sender = context.get().getSender();
         TileEntity te = context.get().getSender().getEntityWorld().getTileEntity(packet.blockPos);
-        if (te instanceof ControllerNodeTE) {
-          ControllerNodeTE controllerNodeTE = (ControllerNodeTE) te;
-          controllerNodeTE.getMappingsFromNBT(packet.controllerNodeTENBT);
-          controllerNodeTE.markDirty();
+        if (te instanceof RouterTE) {
+          RouterTE routerTE = (RouterTE) te;
+          routerTE.getMappingsFromNBT(packet.controllerNodeTENBT);
+          routerTE.markDirty();
         }
         PacketHander.INSTANCE.sendTo(packet, context.get().getNetworkManager(), NetworkDirection.PLAY_TO_CLIENT);
       } else {
         TileEntity te = Minecraft.getInstance().world.getTileEntity(packet.blockPos);
-        if (te instanceof ControllerNodeTE) {
-          ControllerNodeTE controllerNodeTE = (ControllerNodeTE) te;
-          controllerNodeTE.getMappingsFromNBT(packet.controllerNodeTENBT);
-          controllerNodeTE.markDirty();
+        if (te instanceof RouterTE) {
+          RouterTE routerTE = (RouterTE) te;
+          routerTE.getMappingsFromNBT(packet.controllerNodeTENBT);
+          routerTE.markDirty();
         }
       }
     });

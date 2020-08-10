@@ -20,8 +20,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
-import xyz.austinmreppert.graph_io.tileentity.ControllerNodeTE;
-import xyz.austinmreppert.graph_io.tileentity.TileEntityTypes;
+import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,13 +28,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class ControllerNodeBlock extends ContainerBlock {
 
-  private ControllerNodeTE.Tier tier;
+  private RouterTE.Tier tier;
 
   private ControllerNodeBlock() {
     super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15).hardnessAndResistance(3.0F).notSolid().setOpaque(ControllerNodeBlock::func_235436_b_));
   }
 
-  public ControllerNodeBlock(ControllerNodeTE.Tier tier) {
+  public ControllerNodeBlock(RouterTE.Tier tier) {
     this();
     this.tier = tier;
   }
@@ -60,7 +59,7 @@ public class ControllerNodeBlock extends ContainerBlock {
   @Override
   @Nullable
   public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-    TileEntity controllerNodeTE = new ControllerNodeTE(tier);
+    TileEntity controllerNodeTE = new RouterTE(tier);
     return controllerNodeTE;
   }
 
@@ -76,7 +75,7 @@ public class ControllerNodeBlock extends ContainerBlock {
   public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
     if (!worldIn.isRemote) {
       final TileEntity tileEntity = worldIn.getTileEntity(pos);
-      if (tileEntity instanceof ControllerNodeTE)
+      if (tileEntity instanceof RouterTE)
         NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, pos);
     }
     return ActionResultType.SUCCESS;
@@ -86,7 +85,7 @@ public class ControllerNodeBlock extends ContainerBlock {
   @Override
   @ParametersAreNonnullByDefault
   public TileEntity createNewTileEntity(IBlockReader blockReader) {
-    TileEntity controllerNodeTE = new ControllerNodeTE(tier);
+    TileEntity controllerNodeTE = new RouterTE(tier);
     return controllerNodeTE;
   }
 

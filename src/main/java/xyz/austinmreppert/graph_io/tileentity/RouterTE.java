@@ -25,7 +25,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
-import xyz.austinmreppert.graph_io.container.ControllerNodeContainer;
+import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.item.Items;
 
 import javax.annotation.Nonnull;
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-public class ControllerNodeTE extends LockableLootTileEntity implements ITickableTileEntity, INamedContainerProvider {
+public class RouterTE extends LockableLootTileEntity implements ITickableTileEntity, INamedContainerProvider {
 
   private ArrayList<Mapping> mappings;
   private HashMap<String, BlockPos> identifiers;
@@ -56,27 +56,27 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   }
 
   public enum Tier {
-    WOOD,
-    IRON,
-    GOLD,
-    DIAMOND;
+    BASIC,
+    ADVANCED,
+    ELITE,
+    ULTIMATE;
 
-    public static ControllerNodeTE.Tier valueOf(int ordinal) {
-      if (ordinal == 0) return Tier.WOOD;
-      else if (ordinal == 1) return Tier.IRON;
-      else if (ordinal == 2) return Tier.GOLD;
-      else if (ordinal == 3) return Tier.DIAMOND;
+    public static RouterTE.Tier valueOf(int ordinal) {
+      if (ordinal == 0) return Tier.BASIC;
+      else if (ordinal == 1) return Tier.ADVANCED;
+      else if (ordinal == 2) return Tier.ELITE;
+      else if (ordinal == 3) return Tier.ULTIMATE;
       else return null;
     }
 
   }
 
-  public ControllerNodeTE() {
-    this(Tier.WOOD);
+  public RouterTE() {
+    this(Tier.BASIC);
   }
 
-  public ControllerNodeTE(Tier tier) {
-    super(TileEntityTypes.CONTROLLER_NODE);
+  public RouterTE(Tier tier) {
+    super(TileEntityTypes.ROUTER);
     mappings = new ArrayList<>();
     identifiers = new HashMap<>();
     ticks = 0;
@@ -87,21 +87,21 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
 
   private void setTier(Tier tier) {
     this.tier = tier;
-    if (tier == Tier.WOOD) {
+    if (tier == Tier.BASIC) {
       maxItemsPerTick = 1;
       maxBucketsPerTick = 1000;
       maxEnergyPerTick = 400;
       filterSize = 5;
-    } else if (tier == Tier.IRON) {
+    } else if (tier == Tier.ADVANCED) {
       maxItemsPerTick = 16;
       maxBucketsPerTick = 4000;
       maxEnergyPerTick = 4000;
       filterSize = 10;
-    } else if (tier == Tier.GOLD) {
+    } else if (tier == Tier.ELITE) {
       maxItemsPerTick = 32;
       maxBucketsPerTick = 8000;
       maxEnergyPerTick = 40000;
-    } else if (tier == Tier.DIAMOND) {
+    } else if (tier == Tier.ULTIMATE) {
       maxItemsPerTick = 64;
       maxBucketsPerTick = 16000;
       maxEnergyPerTick = 400000;
@@ -221,35 +221,35 @@ public class ControllerNodeTE extends LockableLootTileEntity implements ITickabl
   @Override
   @Nonnull
   public ITextComponent getDisplayName() {
-    if (tier == Tier.WOOD) {
-      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
-    } else if (tier == Tier.IRON) {
-      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
-    } else if (tier == Tier.GOLD) {
-      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
-    } else if (tier == Tier.DIAMOND) {
-      return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
+    if (tier == Tier.BASIC) {
+      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
+    } else if (tier == Tier.ADVANCED) {
+      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
+    } else if (tier == Tier.ELITE) {
+      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
+    } else if (tier == Tier.ULTIMATE) {
+      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
     }
-    return new TranslationTextComponent(Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslationKey());
+    return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
   }
 
   @Override
   @Nonnull
   protected ITextComponent getDefaultName() {
-    return Blocks.WOOD_CONTROLLER_NODE_BLOCK.getTranslatedName();
+    return Blocks.BASIC_ROUTER.getTranslatedName();
   }
 
   @Override
   @ParametersAreNonnullByDefault
   public Container createMenu(int windowID, PlayerInventory inventory, PlayerEntity p_createMenu_3_) {
-    return p_createMenu_3_.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new ControllerNodeContainer(windowID, inventory, this);
+    return p_createMenu_3_.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
   protected Container createMenu(int windowID, PlayerInventory inventory) {
-    return inventory.player.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new ControllerNodeContainer(windowID, inventory, this);
+    return inventory.player.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override

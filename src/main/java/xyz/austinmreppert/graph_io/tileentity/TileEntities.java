@@ -11,8 +11,10 @@ public class TileEntities {
 
   @SubscribeEvent
   public static void registerTE(RegistryEvent.Register<TileEntityType<?>> tileEntityRegistryEvent) {
-    TileEntityTypes.CONTROLLER_NODE = (TileEntityType<ControllerNodeTE>) TileEntityType.Builder.create(ControllerNodeTE::new, Blocks.WOOD_CONTROLLER_NODE_BLOCK, Blocks.IRON_CONTROLLER_NODE_BLOCK).build(null).setRegistryName("example_block");
-    tileEntityRegistryEvent.getRegistry().registerAll(TileEntityTypes.CONTROLLER_NODE);
+    TileEntityTypes.ROUTER = (TileEntityType<RouterTE>) TileEntityType.Builder.create(RouterTE::new,
+      Blocks.BASIC_ROUTER, Blocks.ADVANCED_ROUTER, Blocks.ELITE_ROUTER,
+      Blocks.ULTIMATE_ROUTER).build(null).setRegistryName("example_block");
+    tileEntityRegistryEvent.getRegistry().registerAll(TileEntityTypes.ROUTER);
   }
 
 }
