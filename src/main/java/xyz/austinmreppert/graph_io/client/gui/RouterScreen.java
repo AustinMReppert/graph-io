@@ -214,6 +214,11 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       int index = rawMappings.indexOf(getListener());
       if (index != -1) {
         //currentScroll = (currentScroll * rawMappings.size() - 1) / (rawMappings.size() - 1);
+        for(int i = 0; i < container.getFilterSlots().size(); ++i) {
+          container.getFilterSlots().get(i).setEnabled(false);
+          container.getFilterSlots().get(i).putStack(ItemStack.EMPTY);
+        }
+        lastFocusedMapping = -1;
         rawMappings.remove(index);
         mappingsCopy.remove(index);
         children.remove(getListener());
@@ -261,6 +266,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       lastFocusedMapping = index;
       updateMappingGUI();
       for (int i = 0; i < container.getControllerNodeTE().getFilterSize(); ++i) {
+        container.getFilterSlots().get(i).setEnabled(true);
         Mapping mapping = mappingsCopy.get(index);
         Inventory tmpFilterInventory = container.getTmpFilterInventory();
         Inventory filterInventory = mapping.getFilterInventory();
@@ -366,7 +372,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     this.addButton(decreaseBucketsButton = new ImageButton(this.guiLeft - 80, guiTop + 60, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
-      mapping.changeBucketsPerTick(-1);
+      mapping.changeBucketsPerTick(-1 * (hasShiftDown() ? 1000 : 100));
       updateMappingGUI();
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
@@ -374,7 +380,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     this.addButton(increaseBucketsButton = new ImageButton(this.guiLeft - 50, guiTop + 60, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
-      mapping.changeBucketsPerTick(1);
+      mapping.changeBucketsPerTick(hasShiftDown() ? 1000 : 100);
       updateMappingGUI();
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
@@ -382,7 +388,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     this.addButton(decreaseEnergyButton = new ImageButton(this.guiLeft - 80, guiTop + 91, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
-      mapping.changeEnergyPerTick(-1 * (hasShiftDown() ? 100 : 1));
+      mapping.changeEnergyPerTick(-1 * (hasShiftDown() ? 1000 : 100));
       updateMappingGUI();
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
@@ -472,7 +478,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     if(lastFocusedMapping >= 0 && lastFocusedMapping <= mappingsCopy.size()) {
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       itemsPerTickStr = mapping.getItemsPerTick() + "";
-      bucketsPerTickStr = mapping.getBucketsPerTick()/1000 + "";
+      bucketsPerTickStr = mapping.getBucketsPerTick() + "";
       energyPerTickStr = mapping.getEnergyPerTick() + "";
     }
       font.func_238422_b_(matrixStack, ITEMS_PER_TICK, -80, 10, Color.func_240745_a_("#FFFFFF").func_240742_a_());

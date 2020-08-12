@@ -47,8 +47,10 @@ public class RouterContainer extends Container {
         this.addSlot(new Slot(inv, column + row * 9 + 9, INVENTORY_X + column * SLOT_SIZE, INVENTORY_Y + row * SLOT_SIZE));
 
     // Draw the filter slots
-    for (int i = 0; i < tmpFilterInventory.getSizeInventory(); ++i)
+    for (int i = 0; i < tmpFilterInventory.getSizeInventory(); ++i) {
       filterSlots.add((FilterSlot) addSlot(new FilterSlot(tmpFilterInventory, i, 5 + (i % 5) * SLOT_SIZE, INVENTORY_Y + (i >= 5 ? SLOT_SIZE : 0))));
+      filterSlots.get(i).setEnabled(false);
+    }
   }
 
   @Override

@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "rbr",
+    "isi",
+    "rbr"
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "r": {
+      "item": "minecraft:redstone"
+    },
+    "b": {
+      "item": "graphio:basic_router_core"
+    },
+    "s": {
+      "item": "mekanism:steel_casing"
+    }
+  },
+  "result": {
+    "item": "graphio:basic_router"
+  }
+}

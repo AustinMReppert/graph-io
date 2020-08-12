@@ -16,12 +16,12 @@ import java.util.function.Supplier;
 public class SetMappingsPacket {
 
   private final BlockPos blockPos;
-  private final CompoundNBT controllerNodeTENBT;
+  private final CompoundNBT routerTENBT;
 
-  public SetMappingsPacket(BlockPos blockPos, CompoundNBT controllerNodeTENBT) {
+  public SetMappingsPacket(BlockPos blockPos, CompoundNBT routerTENBT) {
     super();
     this.blockPos = blockPos;
-    this.controllerNodeTENBT = controllerNodeTENBT;
+    this.routerTENBT = routerTENBT;
   }
 
   public static void handle(SetMappingsPacket packet, Supplier<NetworkEvent.Context> context) {
@@ -31,7 +31,7 @@ public class SetMappingsPacket {
         TileEntity te = context.get().getSender().getEntityWorld().getTileEntity(packet.blockPos);
         if (te instanceof RouterTE) {
           RouterTE routerTE = (RouterTE) te;
-          routerTE.getMappingsFromNBT(packet.controllerNodeTENBT);
+          routerTE.getMappingsFromNBT(packet.routerTENBT);
           routerTE.markDirty();
         }
         PacketHander.INSTANCE.sendTo(packet, context.get().getNetworkManager(), NetworkDirection.PLAY_TO_CLIENT);
@@ -39,7 +39,7 @@ public class SetMappingsPacket {
         TileEntity te = Minecraft.getInstance().world.getTileEntity(packet.blockPos);
         if (te instanceof RouterTE) {
           RouterTE routerTE = (RouterTE) te;
-          routerTE.getMappingsFromNBT(packet.controllerNodeTENBT);
+          routerTE.getMappingsFromNBT(packet.routerTENBT);
           routerTE.markDirty();
         }
       }
@@ -49,13 +49,13 @@ public class SetMappingsPacket {
 
   public static void encode(SetMappingsPacket packet, PacketBuffer packetBuffer) {
     packetBuffer.writeBlockPos(packet.blockPos);
-    packetBuffer.writeCompoundTag(packet.controllerNodeTENBT);
+    packetBuffer.writeCompoundTag(packet.routerTENBT);
   }
 
   public static SetMappingsPacket decode(PacketBuffer packetBuffer) {
-    BlockPos controllerPos = packetBuffer.readBlockPos();
-    CompoundNBT controllerNodeTENBT = packetBuffer.readCompoundTag();
-    return new SetMappingsPacket(controllerPos, controllerNodeTENBT);
+    BlockPos routerPos = packetBuffer.readBlockPos();
+    CompoundNBT routerTENBT = packetBuffer.readCompoundTag();
+    return new SetMappingsPacket(routerPos, routerTENBT);
   }
 
 

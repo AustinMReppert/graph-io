@@ -1,0 +1,34 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ucm",
+    "ete",
+    "pcl"
+  ],
+  "key": {
+    "e": {
+      "item": "minecraft:ender_pearl"
+    },
+    "c": {
+      "item": "mekanism:basic_control_circuit"
+    },
+    "u": {
+      "item": "mekanism:basic_universal_cable"
+    },
+    "m": {
+      "item": "mekanism:basic_mechanical_pipe"
+    },
+    "p": {
+      "item": "mekanism:basic_pressurized_tube"
+    },
+    "l": {
+      "item": "mekanism:basic_logistical_transporter"
+    },
+    "t": {
+      "item": "mekanism:basic_thermodynamic_conductor"
+    }
+  },
+  "result": {
+    "item": "graphio:basic_router_core"
+  }
+}

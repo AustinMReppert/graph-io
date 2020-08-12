@@ -89,22 +89,24 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     this.tier = tier;
     if (tier == Tier.BASIC) {
       maxItemsPerTick = 1;
-      maxBucketsPerTick = 1000;
-      maxEnergyPerTick = 400;
+      maxBucketsPerTick = 100;
+      maxEnergyPerTick = 3200;
       filterSize = 5;
     } else if (tier == Tier.ADVANCED) {
       maxItemsPerTick = 16;
-      maxBucketsPerTick = 4000;
-      maxEnergyPerTick = 4000;
+      maxBucketsPerTick = 400;
+      maxEnergyPerTick = 12800;
       filterSize = 10;
     } else if (tier == Tier.ELITE) {
       maxItemsPerTick = 32;
-      maxBucketsPerTick = 8000;
-      maxEnergyPerTick = 40000;
+      maxBucketsPerTick = 1600;
+      maxEnergyPerTick = 64000;
+      filterSize = 15;
     } else if (tier == Tier.ULTIMATE) {
       maxItemsPerTick = 64;
-      maxBucketsPerTick = 16000;
-      maxEnergyPerTick = 400000;
+      maxBucketsPerTick = 6400;
+      maxEnergyPerTick = 320000;
+      filterSize = 20;
     }
   }
 

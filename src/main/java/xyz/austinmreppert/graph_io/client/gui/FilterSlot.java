@@ -10,8 +10,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class FilterSlot extends Slot {
 
+  boolean enabled;
+
   public FilterSlot(IInventory inventoryIn, int index, int xPosition, int yPosition) {
     super(inventoryIn, index, xPosition, yPosition);
+    enabled = true;
   }
 
   @Override
@@ -55,6 +58,15 @@ public class FilterSlot extends Slot {
   @Nonnull
   public ItemStack getStack() {
     return inventory.getStackInSlot(getSlotIndex());
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
   }
 
 }

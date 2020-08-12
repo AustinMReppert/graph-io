@@ -26,15 +26,15 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-public class ControllerNodeBlock extends ContainerBlock {
+public class RouterBlock extends ContainerBlock {
 
   private RouterTE.Tier tier;
 
-  private ControllerNodeBlock() {
-    super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15).hardnessAndResistance(3.0F).notSolid().setOpaque(ControllerNodeBlock::func_235436_b_));
+  private RouterBlock() {
+    super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15).hardnessAndResistance(3.0F).notSolid().setOpaque(RouterBlock::func_235436_b_));
   }
 
-  public ControllerNodeBlock(RouterTE.Tier tier) {
+  public RouterBlock(RouterTE.Tier tier) {
     this();
     this.tier = tier;
   }

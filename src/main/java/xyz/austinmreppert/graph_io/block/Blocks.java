@@ -12,10 +12,10 @@ import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Blocks {
 
-  public static final Block BASIC_ROUTER = register(new ControllerNodeBlock(RouterTE.Tier.BASIC), "basic_router");
-  public static final Block ADVANCED_ROUTER = register(new ControllerNodeBlock(RouterTE.Tier.ADVANCED), "advanced_router");
-  public static final Block ELITE_ROUTER = register(new ControllerNodeBlock(RouterTE.Tier.ELITE), "elite_router");
-  public static final Block ULTIMATE_ROUTER = register(new ControllerNodeBlock(RouterTE.Tier.ULTIMATE), "ultimate_router");
+  public static final Block BASIC_ROUTER = register(new RouterBlock(RouterTE.Tier.BASIC), "basic_router");
+  public static final Block ADVANCED_ROUTER = register(new RouterBlock(RouterTE.Tier.ADVANCED), "advanced_router");
+  public static final Block ELITE_ROUTER = register(new RouterBlock(RouterTE.Tier.ELITE), "elite_router");
+  public static final Block ULTIMATE_ROUTER = register(new RouterBlock(RouterTE.Tier.ULTIMATE), "ultimate_router");
 
   @SubscribeEvent
   public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
