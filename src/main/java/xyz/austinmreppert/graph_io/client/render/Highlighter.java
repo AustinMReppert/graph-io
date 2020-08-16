@@ -1,17 +1,15 @@
 package xyz.austinmreppert.graph_io.client.render;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.sun.jna.platform.win32.WinUser;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,11 +17,8 @@ import org.lwjgl.opengl.GL11;
 import xyz.austinmreppert.graph_io.GraphIO;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
-@Mod.EventBusSubscriber(modid = GraphIO.MOD_ID)
+@Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, value = Dist.CLIENT)
 public class Highlighter {
 
   private static final ArrayList<HighlightedBlock> highlightedBlocks = new ArrayList<>();

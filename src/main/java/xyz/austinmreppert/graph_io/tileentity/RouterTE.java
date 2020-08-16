@@ -389,4 +389,5 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   public int getMaxItemsPerTick() {
     return maxItemsPerTick;
   }
+
 }
