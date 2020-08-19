@@ -32,6 +32,8 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
+import xyz.austinmreppert.graph_io.data.mappings.Mapping;
+import xyz.austinmreppert.graph_io.data.mappings.NodeInfo;
 import xyz.austinmreppert.graph_io.item.Items;
 
 import javax.annotation.Nonnull;

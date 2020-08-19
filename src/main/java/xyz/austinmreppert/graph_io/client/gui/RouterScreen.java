@@ -25,7 +25,7 @@ import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.network.PacketHander;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
-import xyz.austinmreppert.graph_io.tileentity.Mapping;
+import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nullable;

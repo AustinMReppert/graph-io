@@ -1,4 +1,4 @@
-package xyz.austinmreppert.graph_io.tileentity;
+package xyz.austinmreppert.graph_io.data.mappings;
 
 import net.minecraft.util.Direction;
 

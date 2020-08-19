@@ -1,4 +1,4 @@
-package xyz.austinmreppert.graph_io.tileentity;
+package xyz.austinmreppert.graph_io.data.mappings;
 
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -14,38 +14,27 @@ import java.util.Set;
 
 public class Mapping {
 
+  private final Inventory filterInventory;
+  public int currentInputIndex;
+  public int currentOutputIndex;
   private String raw;
   private ArrayList<NodeInfo> inputs;
   private ArrayList<NodeInfo> outputs;
   private boolean valid;
   private DistributionScheme distributionScheme;
   private FilterScheme filterScheme;
-  private final Inventory filterInventory;
-  public int currentInputIndex;
-  public int currentOutputIndex;
   private int itemsPerTick;
   private int bucketsPerTick;
   private int energyPerTick;
   private int tickDelay;
-  private int maxItemsPerTick;
-  private int maxBucketsTick;
-  private int maxEnergyPerTick;
-  private int minTickDelay;
+  private final int maxItemsPerTick;
+  private final int maxBucketsTick;
+  private final int maxEnergyPerTick;
+  private final int minTickDelay;
   private int lastTick;
 
   public Mapping(String raw, Set<String> identifiers, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick, int minTickDelay) {
-    this.raw = raw;
-    this.distributionScheme = distributionScheme;
-    this.filterScheme = filterScheme;
-    this.maxItemsPerTick = maxItemsPerTick;
-    this.maxBucketsTick = maxBucketsPerTick;
-    this.maxEnergyPerTick = maxEnergyPerTick;
-    this.minTickDelay = minTickDelay;
-    this.itemsPerTick = MathHelper.clamp(itemsPerTick, 0, maxItemsPerTick);
-    this.bucketsPerTick = MathHelper.clamp(bucketsPerTick, 0, maxBucketsPerTick);
-    this.energyPerTick = MathHelper.clamp(energyPerTick, 0, maxEnergyPerTick);
-    this.tickDelay = MathHelper.clamp(tickDelay, minTickDelay, 20);
-    filterInventory = new Inventory(filterSize);
+    this(raw, distributionScheme, filterScheme, filterSize, itemsPerTick, bucketsPerTick, energyPerTick, tickDelay, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
     String[] components = raw.split("->");
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
@@ -169,12 +158,12 @@ public class Mapping {
     this.distributionScheme = distributionScheme;
   }
 
-  public void setFilterScheme(FilterScheme filterScheme) {
-    this.filterScheme = filterScheme;
-  }
-
   public String getRaw() {
     return raw;
+  }
+
+  public void setRaw(String raw) {
+    this.raw = raw;
   }
 
   public ArrayList<NodeInfo> getInputs() {
@@ -183,10 +172,6 @@ public class Mapping {
 
   public ArrayList<NodeInfo> getOutputs() {
     return outputs;
-  }
-
-  public void setRaw(String raw) {
-    this.raw = raw;
   }
 
   public int getDistributionSchemeOrdinal() {
@@ -201,6 +186,10 @@ public class Mapping {
 
   public FilterScheme getFilterScheme() {
     return filterScheme;
+  }
+
+  public void setFilterScheme(FilterScheme filterScheme) {
+    this.filterScheme = filterScheme;
   }
 
   public boolean isValid() {
@@ -231,6 +220,26 @@ public class Mapping {
     tickDelay = MathHelper.clamp(tickDelay + amount, minTickDelay, 20);
   }
 
+  public Inventory getFilterInventory() {
+    return filterInventory;
+  }
+
+  public int getItemsPerTick() {
+    return itemsPerTick;
+  }
+
+  public int getBucketsPerTick() {
+    return bucketsPerTick;
+  }
+
+  public int getEnergyPerTick() {
+    return energyPerTick;
+  }
+
+  public int getTickDelay() {
+    return tickDelay;
+  }
+
   public enum DistributionScheme {
     NATURAL,
     RANDOM,
@@ -255,25 +264,5 @@ public class Mapping {
       else return null;
     }
 
-  }
-
-  public Inventory getFilterInventory() {
-    return filterInventory;
-  }
-
-  public int getItemsPerTick() {
-    return itemsPerTick;
-  }
-
-  public int getBucketsPerTick() {
-    return bucketsPerTick;
-  }
-
-  public int getEnergyPerTick() {
-    return energyPerTick;
-  }
-
-  public int getTickDelay() {
-    return tickDelay;
   }
 }
