@@ -11,6 +11,7 @@ public class Capabilities {
 
   public static void register() {
     CapabilityManager.INSTANCE.register(IIdentifierCapability.class, new IdentifierCapabilityStorage(), IdentifierCapability::new);
+    System.out.println("REGISTERING AAAAA");
   }
 
 }

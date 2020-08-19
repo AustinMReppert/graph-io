@@ -59,7 +59,7 @@ public class IdentifierItem extends Item {
   @Nullable
   @Override
   public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
-    return new IdentifierCapabilityProvider(stack);
+    return new IdentifierCapabilityProvider();
   }
 
 }

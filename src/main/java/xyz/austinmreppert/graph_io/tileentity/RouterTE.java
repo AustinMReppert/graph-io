@@ -10,15 +10,21 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.*;
+import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.energy.EnergyStorage;
+import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -40,12 +46,30 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   private HashMap<String, BlockPos> identifiers;
   private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
   private int ticks;
-  private int maxItemsPerTick = 64;
-  private int maxBucketsPerTick = 1000;
-  private int maxEnergyPerTick = 4000;
-  private int filterSize = 10;
+  private int maxItemsPerTick;
+  private int maxBucketsPerTick;
+  private int maxEnergyPerTick = 0;
+  private int minTickDelay;
+  private int maxEnergy;
+  private int filterSize;
   private final Random random;
   private Tier tier;
+  private IEnergyStorage energyStorage;
+  private LazyOptional<IEnergyStorage> energyCapabilityLO;
+  private int lastTick;
+  private int energyPerMappingTick = 1000;
+
+  public RouterTE() {
+    this(Tier.BASIC);
+  }
+
+  public boolean shouldTick() {
+    if (ticks - lastTick >= minTickDelay) {
+      lastTick = ticks;
+      return true;
+    }
+    return false;
+  }
 
   public int getMaxBucketsPerTick() {
     return maxBucketsPerTick;
@@ -53,6 +77,14 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   public int getMaxEnergyPerTick() {
     return maxEnergyPerTick;
+  }
+
+  public int getMinTickDelay() {
+    return minTickDelay;
+  }
+
+  public IEnergyStorage getEnergyStorage() {
+    return energyStorage;
   }
 
   public enum Tier {
@@ -71,51 +103,81 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   }
 
-  public RouterTE() {
-    this(Tier.BASIC);
-  }
-
   public RouterTE(Tier tier) {
     super(TileEntityTypes.ROUTER);
+    setTier(tier);
     mappings = new ArrayList<>();
     identifiers = new HashMap<>();
     ticks = 0;
     random = new Random(System.currentTimeMillis());
-    setTier(tier);
-
   }
 
-  private void setTier(Tier tier) {
+  private void setTier(@Nonnull Tier tier) {
     this.tier = tier;
     if (tier == Tier.BASIC) {
       maxItemsPerTick = 1;
       maxBucketsPerTick = 100;
       maxEnergyPerTick = 3200;
+      minTickDelay = 20;
+      maxEnergy = maxEnergyPerTick * 5;
       filterSize = 5;
     } else if (tier == Tier.ADVANCED) {
       maxItemsPerTick = 16;
       maxBucketsPerTick = 400;
       maxEnergyPerTick = 12800;
+      minTickDelay = 15;
+      maxEnergy = maxEnergyPerTick * 5;
       filterSize = 10;
     } else if (tier == Tier.ELITE) {
       maxItemsPerTick = 32;
       maxBucketsPerTick = 1600;
       maxEnergyPerTick = 64000;
+      minTickDelay = 10;
+      maxEnergy = maxEnergyPerTick * 5;
       filterSize = 15;
     } else if (tier == Tier.ULTIMATE) {
       maxItemsPerTick = 64;
       maxBucketsPerTick = 6400;
       maxEnergyPerTick = 320000;
+      minTickDelay = 1;
+      maxEnergy = maxEnergyPerTick * 5;
       filterSize = 20;
+    } else {
+      throw new IllegalArgumentException("Invalid tier.");
     }
+    energyStorage = new EnergyStorage(maxEnergy);
+    energyCapabilityLO = LazyOptional.of(() -> energyStorage);
   }
 
   @Override
   public void tick() {
-    if (world == null || world.isRemote || ++ticks < 20*5) return;
-    ticks = 0;
+    if (world == null) return;
+    ++ticks;
+
+    if (shouldTick()) {
+      System.out.println(energyStorage.getEnergyStored());
+      for (Direction direction : Direction.values()) {
+        if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
+          break;
+        TileEntity te = world.getTileEntity(pos.offset(direction));
+        if (te != null) {
+          te.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
+            final int simulatedReceived = energyStorage.receiveEnergy(cap.extractEnergy(MathHelper.clamp(maxEnergyPerTick, 0, energyStorage.getMaxEnergyStored() - energyStorage.getEnergyStored()), true), true);
+            energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false);
+          });
+        }
+      }
+    }
+
+    if (world.isRemote) return;
+
     for (Mapping mapping : mappings) {
-      if (!mapping.isValid())
+      if (!mapping.isValid() || !mapping.shouldTick(ticks))
+        continue;
+
+      if (energyStorage.getEnergyStored() - energyPerMappingTick >= 0)
+        energyStorage.extractEnergy(energyPerMappingTick, false);
+      else
         continue;
 
       Inventory filterInventory = mapping.getFilterInventory();
@@ -258,6 +320,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   @Nonnull
   public CompoundNBT write(CompoundNBT compound) {
     compound.putInt("tier", getTierOrdinal());
+    compound.put("energyStorage", CapabilityEnergy.ENERGY.writeNBT(energyStorage, null));
     getNBTFromMappings(compound);
     getNBTFromInventory(compound);
     return super.write(compound);
@@ -274,7 +337,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   }
 
   public int getTierOrdinal() {
-    if(tier == null) return -1;
+    if (tier == null) return -1;
     return tier.ordinal();
   }
 
@@ -282,8 +345,11 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   @ParametersAreNonnullByDefault
   public void read(BlockState stateIn, CompoundNBT nbtIn) {
     setTier(Tier.valueOf(nbtIn.getInt("tier")));
+    INBT energyStorageNBT = nbtIn.get("energyStorage");
+    if (energyStorageNBT != null)
+      CapabilityEnergy.ENERGY.readNBT(energyStorage, null, energyStorageNBT);
     getInventoryFromNBT(nbtIn);
-    mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
+    mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
     super.read(stateIn, nbtIn);
   }
 
@@ -307,7 +373,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   @Override
   public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-    mappings = Mapping.getMappingsFromNBT(tag, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
+    mappings = Mapping.getMappingsFromNBT(tag, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
     super.handleUpdateTag(state, tag);
   }
 
@@ -315,13 +381,14 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   public SUpdateTileEntityPacket getUpdatePacket() {
     CompoundNBT nbtTag = new CompoundNBT();
     nbtTag.putInt("tier", getTierOrdinal());
+    nbtTag.put("energyStorage", CapabilityEnergy.ENERGY.writeNBT(energyStorage, null));
     getNBTFromMappings(nbtTag);
     return new SUpdateTileEntityPacket(getPos(), -1, nbtTag);
   }
 
   @Override
   public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-    mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
+    mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
   }
 
   public ArrayList<Mapping> getMappings() {
@@ -370,6 +437,12 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
         identifiers.put(is.getDisplayName().getString(), identifierCapability.getBlockPos()));
   }
 
+  @Nonnull
+  @Override
+  public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
+    return CapabilityEnergy.ENERGY.orEmpty(cap, energyCapabilityLO);
+  }
+
   @Override
   protected void setItems(NonNullList<ItemStack> itemsIn) {
     identifiers.clear();
@@ -383,7 +456,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   }
 
   public void getMappingsFromNBT(CompoundNBT controllerNodeTENBT) {
-    mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick);
+    mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
   }
 
   public int getMaxItemsPerTick() {

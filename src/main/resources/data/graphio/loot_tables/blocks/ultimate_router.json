@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "graphio:controller_node_block"
+          "name": "graphio:ultimate_router"
         }
       ],
       "conditions": [

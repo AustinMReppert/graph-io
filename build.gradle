@@ -44,6 +44,8 @@ minecraft {
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
 
+            args '--username', 'pie'
+
             mods {
                 graphio {
                     source sourceSets.main

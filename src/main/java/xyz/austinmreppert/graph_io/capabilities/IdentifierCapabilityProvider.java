@@ -12,13 +12,7 @@ import javax.annotation.Nullable;
 
 public class IdentifierCapabilityProvider implements ICapabilitySerializable {
 
-  private final IIdentifierCapability identifierCapability;
-  private final LazyOptional<IIdentifierCapability> identifierCapabilityLO;
-
-  public IdentifierCapabilityProvider(ItemStack itemStack) {
-    identifierCapability = new IdentifierCapability();
-    identifierCapabilityLO = LazyOptional.of(() -> identifierCapability);
-  }
+  private final LazyOptional<IIdentifierCapability> identifierCapabilityLO = LazyOptional.of(IdentifierCapability::new);
 
   @Nonnull
   @Override
@@ -28,11 +22,14 @@ public class IdentifierCapabilityProvider implements ICapabilitySerializable {
 
   @Override
   public INBT serializeNBT() {
-    return Capabilities.IDENTIFIER_CAPABILITY.getStorage().writeNBT(Capabilities.IDENTIFIER_CAPABILITY, identifierCapability, null);
+    return Capabilities.IDENTIFIER_CAPABILITY.getStorage().writeNBT(Capabilities.IDENTIFIER_CAPABILITY,
+      identifierCapabilityLO.orElseThrow(() -> new IllegalArgumentException("LazyOptional cannot be empty.")), null);
   }
 
   @Override
   public void deserializeNBT(INBT nbt) {
-    Capabilities.IDENTIFIER_CAPABILITY.getStorage().readNBT(Capabilities.IDENTIFIER_CAPABILITY, identifierCapability, null, nbt);
+    Capabilities.IDENTIFIER_CAPABILITY.getStorage().readNBT(Capabilities.IDENTIFIER_CAPABILITY,
+      identifierCapabilityLO.orElseThrow(() -> new IllegalArgumentException("LazyOptional cannot be empty.")), null, nbt);
   }
+
 }

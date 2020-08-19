@@ -18,5 +18,7 @@
   "gui.graphio.increase_stack_size": "Increase Stack Size",
   "graphio.gui.items_per_tick": "Items/Tick:",
   "graphio.gui.buckets_per_tick": "Buckets/Tick:",
-  "graphio.gui.energy_per_tick": "Energy/Tick:"
+  "graphio.gui.energy_per_tick": "Energy/Tick:",
+  "graphio.gui.tick_delay": "Tick Delay:",
+  "graphio.gui.energy": "Energy(kj):"
 }

@@ -30,7 +30,7 @@ public class RouterContainer extends Container {
   }
 
   public RouterContainer(int windowId, PlayerInventory inv, RouterTE routerTE) {
-    super(ContainerTypes.CONTROLLER_NODE_CONTAINER, windowId);
+    super(ContainerTypes.ROUTER_CONTAINER, windowId);
 
     this.routerTE = routerTE;
 
@@ -97,10 +97,10 @@ public class RouterContainer extends Container {
   @Override
   @Nonnull
   public ContainerType<?> getType() {
-    return ContainerTypes.CONTROLLER_NODE_CONTAINER;
+    return ContainerTypes.ROUTER_CONTAINER;
   }
 
-  public RouterTE getControllerNodeTE() {
+  public RouterTE getRouterTE() {
     return routerTE;
   }
 

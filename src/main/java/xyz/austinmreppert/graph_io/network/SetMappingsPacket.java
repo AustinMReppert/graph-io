@@ -6,9 +6,11 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.PacketDistributor;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import java.util.function.Supplier;
@@ -33,8 +35,8 @@ public class SetMappingsPacket {
           RouterTE routerTE = (RouterTE) te;
           routerTE.getMappingsFromNBT(packet.routerTENBT);
           routerTE.markDirty();
+          PacketHander.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> {return (Chunk) te.getWorld().getChunk(te.getPos()); }), packet);
         }
-        PacketHander.INSTANCE.sendTo(packet, context.get().getNetworkManager(), NetworkDirection.PLAY_TO_CLIENT);
       } else {
         TileEntity te = Minecraft.getInstance().world.getTileEntity(packet.blockPos);
         if (te instanceof RouterTE) {

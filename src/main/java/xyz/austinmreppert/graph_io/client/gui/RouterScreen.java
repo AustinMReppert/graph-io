@@ -26,6 +26,7 @@ import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.network.PacketHander;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
 import xyz.austinmreppert.graph_io.tileentity.Mapping;
+import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -91,8 +92,10 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private ITextComponent ITEMS_PER_TICK = new TranslationTextComponent("graphio.gui.items_per_tick");
   private ITextComponent BUCKETS_PER_TICK = new TranslationTextComponent("graphio.gui.buckets_per_tick");
   private ITextComponent ENERGY_PER_TICK = new TranslationTextComponent("graphio.gui.energy_per_tick");
+  private ITextComponent TICK_DELAY = new TranslationTextComponent("graphio.gui.tick_delay");
+  private ITextComponent ENERGY = new TranslationTextComponent("graphio.gui.energy");
 
-  private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/controller_node_gui.png");
+  private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/router.png");
   private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/cyclic_button.png");
   private static final ResourceLocation FILTER_SCHEME_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/filter_scheme_button.png");
   private static final ResourceLocation MINUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/decrease_stack_size_button.png");
@@ -108,10 +111,14 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private ImageButton increaseBucketsButton;
   private ImageButton decreaseEnergyButton;
   private ImageButton increaseEnergyButton;
+  private ImageButton decreaseTickDelay;
+  private ImageButton increaseTickDelay;
   private int lastFocusedMapping;
+  private RouterTE routerTE;
 
   public RouterScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
     super((RouterContainer) screenContainer, inv, titleIn);
+    routerTE = ((RouterContainer) screenContainer).getRouterTE();
     passEvents = false;
     xSize = 276;
     ySize = 256;
@@ -162,7 +169,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   }
 
   private void updateMappings() {
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(container.getControllerNodeTE().getPos(), Mapping.toNBT(mappingsCopy)));
+    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getPos(), Mapping.toNBT(mappingsCopy)));
   }
 
   @Override
@@ -202,7 +209,10 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       else
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       children.add(mapping);
-      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST, container.getControllerNodeTE().getFilterSize(), container.getControllerNodeTE().getMaxItemsPerTick(), container.getControllerNodeTE().getMaxBucketsPerTick(), container.getControllerNodeTE().getMaxEnergyPerTick(), container.getControllerNodeTE().getMaxItemsPerTick(), container.getControllerNodeTE().getMaxBucketsPerTick(), container.getControllerNodeTE().getMaxEnergyPerTick()));
+      mappingsCopy.add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST,
+        routerTE.getFilterSize(), routerTE.getMaxItemsPerTick(), routerTE.getMaxBucketsPerTick(), routerTE.getMinTickDelay(),
+        routerTE.getMaxEnergyPerTick(), routerTE.getMaxItemsPerTick(), routerTE.getMaxBucketsPerTick(),
+        routerTE.getMaxEnergyPerTick(), routerTE.getMinTickDelay()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocused2(true);
@@ -214,7 +224,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       int index = rawMappings.indexOf(getListener());
       if (index != -1) {
         //currentScroll = (currentScroll * rawMappings.size() - 1) / (rawMappings.size() - 1);
-        for(int i = 0; i < container.getFilterSlots().size(); ++i) {
+        for (int i = 0; i < container.getFilterSlots().size(); ++i) {
           container.getFilterSlots().get(i).setEnabled(false);
           container.getFilterSlots().get(i).putStack(ItemStack.EMPTY);
         }
@@ -265,7 +275,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     if (index != -1) {
       lastFocusedMapping = index;
       updateMappingGUI();
-      for (int i = 0; i < container.getControllerNodeTE().getFilterSize(); ++i) {
+      for (int i = 0; i < routerTE.getFilterSize(); ++i) {
         container.getFilterSlots().get(i).setEnabled(true);
         Mapping mapping = mappingsCopy.get(index);
         Inventory tmpFilterInventory = container.getTmpFilterInventory();
@@ -281,7 +291,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   protected void handleMouseClick(@Nullable Slot slotIn, int slotId, int mouseButton, ClickType type) {
     if (slotIn instanceof FilterSlot && lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
       super.handleMouseClick(slotIn, slotId, mouseButton, type);
-      for (int i = 0; i < container.getControllerNodeTE().getFilterSize(); ++i) {
+      for (int i = 0; i < routerTE.getFilterSize(); ++i) {
         Mapping mapping = mappingsCopy.get(lastFocusedMapping);
         Inventory tmpFilterInventory = container.getTmpFilterInventory();
         Inventory filterInventory = mapping.getFilterInventory();
@@ -297,7 +307,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     super.init();
     lastFocusedMapping = -1;
     rawMappings.clear();
-    ArrayList<Mapping> mappings = container.getControllerNodeTE().getMappings();
+    ArrayList<Mapping> mappings = routerTE.getMappings();
     mappingsCopy = new ArrayList<>(mappings.size());
     for (Mapping mapping : mappings)
       mappingsCopy.add(new Mapping(mapping));
@@ -369,7 +379,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(decreaseBucketsButton = new ImageButton(this.guiLeft - 80, guiTop + 60, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(decreaseBucketsButton = new ImageButton(this.guiLeft - 80, guiTop + 59, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.changeBucketsPerTick(-1 * (hasShiftDown() ? 1000 : 100));
@@ -377,7 +387,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(increaseBucketsButton = new ImageButton(this.guiLeft - 50, guiTop + 60, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(increaseBucketsButton = new ImageButton(this.guiLeft - 50, guiTop + 59, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.changeBucketsPerTick(hasShiftDown() ? 1000 : 100);
@@ -385,7 +395,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(decreaseEnergyButton = new ImageButton(this.guiLeft - 80, guiTop + 91, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(decreaseEnergyButton = new ImageButton(this.guiLeft - 80, guiTop + 90, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.changeEnergyPerTick(-1 * (hasShiftDown() ? 1000 : 100));
@@ -393,10 +403,26 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(increaseEnergyButton = new ImageButton(this.guiLeft - 50, guiTop + 91, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addButton(increaseEnergyButton = new ImageButton(this.guiLeft - 50, guiTop + 90, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       mapping.changeEnergyPerTick(hasShiftDown() ? 100 : 1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(decreaseTickDelay = new ImageButton(this.guiLeft - 80, guiTop + 121, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeTickDelay(-1);
+      updateMappingGUI();
+      updateMappings();
+    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+
+    this.addButton(increaseTickDelay = new ImageButton(this.guiLeft - 50, guiTop + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+      if (lastFocusedMapping < 0 || lastFocusedMapping >= mappingsCopy.size()) return;
+      Mapping mapping = mappingsCopy.get(lastFocusedMapping);
+      mapping.changeTickDelay(1);
       updateMappingGUI();
       updateMappings();
     }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
@@ -475,18 +501,25 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     String itemsPerTickStr = "?";
     String bucketsPerTickStr = "?";
     String energyPerTickStr = "?";
-    if(lastFocusedMapping >= 0 && lastFocusedMapping <= mappingsCopy.size()) {
+    String tickDelayStr = "?";
+    String energyStr = routerTE.getEnergyStorage().getEnergyStored()/1000 + "/" +  routerTE.getEnergyStorage().getMaxEnergyStored()/1000;
+    if (lastFocusedMapping >= 0 && lastFocusedMapping <= mappingsCopy.size()) {
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       itemsPerTickStr = mapping.getItemsPerTick() + "";
       bucketsPerTickStr = mapping.getBucketsPerTick() + "";
       energyPerTickStr = mapping.getEnergyPerTick() + "";
+      tickDelayStr = mapping.getTickDelay() + "";
     }
-      font.func_238422_b_(matrixStack, ITEMS_PER_TICK, -80, 10, Color.func_240745_a_("#FFFFFF").func_240742_a_());
-      font.drawString(matrixStack, itemsPerTickStr, -80, 19, Color.func_240745_a_("#FFFFFF").func_240742_a_());
-      font.func_238422_b_(matrixStack, BUCKETS_PER_TICK, -80, 41, Color.func_240745_a_("#FFFFFF").func_240742_a_());
-      font.drawString(matrixStack, bucketsPerTickStr, -80, 51, Color.func_240745_a_("#FFFFFF").func_240742_a_());
-      font.func_238422_b_(matrixStack, ENERGY_PER_TICK, -80, 73, Color.func_240745_a_("#FFFFFF").func_240742_a_());
-      font.drawString(matrixStack, energyPerTickStr, -80, 82, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.func_238422_b_(matrixStack, ITEMS_PER_TICK, -80, 10, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.drawString(matrixStack, itemsPerTickStr, -80, 19, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.func_238422_b_(matrixStack, BUCKETS_PER_TICK, -80, 41, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.drawString(matrixStack, bucketsPerTickStr, -80, 50, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.func_238422_b_(matrixStack, ENERGY_PER_TICK, -80, 72, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.drawString(matrixStack, energyPerTickStr, -80, 81, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.func_238422_b_(matrixStack, TICK_DELAY, -80, 103, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.drawString(matrixStack, tickDelayStr, -80, 112, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.func_238422_b_(matrixStack, ENERGY, -80, 134, Color.func_240745_a_("#FFFFFF").func_240742_a_());
+    font.drawString(matrixStack, energyStr, -80, 144, Color.func_240745_a_("#FFFFFF").func_240742_a_());
   }
 
   private boolean canScroll(int items) {

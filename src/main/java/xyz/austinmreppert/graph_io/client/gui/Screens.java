@@ -20,7 +20,7 @@ public class Screens {
   }
 
   public static void register() {
-    ScreenManager.registerFactory(ContainerTypes.CONTROLLER_NODE_CONTAINER, RouterScreen::new);
+    ScreenManager.registerFactory(ContainerTypes.ROUTER_CONTAINER, RouterScreen::new);
   }
 
 }
