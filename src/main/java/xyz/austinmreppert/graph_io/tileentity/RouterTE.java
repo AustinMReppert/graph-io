@@ -1,6 +1,8 @@
 package xyz.austinmreppert.graph_io.tileentity;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -31,6 +33,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
+import xyz.austinmreppert.graph_io.client.gui.RouterScreen;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.data.mappings.NodeInfo;
@@ -44,6 +47,7 @@ import java.util.Random;
 
 public class RouterTE extends LockableLootTileEntity implements ITickableTileEntity, INamedContainerProvider {
 
+  private final Random random;
   private ArrayList<Mapping> mappings;
   private HashMap<String, BlockPos> identifiers;
   private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
@@ -54,7 +58,6 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   private int minTickDelay;
   private int maxEnergy;
   private int filterSize;
-  private final Random random;
   private Tier tier;
   private IEnergyStorage energyStorage;
   private LazyOptional<IEnergyStorage> energyCapabilityLO;
@@ -63,6 +66,15 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   public RouterTE() {
     this(Tier.BASIC);
+  }
+
+  public RouterTE(Tier tier) {
+    super(TileEntityTypes.ROUTER);
+    setTier(tier);
+    mappings = new ArrayList<>();
+    identifiers = new HashMap<>();
+    ticks = 0;
+    random = new Random(System.currentTimeMillis());
   }
 
   public boolean shouldTick() {
@@ -87,31 +99,6 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   public IEnergyStorage getEnergyStorage() {
     return energyStorage;
-  }
-
-  public enum Tier {
-    BASIC,
-    ADVANCED,
-    ELITE,
-    ULTIMATE;
-
-    public static RouterTE.Tier valueOf(int ordinal) {
-      if (ordinal == 0) return Tier.BASIC;
-      else if (ordinal == 1) return Tier.ADVANCED;
-      else if (ordinal == 2) return Tier.ELITE;
-      else if (ordinal == 3) return Tier.ULTIMATE;
-      else return null;
-    }
-
-  }
-
-  public RouterTE(Tier tier) {
-    super(TileEntityTypes.ROUTER);
-    setTier(tier);
-    mappings = new ArrayList<>();
-    identifiers = new HashMap<>();
-    ticks = 0;
-    random = new Random(System.currentTimeMillis());
   }
 
   private void setTier(@Nonnull Tier tier) {
@@ -409,6 +396,14 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   }
 
   @Override
+  protected void setItems(NonNullList<ItemStack> itemsIn) {
+    identifiers.clear();
+    for (ItemStack is : itemsIn)
+      checkForIdentifier(is);
+    this.inventory = itemsIn;
+  }
+
+  @Override
   @Nonnull
   public ItemStack removeStackFromSlot(int index) {
     identifiers.clear();
@@ -445,24 +440,39 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     return CapabilityEnergy.ENERGY.orEmpty(cap, energyCapabilityLO);
   }
 
-  @Override
-  protected void setItems(NonNullList<ItemStack> itemsIn) {
-    identifiers.clear();
-    for (ItemStack is : itemsIn)
-      checkForIdentifier(is);
-    this.inventory = itemsIn;
-  }
-
   public int getFilterSize() {
     return filterSize;
   }
 
   public void getMappingsFromNBT(CompoundNBT controllerNodeTENBT) {
     mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, filterSize, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
+    if(world.isRemote()) {
+      Screen currentTmp = Minecraft.getInstance().currentScreen;
+      if(currentTmp instanceof RouterScreen) {
+        RouterScreen current = (RouterScreen) currentTmp;
+        current.update();
+      }
+    }
   }
 
   public int getMaxItemsPerTick() {
     return maxItemsPerTick;
+  }
+
+  public enum Tier {
+    BASIC,
+    ADVANCED,
+    ELITE,
+    ULTIMATE;
+
+    public static RouterTE.Tier valueOf(int ordinal) {
+      if (ordinal == 0) return Tier.BASIC;
+      else if (ordinal == 1) return Tier.ADVANCED;
+      else if (ordinal == 2) return Tier.ELITE;
+      else if (ordinal == 3) return Tier.ULTIMATE;
+      else return null;
+    }
+
   }
 
 }

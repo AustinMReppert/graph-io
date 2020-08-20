@@ -502,7 +502,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     String bucketsPerTickStr = "?";
     String energyPerTickStr = "?";
     String tickDelayStr = "?";
-    String energyStr = routerTE.getEnergyStorage().getEnergyStored()/1000 + "/" +  routerTE.getEnergyStorage().getMaxEnergyStored()/1000;
+    String energyStr = routerTE.getEnergyStorage().getEnergyStored() / 1000 + "/" + routerTE.getEnergyStorage().getMaxEnergyStored() / 1000;
     if (lastFocusedMapping >= 0 && lastFocusedMapping <= mappingsCopy.size()) {
       Mapping mapping = mappingsCopy.get(lastFocusedMapping);
       itemsPerTickStr = mapping.getItemsPerTick() + "";
@@ -547,6 +547,44 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   @Override
   @ParametersAreNonnullByDefault
   public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue) {
+  }
+
+  public void update() {
+    int cursorPos = -1;
+    if (lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
+      cursorPos = rawMappings.get(lastFocusedMapping).getCursorPosition();
+    }
+    for (TextFieldWidget rawMapping : rawMappings)
+      children.remove(rawMapping);
+    rawMappings.clear();
+    ArrayList<Mapping> mappings = routerTE.getMappings();
+    mappingsCopy = new ArrayList<>(mappings.size());
+    for (Mapping mapping : mappings)
+      mappingsCopy.add(new Mapping(mapping));
+    for (int i = 0; i < mappingsCopy.size(); ++i) {
+      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y + (i % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
+      mapping.setCanLoseFocus(true);
+      mapping.setTextColor(Color.func_240745_a_("#FFFFFF").func_240742_a_());
+      mapping.setDisabledTextColour(-1);
+      mapping.setEnableBackgroundDrawing(true);
+      mapping.setResponder(this::onTextChanged);
+      mapping.setMaxStringLength(40);
+      mapping.setEnabled(true);
+      mapping.setText(mappingsCopy.get(i).getRaw());
+      if (i >= MAPPINGS_PER_PAGE)
+        mapping.setVisible(false);
+      children.add(mapping);
+      rawMappings.add(mapping);
+    }
+    if (lastFocusedMapping >= 0 && lastFocusedMapping < mappingsCopy.size()) {
+      setListener(rawMappings.get(lastFocusedMapping));
+      rawMappings.get(lastFocusedMapping).setFocused2(true);
+      if (cursorPos != -1)
+        rawMappings.get(lastFocusedMapping).setCursorPosition(cursorPos);
+    } else {
+      lastFocusedMapping = mappingsCopy.size() - 1;
+    }
+    scrollTo(currentScroll);
   }
 
 }

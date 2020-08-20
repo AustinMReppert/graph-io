@@ -48,7 +48,7 @@ public class IdentifierItem extends Item {
         BlockPos identifierPos = identifierCapability.getBlockPos();
         if (worldIn.isRemote) {
           Minecraft.getInstance().player.sendChatMessage("Identifier points to (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ")");
-          Highlighter.toggleHighlightBlock(identifierPos, 255, 0, 0, 125);
+          Highlighter.toggleHighlightBlock(identifierPos, 0.01F, 255, 0, 0, 125);
         }
       }
     });

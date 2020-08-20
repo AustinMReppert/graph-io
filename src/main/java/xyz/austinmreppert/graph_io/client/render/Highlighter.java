@@ -26,17 +26,17 @@ public class Highlighter {
   @SubscribeEvent
   public static void onRenderWorld(RenderWorldLastEvent e) {
     for (HighlightedBlock highlightedBlock : highlightedBlocks)
-      highlightBlock(highlightedBlock.blockPos, e.getMatrixStack(), highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
+      highlightBlock(e.getMatrixStack(), highlightedBlock.blockPos, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
   }
 
-  public static void highlightBlock(BlockPos blockPos, int r, int g, int b, int a) {
-    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, r, g, b, a);
+  public static void highlightBlock(BlockPos blockPos, float padding, int r, int g, int b, int a) {
+    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
       highlightedBlocks.add(highlightedBlock);
   }
 
-  public static void toggleHighlightBlock(BlockPos blockPos, int r, int g, int b, int a) {
-    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, r, g, b, a);
+  public static void toggleHighlightBlock(BlockPos blockPos, float padding, int r, int g, int b, int a) {
+    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
       highlightedBlocks.add(highlightedBlock);
     else
@@ -47,7 +47,7 @@ public class Highlighter {
     highlightedBlocks.removeIf(highlightedBlock -> blockPos.equals(highlightedBlock.blockPos));
   }
 
-  private static void highlightBlock(BlockPos blockPos, MatrixStack matrixStack, int r, int g, int b, int a) {
+  private static void highlightBlock(MatrixStack matrixStack, BlockPos blockPos, float padding, int r, int g, int b, int a) {
     if (!blockPos.withinDistance(Minecraft.getInstance().player.getPositionVec(), Minecraft.getInstance().gameSettings.renderDistanceChunks * 16))
       return;
     int x = blockPos.getX();
@@ -72,35 +72,42 @@ public class Highlighter {
 
     bb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 
-    bb.pos(mat, x + 1.01F, y + 1.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y - 0.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y - 0.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y + 1.01F, z - 0.01F).color(r, g, b, a).endVertex();
+    float x1 = x - padding;
+    float x2 = x + padding + 1.0F;
+    float y1 = y - padding;
+    float y2 = y + padding + 1.0F;
+    float z1 = z - padding;
+    float z2 = z + padding + 1.0F;
 
-    bb.pos(mat, x - 0.01F, y + 1.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y - 0.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y - 0.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y + 1.01F, z + 1.01F).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y2, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y1, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y2, z1).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x - 0.01F, y + 1.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y - 0.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y - 0.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y + 1.01F, z + 1.01F).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y2, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y1, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y1, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y2, z2).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x + 1.01F, y + 1.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y - 0.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y - 0.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y + 1.01F, z - 0.01F).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y2, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y1, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y1, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x - 0.01F, y - 0.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y - 0.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y - 0.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y - 0.01F, z + 1.01F).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y2, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y1, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y2, z1).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x + 1.01F, y + 1.01F, z + 1.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x + 1.01F, y + 1.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y + 1.01F, z - 0.01F).color(r, g, b, a).endVertex();
-    bb.pos(mat, x - 0.01F, y + 1.01F, z + 1.01F).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y1, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y1, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y1, z2).color(r, g, b, a).endVertex();
+
+    bb.pos(mat, x2, y2, z2).color(r, g, b, a).endVertex();
+    bb.pos(mat, x2, y2, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y2, z1).color(r, g, b, a).endVertex();
+    bb.pos(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
     tes.draw();
     matrixStack.pop();
@@ -109,13 +116,15 @@ public class Highlighter {
   private static class HighlightedBlock {
 
     public BlockPos blockPos;
+    public float padding;
     public int r;
     public int g;
     public int b;
     public int a;
 
-    public HighlightedBlock(BlockPos blockPos, int r, int g, int b, int a) {
+    public HighlightedBlock(BlockPos blockPos, float padding, int r, int g, int b, int a) {
       this.blockPos = blockPos;
+      this.padding = padding;
       this.r = r;
       this.g = g;
       this.b = b;
