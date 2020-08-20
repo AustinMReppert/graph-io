@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.util.Constants;
+import xyz.austinmreppert.graph_io.data.tiers.RouterTier;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.Set;
 public class Mapping {
 
   private final Inventory filterInventory;
+  private final RouterTier routerTier;
   public int currentInputIndex;
   public int currentOutputIndex;
   private String raw;
@@ -27,14 +29,10 @@ public class Mapping {
   private int bucketsPerTick;
   private int energyPerTick;
   private int tickDelay;
-  private final int maxItemsPerTick;
-  private final int maxBucketsTick;
-  private final int maxEnergyPerTick;
-  private final int minTickDelay;
   private int lastTick;
 
-  public Mapping(String raw, Set<String> identifiers, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick, int minTickDelay) {
-    this(raw, distributionScheme, filterScheme, filterSize, itemsPerTick, bucketsPerTick, energyPerTick, tickDelay, maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
+  public Mapping(String raw, Set<String> identifiers, DistributionScheme distributionScheme, FilterScheme filterScheme, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, RouterTier tier) {
+    this(raw, distributionScheme, filterScheme, itemsPerTick, bucketsPerTick, energyPerTick, tickDelay, tier);
     String[] components = raw.split("->");
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
@@ -72,27 +70,27 @@ public class Mapping {
     valid = true;
   }
 
-  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, int filterSize, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick, int minTickDelay) {
+  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, RouterTier tier) {
     this.raw = raw;
     this.distributionScheme = distributionScheme;
     this.filterScheme = filterScheme;
-    filterInventory = new Inventory(filterSize);
-    this.maxItemsPerTick = maxItemsPerTick;
-    this.maxBucketsTick = maxBucketsPerTick;
-    this.maxEnergyPerTick = maxEnergyPerTick;
-    this.minTickDelay = minTickDelay;
-    this.itemsPerTick = MathHelper.clamp(itemsPerTick, 0, maxItemsPerTick);
-    this.bucketsPerTick = MathHelper.clamp(bucketsPerTick, 0, maxBucketsPerTick);
-    this.energyPerTick = MathHelper.clamp(energyPerTick, 0, maxEnergyPerTick);
-    this.tickDelay = MathHelper.clamp(tickDelay, minTickDelay, 20);
+    this.routerTier = tier;
+    filterInventory = new Inventory(tier.filterSize);
+    this.itemsPerTick = MathHelper.clamp(itemsPerTick, 0, tier.maxItemsPerTick);
+    this.bucketsPerTick = MathHelper.clamp(bucketsPerTick, 0, tier.maxBucketsPerTick);
+    this.energyPerTick = MathHelper.clamp(energyPerTick, 0, tier.maxEnergyPerTick);
+    this.tickDelay = MathHelper.clamp(tickDelay, tier.minTickDelay, 20);
   }
 
   public Mapping(Mapping mapping) {
-    this(mapping.raw, mapping.distributionScheme, mapping.filterScheme, mapping.filterInventory.getSizeInventory(),
-      mapping.itemsPerTick, mapping.bucketsPerTick, mapping.energyPerTick, mapping.tickDelay, mapping.maxItemsPerTick,
-      mapping.maxBucketsTick, mapping.maxEnergyPerTick, mapping.minTickDelay);
+    this(mapping.raw, mapping.distributionScheme, mapping.filterScheme,
+      mapping.itemsPerTick, mapping.bucketsPerTick, mapping.energyPerTick, mapping.tickDelay, mapping.routerTier);
     for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i)
       filterInventory.setInventorySlotContents(i, mapping.getFilterInventory().getStackInSlot(i).copy());
+  }
+
+  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, RouterTier tier) {
+    this(raw, distributionScheme, filterScheme, tier.maxItemsPerTick, tier.maxBucketsPerTick, tier.maxEnergyPerTick, tier.minTickDelay, tier);
   }
 
   public static CompoundNBT toNBT(ArrayList<Mapping> mappingsCopy) {
@@ -110,6 +108,7 @@ public class Mapping {
       mappingNBT.putInt("itemsPerTick", mapping.itemsPerTick);
       mappingNBT.putInt("bucketsPerTick", mapping.bucketsPerTick);
       mappingNBT.putInt("energyPerTick", mapping.energyPerTick);
+      mappingNBT.putInt("tickDelay", mapping.tickDelay);
 
       ListNBT filterNBT = new ListNBT();
       for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i) {
@@ -127,17 +126,17 @@ public class Mapping {
     return nbt;
   }
 
-  public static ArrayList<Mapping> getMappingsFromNBT(CompoundNBT tag, HashMap<String, BlockPos> identifiers, int filterSize, int maxItemsPerTick, int maxBucketsPerTick, int maxEnergyPerTick, int minTickDelay) {
+  public static ArrayList<Mapping> getMappingsFromNBT(CompoundNBT tag, HashMap<String, BlockPos> identifiers, RouterTier tier) {
     ListNBT list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
     ArrayList<Mapping> mappings = new ArrayList<>(list.size());
     for (int i = 0; i < list.size(); ++i) {
       CompoundNBT mappingNBT = list.getCompound(i);
       Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(),
         Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")),
-        Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")), filterSize,
+        Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")),
         mappingNBT.getInt("itemsPerTick"),
         mappingNBT.getInt("bucketsPerTick"),
-        mappingNBT.getInt("energyPerTick"), mappingNBT.getInt("tickDelay"), maxItemsPerTick, maxBucketsPerTick, maxEnergyPerTick, minTickDelay);
+        mappingNBT.getInt("energyPerTick"), mappingNBT.getInt("tickDelay"), tier);
       ListNBT filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
       for (int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundNBT itemStackNBT = filterItemsNBT.getCompound(j);
@@ -197,15 +196,15 @@ public class Mapping {
   }
 
   public void changeItemsPerTick(int amount) {
-    itemsPerTick = MathHelper.clamp(itemsPerTick + amount, 0, maxItemsPerTick);
+    itemsPerTick = MathHelper.clamp(itemsPerTick + amount, 0, routerTier.maxItemsPerTick);
   }
 
   public void changeBucketsPerTick(int amount) {
-    bucketsPerTick = MathHelper.clamp(bucketsPerTick + amount, 0, maxBucketsTick);
+    bucketsPerTick = MathHelper.clamp(bucketsPerTick + amount, 0, routerTier.maxBucketsPerTick);
   }
 
   public void changeEnergyPerTick(int amount) {
-    energyPerTick = MathHelper.clamp(energyPerTick + amount, 0, maxEnergyPerTick);
+    energyPerTick = MathHelper.clamp(energyPerTick + amount, 0, routerTier.maxEnergyPerTick);
   }
 
   public boolean shouldTick(int ticks) {
@@ -217,7 +216,7 @@ public class Mapping {
   }
 
   public void changeTickDelay(int amount) {
-    tickDelay = MathHelper.clamp(tickDelay + amount, minTickDelay, 20);
+    tickDelay = MathHelper.clamp(tickDelay + amount, routerTier.minTickDelay, 20);
   }
 
   public Inventory getFilterInventory() {

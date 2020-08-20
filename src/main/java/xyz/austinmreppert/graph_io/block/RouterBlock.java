@@ -20,6 +20,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
+import xyz.austinmreppert.graph_io.data.tiers.Tier;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nonnull;
@@ -28,13 +29,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class RouterBlock extends ContainerBlock {
 
-  private RouterTE.Tier tier;
+  private Tier tier;
 
   private RouterBlock() {
     super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15).hardnessAndResistance(3.0F).notSolid().setOpaque(RouterBlock::func_235436_b_));
   }
 
-  public RouterBlock(RouterTE.Tier tier) {
+  public RouterBlock(Tier tier) {
     this();
     this.tier = tier;
   }

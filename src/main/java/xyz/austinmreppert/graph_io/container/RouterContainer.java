@@ -34,7 +34,7 @@ public class RouterContainer extends Container {
 
     this.routerTE = routerTE;
 
-    tmpFilterInventory = new Inventory(routerTE.getFilterSize());
+    tmpFilterInventory = new Inventory(routerTE.getTier().filterSize);
     filterSlots = new ArrayList<>();
 
     // Draw the hotbar
