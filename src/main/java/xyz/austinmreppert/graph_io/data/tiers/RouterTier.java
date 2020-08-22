@@ -49,6 +49,4 @@ public class RouterTier {
     this(Tier.valueOf(tierOrdinal));
   }
 
-
-
 }

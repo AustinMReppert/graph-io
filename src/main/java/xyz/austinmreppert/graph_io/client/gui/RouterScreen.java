@@ -172,7 +172,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   }
 
   private void updateMappings() {
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getPos(), Mapping.toNBT(mappingsCopy)));
+    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getPos(), Mapping.toNBT(mappingsCopy), container.windowId));
   }
 
   @Override
@@ -510,6 +510,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   @Override
   @ParametersAreNonnullByDefault
   protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
+    super.drawGuiContainerForegroundLayer(matrixStack, x, y);
     font.func_238422_b_(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
 
     String itemsPerTickStr = "?";

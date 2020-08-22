@@ -1,19 +1,32 @@
 package xyz.austinmreppert.graph_io.container;
 
+import com.google.common.collect.Lists;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.IntReferenceHolder;
+import net.minecraftforge.fml.network.NetworkDirection;
 import xyz.austinmreppert.graph_io.client.gui.FilterSlot;
+import xyz.austinmreppert.graph_io.data.mappings.Mapping;
+import xyz.austinmreppert.graph_io.network.PacketHander;
+import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
+import java.util.List;
 
 public class RouterContainer extends Container {
+
+  private final List<ServerPlayerEntity> listeners;
+  private final MappingsReferenceHolder trackedMappingsReference;
 
   private final RouterTE routerTE;
   private final ArrayList<FilterSlot> filterSlots;
@@ -31,6 +44,8 @@ public class RouterContainer extends Container {
 
   public RouterContainer(int windowId, PlayerInventory inv, RouterTE routerTE) {
     super(ContainerTypes.ROUTER_CONTAINER, windowId);
+
+    listeners = Lists.newArrayList();
 
     this.routerTE = routerTE;
 
@@ -51,6 +66,65 @@ public class RouterContainer extends Container {
       filterSlots.add((FilterSlot) addSlot(new FilterSlot(tmpFilterInventory, i, 5 + (i % 5) * SLOT_SIZE, INVENTORY_Y + (i >= 5 ? SLOT_SIZE : 0))));
       filterSlots.get(i).setEnabled(false);
     }
+
+    // The first 2 bytes
+    this.trackInt(new IntReferenceHolder() {
+      @Override
+      public int get() {
+        return routerTE.getEnergyStorage().getEnergyStored() & 0x0000FFFF;
+      }
+
+      @Override
+      public void set(int amount) {
+        routerTE.getEnergyStorage().setEnergyStored((0xFFFF0000 & routerTE.getEnergyStorage().getEnergyStored()) | (amount & 0x0000FFFF), false);
+      }
+    });
+    // The last 2 bytes
+    this.trackInt(new IntReferenceHolder() {
+      @Override
+      public int get() {
+        return routerTE.getEnergyStorage().getEnergyStored() >>> 16;
+      }
+
+      @Override
+      public void set(int amount) {
+        routerTE.getEnergyStorage().setEnergyStored((amount << 16) | (0x0000FFFF & routerTE.getEnergyStorage().getEnergyStored()), true);
+      }
+    });
+
+    this.trackedMappingsReference = new MappingsReferenceHolder(() -> {
+      return routerTE.getMappings();
+    }, (INBT mappingsNBT) -> {
+      routerTE.getMappingsFromNBT((CompoundNBT) mappingsNBT);
+    });
+  }
+
+
+  @Override
+  public void addListener(IContainerListener listener) {
+    super.addListener(listener);
+    if (listener instanceof ServerPlayerEntity)
+      listeners.add((ServerPlayerEntity) listener);
+  }
+
+  @Override
+  public void removeListener(IContainerListener listener) {
+    super.removeListener(listener);
+    if (listener instanceof ServerPlayerEntity)
+      listeners.remove(listener);
+  }
+
+  @Override
+  public void detectAndSendChanges() {
+    super.detectAndSendChanges();
+
+    if (trackedMappingsReference.isDirty()) {
+      SetMappingsPacket packet = new SetMappingsPacket(routerTE.getPos(), Mapping.toNBT(trackedMappingsReference.get.get(), new CompoundNBT()), windowId);
+      for (ServerPlayerEntity containerListener : listeners) {
+        PacketHander.INSTANCE.sendTo(packet, containerListener.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
+      }
+    }
+
   }
 
   @Override
@@ -110,6 +184,10 @@ public class RouterContainer extends Container {
 
   public Inventory getTmpFilterInventory() {
     return tmpFilterInventory;
+  }
+
+  public MappingsReferenceHolder getTrackedMappingsReference() {
+    return trackedMappingsReference;
   }
 
 }

@@ -15,7 +15,9 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.*;
+import net.minecraft.tileentity.ITickableTileEntity;
+import net.minecraft.tileentity.LockableLootTileEntity;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
@@ -23,9 +25,9 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
-import net.minecraftforge.energy.EnergyStorage;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
@@ -33,6 +35,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
+import xyz.austinmreppert.graph_io.capabilities.DynamicEnergyStorage;
 import xyz.austinmreppert.graph_io.client.gui.RouterScreen;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
@@ -50,12 +53,12 @@ import java.util.Random;
 public class RouterTE extends LockableLootTileEntity implements ITickableTileEntity, INamedContainerProvider {
 
   private final Random random;
-  private ArrayList<Mapping> mappings;
   private final HashMap<String, BlockPos> identifiers;
+  private ArrayList<Mapping> mappings;
   private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
   private int ticks;
   private RouterTier tier;
-  private IEnergyStorage energyStorage;
+  private DynamicEnergyStorage energyStorage;
   private LazyOptional<IEnergyStorage> energyCapabilityLO;
   private int lastTick;
   private int energyPerMappingTick = 1000;
@@ -66,6 +69,8 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   public RouterTE(Tier tier) {
     super(TileEntityTypes.ROUTER);
+    energyStorage = new DynamicEnergyStorage(0);
+    energyCapabilityLO = LazyOptional.of(() -> energyStorage);
     setTier(tier);
     mappings = new ArrayList<>();
     identifiers = new HashMap<>();
@@ -81,37 +86,31 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     return false;
   }
 
-  public IEnergyStorage getEnergyStorage() {
+  public DynamicEnergyStorage getEnergyStorage() {
     return energyStorage;
-  }
-
-  private void setTier(@Nonnull Tier tier) {
-    this.tier = new RouterTier(tier);
-    energyStorage = new EnergyStorage(this.tier.maxEnergy);
-    energyCapabilityLO = LazyOptional.of(() -> energyStorage);
   }
 
   @Override
   public void tick() {
-    if (world == null) return;
+    if (world == null || world.isRemote) return;
     ++ticks;
 
     if (shouldTick()) {
-      System.out.println(energyStorage.getEnergyStored());
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
         TileEntity te = world.getTileEntity(pos.offset(direction));
         if (te != null) {
           te.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
-            final int simulatedReceived = energyStorage.receiveEnergy(cap.extractEnergy(MathHelper.clamp(tier.maxEnergyPerTick, 0, energyStorage.getMaxEnergyStored() - energyStorage.getEnergyStored()), true), true);
+            int extracted = -1;
+            final int simulatedReceived = energyStorage.receiveEnergy(extracted = cap.extractEnergy(tier.maxEnergyPerTick, true), true);
             energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false);
+            te.markDirty();
+            markDirty();
           });
         }
       }
     }
-
-    if (world.isRemote) return;
 
     for (Mapping mapping : mappings) {
       if (!mapping.isValid() || !mapping.shouldTick(ticks))
@@ -230,11 +229,11 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     if (tier.tier == Tier.BASIC) {
       return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
     } else if (tier.tier == Tier.ADVANCED) {
-      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
+      return new TranslationTextComponent(Blocks.ADVANCED_ROUTER.getTranslationKey());
     } else if (tier.tier == Tier.ELITE) {
-      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
+      return new TranslationTextComponent(Blocks.ELITE_ROUTER.getTranslationKey());
     } else if (tier.tier == Tier.ULTIMATE) {
-      return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
+      return new TranslationTextComponent(Blocks.ULTIMATE_ROUTER.getTranslationKey());
     }
     return new TranslationTextComponent(Blocks.BASIC_ROUTER.getTranslationKey());
   }
@@ -242,7 +241,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   @Override
   @Nonnull
   protected ITextComponent getDefaultName() {
-    return Blocks.BASIC_ROUTER.getTranslatedName();
+    return getDisplayName();
   }
 
   @Override
@@ -269,7 +268,6 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   }
 
   public void getNBTFromInventory(CompoundNBT compound) {
-    super.write(compound);
     if (!this.checkLootAndWrite(compound))
       ItemStackHelper.saveAllItems(compound, inventory);
   }
@@ -283,8 +281,9 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   public void read(BlockState stateIn, CompoundNBT nbtIn) {
     setTier(Tier.valueOf(nbtIn.getInt("tier")));
     INBT energyStorageNBT = nbtIn.get("energyStorage");
-    if (energyStorageNBT != null)
+    if (energyStorageNBT != null) {
       CapabilityEnergy.ENERGY.readNBT(energyStorage, null, energyStorageNBT);
+    }
     getInventoryFromNBT(nbtIn);
     mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, tier);
     super.read(stateIn, nbtIn);
@@ -300,17 +299,28 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   }
 
   @Override
+  public void onLoad() {
+    super.onLoad();
+  }
+
+  // On chunk load
+  @Override
   @Nonnull
   public CompoundNBT getUpdateTag() {
     CompoundNBT mappingsNBT = super.getUpdateTag();
     mappingsNBT.putInt("tier", Tier.getOrdinal(tier.tier));
+    mappingsNBT.put("energyStorage", CapabilityEnergy.ENERGY.writeNBT(energyStorage, null));
     getNBTFromMappings(mappingsNBT);
     return mappingsNBT;
   }
 
   @Override
   public void handleUpdateTag(BlockState state, CompoundNBT tag) {
+    setTier(Tier.valueOf(tag.getInt("tier")));
     mappings = Mapping.getMappingsFromNBT(tag, identifiers, tier);
+    INBT energyStorageNBT = tag.get("energyStorage");
+    if (energyStorageNBT != null)
+      CapabilityEnergy.ENERGY.readNBT(energyStorage, null, energyStorageNBT);
     super.handleUpdateTag(state, tag);
   }
 
@@ -318,14 +328,19 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   public SUpdateTileEntityPacket getUpdatePacket() {
     CompoundNBT nbtTag = new CompoundNBT();
     nbtTag.putInt("tier", Tier.getOrdinal(tier.tier));
+    //getNBTFromMappings(nbtTag);
     nbtTag.put("energyStorage", CapabilityEnergy.ENERGY.writeNBT(energyStorage, null));
-    getNBTFromMappings(nbtTag);
     return new SUpdateTileEntityPacket(getPos(), -1, nbtTag);
   }
 
   @Override
   public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-    mappings = Mapping.getMappingsFromNBT(pkt.getNbtCompound(), identifiers, tier);
+    CompoundNBT compound = pkt.getNbtCompound();
+    setTier(Tier.valueOf(compound.getInt("tier")));
+    mappings = Mapping.getMappingsFromNBT(compound, identifiers, tier);
+    INBT energyStorageNBT = compound.get("energyStorage");
+    if (energyStorageNBT != null)
+      CapabilityEnergy.ENERGY.readNBT(energyStorage, null, energyStorageNBT);
   }
 
   public ArrayList<Mapping> getMappings() {
@@ -390,21 +405,33 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   public void getMappingsFromNBT(CompoundNBT controllerNodeTENBT) {
     mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, tier);
-    if(world.isRemote()) {
+    if (world.isRemote()) {
       Screen currentTmp = Minecraft.getInstance().currentScreen;
-      if(currentTmp instanceof RouterScreen) {
+      if (currentTmp instanceof RouterScreen) {
         RouterScreen current = (RouterScreen) currentTmp;
         current.update();
       }
     }
   }
 
-  public int getMaxItemsPerTick() {
-    return tier.maxItemsPerTick;
-  }
-
   public RouterTier getTier() {
     return tier;
   }
 
+  private void setTier(@Nonnull Tier tier) {
+    this.tier = new RouterTier(tier);
+    energyStorage.setCapacity(this.tier.maxEnergy);
+    energyStorage.setMaxReceive(this.tier.maxEnergyPerTick);
+  }
+
+  public void setMappings(ArrayList<Mapping> mappings) {
+    this.mappings = mappings;
+    if (world.isRemote()) {
+      Screen currentTmp = Minecraft.getInstance().currentScreen;
+      if (currentTmp instanceof RouterScreen) {
+        RouterScreen current = (RouterScreen) currentTmp;
+        current.update();
+      }
+    }
+  }
 }

@@ -13,7 +13,7 @@ public class TileEntities {
   public static void registerTE(RegistryEvent.Register<TileEntityType<?>> tileEntityRegistryEvent) {
     TileEntityTypes.ROUTER = (TileEntityType<RouterTE>) TileEntityType.Builder.create(RouterTE::new,
       Blocks.BASIC_ROUTER, Blocks.ADVANCED_ROUTER, Blocks.ELITE_ROUTER,
-      Blocks.ULTIMATE_ROUTER).build(null).setRegistryName("example_block");
+      Blocks.ULTIMATE_ROUTER).build(null).setRegistryName("router");
     tileEntityRegistryEvent.getRegistry().registerAll(TileEntityTypes.ROUTER);
   }
 
