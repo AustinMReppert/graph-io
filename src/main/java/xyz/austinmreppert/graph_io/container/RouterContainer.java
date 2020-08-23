@@ -99,6 +99,12 @@ public class RouterContainer extends Container {
     });
   }
 
+  public void setFilterSlotContents(Inventory filter) {
+    for (int i = 0; i < tmpFilterInventory.getSizeInventory(); ++i) {
+      filterSlots.get(i).setEnabled(true);
+      tmpFilterInventory.setInventorySlotContents(i, filter.getStackInSlot(i));
+    }
+  }
 
   @Override
   public void addListener(IContainerListener listener) {
@@ -149,6 +155,13 @@ public class RouterContainer extends Container {
       return super.slotClick(slotId, dragType, clickType, player);
   }
 
+  public void disableFilterSlots() {
+    for (FilterSlot filterSlot : filterSlots) {
+      filterSlot.setEnabled(false);
+      filterSlot.putStack(ItemStack.EMPTY);
+    }
+  }
+
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
@@ -188,6 +201,15 @@ public class RouterContainer extends Container {
 
   public MappingsReferenceHolder getTrackedMappingsReference() {
     return trackedMappingsReference;
+  }
+
+  /**
+   * Copies the slot contents to an inventory.
+   * @param inventory The inventory to copy to.
+   */
+  public void copySlotContents(Inventory inventory) {
+    for (int i = 0; i < routerTE.getTier().filterSize; ++i)
+      inventory.setInventorySlotContents(i, tmpFilterInventory.getStackInSlot(i));
   }
 
 }

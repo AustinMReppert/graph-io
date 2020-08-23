@@ -403,8 +403,8 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     return CapabilityEnergy.ENERGY.orEmpty(cap, energyCapabilityLO);
   }
 
-  public void getMappingsFromNBT(CompoundNBT controllerNodeTENBT) {
-    mappings = Mapping.getMappingsFromNBT(controllerNodeTENBT, identifiers, tier);
+  public void getMappingsFromNBT(CompoundNBT nbt) {
+    mappings = Mapping.getMappingsFromNBT(nbt, identifiers, tier);
     if (world.isRemote()) {
       Screen currentTmp = Minecraft.getInstance().currentScreen;
       if (currentTmp instanceof RouterScreen) {

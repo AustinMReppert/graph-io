@@ -56,12 +56,10 @@ public class RouterBlock extends ContainerBlock {
     return BlockRenderType.MODEL;
   }
 
-
   @Override
   @Nullable
   public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-    TileEntity controllerNodeTE = new RouterTE(tier);
-    return controllerNodeTE;
+    return new RouterTE(tier);
   }
 
   @Override
@@ -86,8 +84,7 @@ public class RouterBlock extends ContainerBlock {
   @Override
   @ParametersAreNonnullByDefault
   public TileEntity createNewTileEntity(IBlockReader blockReader) {
-    TileEntity controllerNodeTE = new RouterTE(tier);
-    return controllerNodeTE;
+    return new RouterTE(tier);
   }
 
   @Override
