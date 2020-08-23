@@ -232,7 +232,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
     renderBackground(matrixStack);
     super.render(matrixStack, mouseX, mouseY, partialTicks);
-    func_230459_a_(matrixStack, mouseX, mouseY);
+    renderHoveredTooltip(matrixStack, mouseX, mouseY);
 
     for (TextFieldWidget mapping : rawMappings)
       mapping.render(matrixStack, mouseX, mouseY, partialTicks);
@@ -472,7 +472,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   @ParametersAreNonnullByDefault
   protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
     super.drawGuiContainerForegroundLayer(matrixStack, x, y);
-    font.func_238422_b_(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
+    font.func_243248_b(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
 
     String itemsPerTickStr = "?";
     String bucketsPerTickStr = "?";
@@ -486,15 +486,15 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       energyPerTickStr = focused.getEnergyPerTick() + "";
       tickDelayStr = focused.getTickDelay() + "";
     }
-    font.func_238422_b_(matrixStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
+    font.func_243248_b(matrixStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
     font.drawString(matrixStack, itemsPerTickStr, -80, 19, TEXT_COLOR);
-    font.func_238422_b_(matrixStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
+    font.func_243248_b(matrixStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
     font.drawString(matrixStack, bucketsPerTickStr, -80, 50, TEXT_COLOR);
-    font.func_238422_b_(matrixStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
+    font.func_243248_b(matrixStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
     font.drawString(matrixStack, energyPerTickStr, -80, 81, TEXT_COLOR);
-    font.func_238422_b_(matrixStack, TICK_DELAY, -80, 103, TEXT_COLOR);
+    font.func_243248_b(matrixStack, TICK_DELAY, -80, 103, TEXT_COLOR);
     font.drawString(matrixStack, tickDelayStr, -80, 112, TEXT_COLOR);
-    font.func_238422_b_(matrixStack, ENERGY, -80, 134, TEXT_COLOR);
+    font.func_243248_b(matrixStack, ENERGY, -80, 134, TEXT_COLOR);
     font.drawString(matrixStack, energyStr, -80, 144, TEXT_COLOR);
   }
 

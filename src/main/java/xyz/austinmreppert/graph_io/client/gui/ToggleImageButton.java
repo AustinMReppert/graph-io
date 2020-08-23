@@ -72,7 +72,8 @@ public class ToggleImageButton extends ImageButton {
     else
       list.add(toolTip);
     FontRenderer font = Minecraft.getInstance().fontRenderer;
-    net.minecraftforge.fml.client.gui.GuiUtils.drawHoveringText(matrixStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);
+    // TODO: Uncomment once forge adds this
+    // net.minecraftforge.fml.client.gui.GuiUtils.drawHoveringText(matrixStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);
   }
 
   public boolean isEnabled() {
