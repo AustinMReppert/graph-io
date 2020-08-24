@@ -126,7 +126,7 @@ public class RouterContainer extends Container {
     super.detectAndSendChanges();
 
     if (trackedMappingsReference.isDirty()) {
-      SetMappingsPacket packet = new SetMappingsPacket(routerTE.getPos(), Mapping.toNBT(trackedMappingsReference.get.get(), new CompoundNBT()), windowId);
+      SetMappingsPacket packet = new SetMappingsPacket(routerTE.getPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundNBT()), windowId);
       for (ServerPlayerEntity containerListener : listeners) {
         PacketHander.INSTANCE.sendTo(packet, containerListener.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
       }

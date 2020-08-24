@@ -2,9 +2,9 @@ package xyz.austinmreppert.graph_io.item_group;
 
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
 import xyz.austinmreppert.graph_io.GraphIO;
+import xyz.austinmreppert.graph_io.item.Items;
 
 public class ItemGroups {
 
@@ -12,12 +12,12 @@ public class ItemGroups {
 
     @Override
     public ItemStack createIcon() {
-      return new ItemStack(Items.LAPIS_BLOCK);
+      return new ItemStack(Items.IDENTIFIER);
     }
 
     @Override
     public boolean hasSearchBar() {
-      return true;
+      return false;
     }
 
     @Override

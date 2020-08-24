@@ -146,7 +146,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   }
 
   private void updateMappings() {
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getPos(), Mapping.toNBT(getMappings()), container.windowId));
+    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getPos(), Mapping.write(getMappings()), container.windowId));
   }
 
   public ArrayList<Mapping> getMappings() {
@@ -172,19 +172,9 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
       minecraft.player.closeScreen();
     else if (keyCode == GLFW.GLFW_KEY_ENTER && !locked) {
-      for (int i = 0; i < rawMappings.size(); ++i) {
-        rawMappings.get(i).setFocused2(false);
-      }
-      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y * (font.FONT_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
-      mapping.setCanLoseFocus(true);
-      mapping.setTextColor(TEXT_COLOR);
-      mapping.setDisabledTextColour(-1);
-      mapping.setEnableBackgroundDrawing(true);
-      mapping.setMaxStringLength(40);
-      mapping.setResponder(this::onTextChanged);
-      mapping.setText("");
-      mapping.setVisible(false);
-      mapping.setEnabled(true);
+      for (TextFieldWidget rawMapping : rawMappings)
+        rawMapping.setFocused2(false);
+      TextFieldWidget mapping = createMappingTextField("", getMappings().size());
       if (canScroll(rawMappings.size()))
         currentScroll = 1.0F;
       else
@@ -389,20 +379,25 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private void createMappingTextFields() {
     rawMappings.clear();
     for (int i = 0; i < getMappings().size(); ++i) {
-      TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y + (i % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
-      mapping.setCanLoseFocus(true);
-      mapping.setTextColor(TEXT_COLOR);
-      mapping.setDisabledTextColour(-1);
-      mapping.setEnableBackgroundDrawing(true);
-      mapping.setResponder(this::onTextChanged);
-      mapping.setMaxStringLength(40);
-      mapping.setEnabled(true);
-      mapping.setText(getMappings().get(i).getRaw());
+      TextFieldWidget mapping = createMappingTextField(getMappings().get(i).getRaw(), i);
       if (i >= MAPPINGS_PER_PAGE)
         mapping.setVisible(false);
       children.add(mapping);
       rawMappings.add(mapping);
     }
+  }
+
+  public TextFieldWidget createMappingTextField(String contents, int index) {
+    TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
+    mapping.setCanLoseFocus(true);
+    mapping.setTextColor(TEXT_COLOR);
+    mapping.setDisabledTextColour(-1);
+    mapping.setEnableBackgroundDrawing(true);
+    mapping.setResponder(this::onTextChanged);
+    mapping.setMaxStringLength(40);
+    mapping.setEnabled(true);
+    mapping.setText(contents);
+    return mapping;
   }
 
   public boolean mouseDragged(double mouseX, double mouseY, int p_231045_5_, double dragX, double dragY) {

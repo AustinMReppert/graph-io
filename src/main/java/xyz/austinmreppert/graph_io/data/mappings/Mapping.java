@@ -38,6 +38,10 @@ public class Mapping {
     outputs = new ArrayList<>();
     if (components.length != 2)
       return;
+    parseMapping(identifiers, components);
+  }
+
+  private void parseMapping(Set<String> identifiers, String[] components) {
     String[] inputsTmp = components[0].split(",");
     String[] outputsTmp = components[1].split(",");
     ArrayList<String> inputs = new ArrayList<>();
@@ -82,23 +86,16 @@ public class Mapping {
     this.tickDelay = MathHelper.clamp(tickDelay, tier.minTickDelay, 20);
   }
 
-  public Mapping(Mapping mapping) {
-    this(mapping.raw, mapping.distributionScheme, mapping.filterScheme,
-      mapping.itemsPerTick, mapping.bucketsPerTick, mapping.energyPerTick, mapping.tickDelay, mapping.routerTier);
-    for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i)
-      filterInventory.setInventorySlotContents(i, mapping.getFilterInventory().getStackInSlot(i).copy());
-  }
-
   public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, RouterTier tier) {
     this(raw, distributionScheme, filterScheme, tier.maxItemsPerTick, tier.maxBucketsPerTick, tier.maxEnergyPerTick, tier.minTickDelay, tier);
   }
 
-  public static CompoundNBT toNBT(ArrayList<Mapping> mappingsCopy) {
+  public static CompoundNBT write(ArrayList<Mapping> mappingsCopy) {
     CompoundNBT mappingsNBT = new CompoundNBT();
-    return Mapping.toNBT(mappingsCopy, mappingsNBT);
+    return Mapping.write(mappingsCopy, mappingsNBT);
   }
 
-  public static CompoundNBT toNBT(ArrayList<Mapping> mappingsCopy, CompoundNBT nbt) {
+  public static CompoundNBT write(ArrayList<Mapping> mappingsCopy, CompoundNBT nbt) {
     ListNBT list = new ListNBT();
     for (Mapping mapping : mappingsCopy) {
       CompoundNBT mappingNBT = new CompoundNBT();
@@ -111,6 +108,7 @@ public class Mapping {
       mappingNBT.putInt("tickDelay", mapping.tickDelay);
 
       ListNBT filterNBT = new ListNBT();
+      mapping.filterInventory.write();
       for (int i = 0; i < mapping.filterInventory.getSizeInventory(); ++i) {
         if (!mapping.filterInventory.getStackInSlot(i).isEmpty()) {
           CompoundNBT compoundnbt = new CompoundNBT();
@@ -126,7 +124,7 @@ public class Mapping {
     return nbt;
   }
 
-  public static ArrayList<Mapping> getMappingsFromNBT(CompoundNBT tag, HashMap<String, BlockPos> identifiers, RouterTier tier) {
+  public static ArrayList<Mapping> read(CompoundNBT tag, HashMap<String, BlockPos> identifiers, RouterTier tier) {
     ListNBT list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
     ArrayList<Mapping> mappings = new ArrayList<>(list.size());
     for (int i = 0; i < list.size(); ++i) {

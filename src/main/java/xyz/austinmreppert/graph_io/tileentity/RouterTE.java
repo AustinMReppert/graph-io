@@ -256,7 +256,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
    * @param compound The nbt tag to write to.
    */
   private void writeMappingsNBT(CompoundNBT compound) {
-    Mapping.toNBT(mappings, compound);
+    Mapping.write(mappings, compound);
   }
 
   @Override
@@ -268,7 +268,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
       CapabilityEnergy.ENERGY.readNBT(energyStorage, null, energyStorageNBT);
     }
     readInventory(nbtIn);
-    mappings = Mapping.getMappingsFromNBT(nbtIn, identifiers, tier);
+    mappings = Mapping.read(nbtIn, identifiers, tier);
     super.read(stateIn, nbtIn);
   }
 
@@ -348,7 +348,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
    * @param nbt The nbt data to read from.
    */
   public void readMappings(CompoundNBT nbt) {
-    mappings = Mapping.getMappingsFromNBT(nbt, identifiers, tier);
+    mappings = Mapping.read(nbt, identifiers, tier);
     if (world.isRemote()) {
       Screen currentTmp = Minecraft.getInstance().currentScreen;
       if (currentTmp instanceof RouterScreen) {
@@ -360,17 +360,6 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   public ArrayList<Mapping> getMappings() {
     return mappings;
-  }
-
-  public void setMappings(ArrayList<Mapping> mappings) {
-    this.mappings = mappings;
-    if (world.isRemote()) {
-      Screen currentTmp = Minecraft.getInstance().currentScreen;
-      if (currentTmp instanceof RouterScreen) {
-        RouterScreen current = (RouterScreen) currentTmp;
-        current.update();
-      }
-    }
   }
 
   @Override

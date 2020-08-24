@@ -10,7 +10,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class FilterSlot extends Slot {
 
-  boolean enabled;
+  private boolean enabled;
 
   public FilterSlot(IInventory inventoryIn, int index, int xPosition, int yPosition) {
     super(inventoryIn, index, xPosition, yPosition);
