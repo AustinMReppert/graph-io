@@ -1,6 +1,7 @@
 {
   "item.graphio.identifier": "Identifier",
   "itemGroup.graphio": "Graph IO",
+  "block.graphio.router": "Router",
   "block.graphio.basic_router": "Basic Router",
   "item.graphio.basic_router_core": "Basic Router Core",
   "item.graphio.advanced_router_core": "Advanced Router Core",

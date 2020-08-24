@@ -20,7 +20,8 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
-import xyz.austinmreppert.graph_io.data.tiers.Tier;
+import xyz.austinmreppert.graph_io.data.mappings.Mapping;
+import xyz.austinmreppert.graph_io.data.tiers.BaseTier;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nonnull;
@@ -29,15 +30,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class RouterBlock extends ContainerBlock {
 
-  private Tier tier;
+  private BaseTier baseTier;
 
   private RouterBlock() {
     super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15).hardnessAndResistance(3.0F).notSolid().setOpaque(RouterBlock::func_235436_b_));
   }
 
-  public RouterBlock(Tier tier) {
+  public RouterBlock(BaseTier baseTier) {
     this();
-    this.tier = tier;
+    this.baseTier = baseTier;
   }
 
   private static boolean func_235436_b_(BlockState p_235436_0_, IBlockReader p_235436_1_, BlockPos p_235436_2_) {
@@ -59,7 +60,7 @@ public class RouterBlock extends ContainerBlock {
   @Override
   @Nullable
   public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-    return new RouterTE(tier);
+    return new RouterTE(baseTier);
   }
 
   @Override
@@ -74,8 +75,16 @@ public class RouterBlock extends ContainerBlock {
   public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
     if (!worldIn.isRemote) {
       final TileEntity tileEntity = worldIn.getTileEntity(pos);
-      if (tileEntity instanceof RouterTE)
-        NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, pos);
+      if (tileEntity instanceof RouterTE) {
+        RouterTE router = (RouterTE) tileEntity;
+        if(player.isSneaking())
+          NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, pos);
+        else
+          NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, (packetBuffer) -> {
+            packetBuffer.writeBlockPos(pos);
+            packetBuffer.writeCompoundTag(Mapping.toNBT(router.getMappings()));
+          });
+      }
     }
     return ActionResultType.SUCCESS;
   }
@@ -84,7 +93,7 @@ public class RouterBlock extends ContainerBlock {
   @Override
   @ParametersAreNonnullByDefault
   public TileEntity createNewTileEntity(IBlockReader blockReader) {
-    return new RouterTE(tier);
+    return new RouterTE(baseTier);
   }
 
   @Override

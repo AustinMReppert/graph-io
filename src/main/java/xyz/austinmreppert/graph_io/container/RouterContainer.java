@@ -40,6 +40,7 @@ public class RouterContainer extends Container {
 
   public RouterContainer(int windowId, PlayerInventory inv, PacketBuffer data) {
     this(windowId, inv, (RouterTE) inv.player.world.getTileEntity(data.readBlockPos()));
+    trackedMappingsReference.set.accept(data.readCompoundTag());
   }
 
   public RouterContainer(int windowId, PlayerInventory inv, RouterTE routerTE) {
@@ -95,7 +96,7 @@ public class RouterContainer extends Container {
     this.trackedMappingsReference = new MappingsReferenceHolder(() -> {
       return routerTE.getMappings();
     }, (INBT mappingsNBT) -> {
-      routerTE.getMappingsFromNBT((CompoundNBT) mappingsNBT);
+      routerTE.readMappings((CompoundNBT) mappingsNBT);
     });
   }
 

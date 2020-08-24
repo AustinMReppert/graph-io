@@ -35,7 +35,7 @@ public class SetMappingsPacket {
         TileEntity te = context.get().getSender().getEntityWorld().getTileEntity(packet.blockPos);
         if (te instanceof RouterTE) {
           RouterTE routerTE = (RouterTE) te;
-          routerTE.getMappingsFromNBT(packet.routerTENBT);
+          routerTE.readMappings(packet.routerTENBT);
           routerTE.markDirty();
         }
       } else {

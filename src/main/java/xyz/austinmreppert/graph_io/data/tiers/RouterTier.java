@@ -1,8 +1,10 @@
 package xyz.austinmreppert.graph_io.data.tiers;
 
+import javax.annotation.Nonnull;
+
 public class RouterTier {
 
-  public final Tier tier;
+  public final BaseTier baseTier;
   public final int filterSize;
   public final int maxItemsPerTick;
   public final int maxBucketsPerTick;
@@ -10,43 +12,38 @@ public class RouterTier {
   public final int maxEnergy;
   public final int minTickDelay;
 
-  public RouterTier(Tier tier) {
-    this.tier = tier;
-    if (tier == Tier.BASIC) {
+  public RouterTier(@Nonnull BaseTier baseTier) {
+    this.baseTier = baseTier;
+    if (baseTier == BaseTier.BASIC) {
       maxItemsPerTick = 1;
       maxBucketsPerTick = 100;
       maxEnergyPerTick = 3200;
       minTickDelay = 20;
       maxEnergy = maxEnergyPerTick * 5;
       filterSize = 5;
-    } else if (tier == Tier.ADVANCED) {
+    } else if (baseTier == BaseTier.ADVANCED) {
       maxItemsPerTick = 16;
       maxBucketsPerTick = 400;
       maxEnergyPerTick = 12800;
       minTickDelay = 15;
       maxEnergy = maxEnergyPerTick * 5;
       filterSize = 10;
-    } else if (tier == Tier.ELITE) {
+    } else if (baseTier == BaseTier.ELITE) {
       maxItemsPerTick = 32;
       maxBucketsPerTick = 1600;
       maxEnergyPerTick = 64000;
       minTickDelay = 10;
       maxEnergy = maxEnergyPerTick * 5;
       filterSize = 15;
-    } else if (tier == Tier.ULTIMATE) {
+    } else if (baseTier == BaseTier.ULTIMATE) {
       maxItemsPerTick = 64;
       maxBucketsPerTick = 6400;
       maxEnergyPerTick = 320000;
       minTickDelay = 1;
       maxEnergy = maxEnergyPerTick * 5;
       filterSize = 20;
-    } else {
+    } else
       throw new IllegalArgumentException("Invalid tier.");
-    }
-  }
-
-  public RouterTier(int tierOrdinal) {
-    this(Tier.valueOf(tierOrdinal));
   }
 
 }
