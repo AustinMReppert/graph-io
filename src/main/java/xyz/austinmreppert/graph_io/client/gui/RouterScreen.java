@@ -32,7 +32,9 @@ import java.util.Optional;
 public class RouterScreen extends ContainerScreen<RouterContainer> implements IHasContainer<RouterContainer> {
 
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/router.png");
-  private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/cyclic_button.png");
+  private static final ResourceLocation NATURAL_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/natural_button.png");
+  private static final ResourceLocation CYCLIC_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/cyclic_button.png");
+  private static final ResourceLocation RANDOM_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/random_button.png");
   private static final ResourceLocation FILTER_SCHEME_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/filter_scheme_button.png");
   private static final ResourceLocation MINUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/decrease_stack_size_button.png");
   private static final ResourceLocation PLUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/increase_stack_size_button.png");
@@ -72,19 +74,18 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private final int SLOT_TEXTURE_WIDTH = 18;
   private final int SLOT_TEXTURE_HEIGHT = 18;
   private final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
-  private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y;
+  private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
   private final int TEXT_COLOR = Color.func_240745_a_("#FFFFFF").func_240742_a_();
   public int inventoryRows;
   protected TextFieldWidget inputField;
   private float currentScroll;
   private boolean isScrolling;
-  private ArrayList<TextFieldWidget> rawMappings;
-  private boolean locked = false;
-  private ITextComponent ITEMS_PER_TICK = new TranslationTextComponent("graphio.gui.items_per_tick");
-  private ITextComponent BUCKETS_PER_TICK = new TranslationTextComponent("graphio.gui.buckets_per_tick");
-  private ITextComponent ENERGY_PER_TICK = new TranslationTextComponent("graphio.gui.energy_per_tick");
-  private ITextComponent TICK_DELAY = new TranslationTextComponent("graphio.gui.tick_delay");
-  private ITextComponent ENERGY = new TranslationTextComponent("graphio.gui.energy");
+  private final ArrayList<TextFieldWidget> rawMappings;
+  private final ITextComponent ITEMS_PER_TICK = new TranslationTextComponent("graphio.gui.items_per_tick");
+  private final ITextComponent BUCKETS_PER_TICK = new TranslationTextComponent("graphio.gui.buckets_per_tick");
+  private final ITextComponent ENERGY_PER_TICK = new TranslationTextComponent("graphio.gui.energy_per_tick");
+  private final ITextComponent TICK_DELAY = new TranslationTextComponent("graphio.gui.tick_delay");
+  private final ITextComponent ENERGY = new TranslationTextComponent("graphio.gui.energy");
   private ToggleImageButton distributeRandomlyButton;
   private ToggleImageButton distributeCyclicallyButton;
   private ToggleImageButton distributeNaturallyButton;
@@ -171,7 +172,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
       minecraft.player.closeScreen();
-    else if (keyCode == GLFW.GLFW_KEY_ENTER && !locked) {
+    else if (keyCode == GLFW.GLFW_KEY_ENTER) {
       for (TextFieldWidget rawMapping : rawMappings)
         rawMapping.setFocused2(false);
       TextFieldWidget mapping = createMappingTextField("", getMappings().size());
@@ -188,7 +189,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       setListener(mapping);
       updateMappings();
       return true;
-    } else if (keyCode == GLFW.GLFW_KEY_DELETE && !locked && getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
+    } else if (keyCode == GLFW.GLFW_KEY_DELETE && getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
       if (rawMappings.size() < 1) return true;
       int index = rawMappings.indexOf(getListener());
       if (index != -1) {
@@ -265,7 +266,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     createMappingTextFields();
     scrollTo(currentScroll);
 
-    this.addButton(distributeNaturallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X, guiTop + DISTRIBUTION_BUTTONS_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addButton(distributeNaturallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X, guiTop + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, NATURAL_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.NATURAL);
         updateMappingGUI();
@@ -273,7 +274,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       });
     }, new TranslationTextComponent("gui.graphio.natural"), this));
 
-    this.addButton(distributeCyclicallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24, guiTop + DISTRIBUTION_BUTTONS_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addButton(distributeCyclicallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24, guiTop + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, CYCLIC_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.CYCLIC);
         updateMappingGUI();
@@ -281,7 +282,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       });
     }, new TranslationTextComponent("gui.graphio.cyclic"), this));
 
-    this.addButton(distributeRandomlyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24 * 2, guiTop + DISTRIBUTION_BUTTONS_Y, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addButton(distributeRandomlyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24 * 2, guiTop + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, RANDOM_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.RANDOM);
         updateMappingGUI();

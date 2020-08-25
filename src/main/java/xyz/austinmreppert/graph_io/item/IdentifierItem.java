@@ -12,6 +12,8 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
@@ -23,6 +25,8 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 public class IdentifierItem extends Item {
+
+  private static final TranslationTextComponent POINTS_TO = new TranslationTextComponent("graphio.chat.identifier_points_to");
 
   public IdentifierItem(Properties properties) {
     super(properties);
@@ -47,7 +51,7 @@ public class IdentifierItem extends Item {
       } else if (!playerIn.isSneaking() && identifierCapability.getBlockPos() != null) {
         BlockPos identifierPos = identifierCapability.getBlockPos();
         if (worldIn.isRemote) {
-          Minecraft.getInstance().player.sendChatMessage("Identifier points to (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ")");
+          Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(ITextComponent.func_244388_a(POINTS_TO.getString() +  " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ")"));
           Highlighter.toggleHighlightBlock(identifierPos, 0.01F, 255, 0, 0, 125);
         }
       }

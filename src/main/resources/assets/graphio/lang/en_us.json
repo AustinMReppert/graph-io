@@ -1,4 +1,5 @@
 {
+  "graphio.chat.identifier_points_to": "Identifier points to",
   "item.graphio.identifier": "Identifier",
   "itemGroup.graphio": "Graph IO",
   "block.graphio.router": "Router",

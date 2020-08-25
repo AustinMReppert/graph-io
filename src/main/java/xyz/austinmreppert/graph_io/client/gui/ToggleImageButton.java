@@ -31,8 +31,8 @@ public class ToggleImageButton extends ImageButton {
     this.enabledToolTip = enabledToolTip;
   }
 
-  public ToggleImageButton(int xIn, int yIn, int widthIn, int heightIn, int xTexStart, int yTexStart, int yDiffText, ResourceLocation resourceLocationIn, int textureWidth, int textureHeight, IPressable onPressIn, ITextComponent toolTip, Screen screen) {
-    super(xIn, yIn, widthIn, heightIn, xTexStart, yTexStart, yDiffText, resourceLocationIn, textureWidth, textureHeight, onPressIn, toolTip);
+  public ToggleImageButton(int x, int y, int width, int height, int xTexStart, int yTexStart, int yDiffText, ResourceLocation resourceLocationIn, int textureWidth, int textureHeight, IPressable onPressIn, ITextComponent toolTip, Screen screen) {
+    super(x, y, width, height, xTexStart, yTexStart, yDiffText, resourceLocationIn, textureWidth, textureHeight, onPressIn, toolTip);
     this.textureWidth = textureWidth;
     this.textureHeight = textureHeight;
     this.xTexStart = xTexStart;
@@ -51,9 +51,9 @@ public class ToggleImageButton extends ImageButton {
     minecraft.getTextureManager().bindTexture(resourceLocation);
     int i = yTexStart;
     if (!isHovered() && enabled)
-      i += yDiffText;
-    else if (isHovered && !enabled)
       i += yDiffText * 2;
+    else if (isHovered && !enabled)
+      i += yDiffText;
     else if (isHovered() && enabled)
       i += yDiffText * 3;
 
