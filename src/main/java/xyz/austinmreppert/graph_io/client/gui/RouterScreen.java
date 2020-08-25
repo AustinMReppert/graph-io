@@ -76,16 +76,16 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
   private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
   private final int TEXT_COLOR = Color.func_240745_a_("#FFFFFF").func_240742_a_();
-  public int inventoryRows;
-  protected TextFieldWidget inputField;
-  private float currentScroll;
-  private boolean isScrolling;
   private final ArrayList<TextFieldWidget> rawMappings;
   private final ITextComponent ITEMS_PER_TICK = new TranslationTextComponent("graphio.gui.items_per_tick");
   private final ITextComponent BUCKETS_PER_TICK = new TranslationTextComponent("graphio.gui.buckets_per_tick");
   private final ITextComponent ENERGY_PER_TICK = new TranslationTextComponent("graphio.gui.energy_per_tick");
   private final ITextComponent TICK_DELAY = new TranslationTextComponent("graphio.gui.tick_delay");
   private final ITextComponent ENERGY = new TranslationTextComponent("graphio.gui.energy");
+  public int inventoryRows;
+  protected TextFieldWidget inputField;
+  private float currentScroll;
+  private boolean isScrolling;
   private ToggleImageButton distributeRandomlyButton;
   private ToggleImageButton distributeCyclicallyButton;
   private ToggleImageButton distributeNaturallyButton;
@@ -115,29 +115,10 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private void updateMappingGUI() {
     getLastFocusedMapping().ifPresentOrElse((mapping) -> {
       Mapping.DistributionScheme mappingDistributionScheme = mapping.getDistributionScheme();
-      if (mappingDistributionScheme == Mapping.DistributionScheme.NATURAL) {
-        distributeNaturallyButton.setEnabled(true);
-        distributeCyclicallyButton.setEnabled(false);
-        distributeRandomlyButton.setEnabled(false);
-      } else if (mappingDistributionScheme == Mapping.DistributionScheme.CYCLIC) {
-        distributeNaturallyButton.setEnabled(false);
-        distributeCyclicallyButton.setEnabled(true);
-        distributeRandomlyButton.setEnabled(false);
-      } else if (mappingDistributionScheme == Mapping.DistributionScheme.RANDOM) {
-        distributeNaturallyButton.setEnabled(false);
-        distributeCyclicallyButton.setEnabled(false);
-        distributeRandomlyButton.setEnabled(true);
-      } else {
-        distributeNaturallyButton.setEnabled(false);
-        distributeCyclicallyButton.setEnabled(false);
-        distributeRandomlyButton.setEnabled(false);
-      }
-
-      Mapping.FilterScheme mappingFilterScheme = mapping.getFilterScheme();
-      if (mappingFilterScheme == Mapping.FilterScheme.BLACK_LIST)
-        filterSchemeButton.setEnabled(false);
-      else if (mappingFilterScheme == Mapping.FilterScheme.WHITE_LIST)
-        filterSchemeButton.setEnabled(true);
+      distributeNaturallyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.NATURAL);
+      distributeCyclicallyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.CYCLIC);
+      distributeRandomlyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.RANDOM);
+      filterSchemeButton.setEnabled(mapping.getFilterScheme() == Mapping.FilterScheme.WHITE_LIST);
     }, () -> {
       distributeNaturallyButton.setEnabled(false);
       distributeCyclicallyButton.setEnabled(false);
