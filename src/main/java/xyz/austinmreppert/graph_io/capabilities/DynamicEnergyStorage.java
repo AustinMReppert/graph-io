@@ -1,6 +1,6 @@
 package xyz.austinmreppert.graph_io.capabilities;
 
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 import net.minecraftforge.energy.EnergyStorage;
 
 public class DynamicEnergyStorage extends EnergyStorage {
@@ -14,7 +14,7 @@ public class DynamicEnergyStorage extends EnergyStorage {
   }
 
   public void setEnergyStored(int amount, boolean clamp) {
-    this.energy = clamp ? MathHelper.clamp(amount, 0, capacity) : amount;
+    this.energy = clamp ? Mth.clamp(amount, 0, capacity) : amount;
   }
 
   public void setEnergyStored(int amount) {

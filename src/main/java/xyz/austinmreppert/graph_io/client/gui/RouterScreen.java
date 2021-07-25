@@ -1,21 +1,22 @@
 package xyz.austinmreppert.graph_io.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.IHasContainer;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.Color;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraftforge.client.event.RenderTooltipEvent;
 import org.lwjgl.glfw.GLFW;
 import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
@@ -29,7 +30,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class RouterScreen extends ContainerScreen<RouterContainer> implements IHasContainer<RouterContainer> {
+public class RouterScreen extends AbstractContainerScreen<RouterContainer> implements MenuAccess<RouterContainer> {
 
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/router.png");
   private static final ResourceLocation NATURAL_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/natural_button.png");
@@ -75,15 +76,15 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private final int SLOT_TEXTURE_HEIGHT = 18;
   private final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
   private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
-  private final int TEXT_COLOR = Color.func_240745_a_("#FFFFFF").func_240742_a_();
-  private final ArrayList<TextFieldWidget> rawMappings;
-  private final ITextComponent ITEMS_PER_TICK = new TranslationTextComponent("graphio.gui.items_per_tick");
-  private final ITextComponent BUCKETS_PER_TICK = new TranslationTextComponent("graphio.gui.buckets_per_tick");
-  private final ITextComponent ENERGY_PER_TICK = new TranslationTextComponent("graphio.gui.energy_per_tick");
-  private final ITextComponent TICK_DELAY = new TranslationTextComponent("graphio.gui.tick_delay");
-  private final ITextComponent ENERGY = new TranslationTextComponent("graphio.gui.energy");
+  private final int TEXT_COLOR = TextColor.parseColor("#FFFFFF").getValue();
+  private final ArrayList<EditBox> rawMappings;
+  private final Component ITEMS_PER_TICK = new TranslatableComponent("graphio.gui.items_per_tick");
+  private final Component BUCKETS_PER_TICK = new TranslatableComponent("graphio.gui.buckets_per_tick");
+  private final Component ENERGY_PER_TICK = new TranslatableComponent("graphio.gui.energy_per_tick");
+  private final Component TICK_DELAY = new TranslatableComponent("graphio.gui.tick_delay");
+  private final Component ENERGY = new TranslatableComponent("graphio.gui.energy");
   public int inventoryRows;
-  protected TextFieldWidget inputField;
+  protected EditBox inputField;
   private float currentScroll;
   private boolean isScrolling;
   private ToggleImageButton distributeRandomlyButton;
@@ -95,17 +96,17 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private int lastFocusedMapping;
   private RouterTE routerTE;
 
-  public RouterScreen(Container screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+  public RouterScreen(AbstractContainerMenu screenContainer, Inventory inv, Component titleIn) {
     super((RouterContainer) screenContainer, inv, titleIn);
     routerTE = ((RouterContainer) screenContainer).getRouterTE();
     passEvents = false;
-    xSize = 276;
-    ySize = 256;
+    imageWidth = 276;
+    imageHeight = 256;
     width = 276;
     height = 256;
     // Inventory start
-    playerInventoryTitleX = 107;
-    playerInventoryTitleY = 162;
+    inventoryLabelX = 107;
+    inventoryLabelY = 162;
     rawMappings = new ArrayList<>();
   }
 
@@ -128,21 +129,21 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   }
 
   private void updateMappings() {
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getPos(), Mapping.write(getMappings()), container.windowId));
+    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
   }
 
   public ArrayList<Mapping> getMappings() {
-    return container.getTrackedMappingsReference().get.get();
+    return menu.getTrackedMappingsReference().get.get();
   }
 
   @Override
   public boolean charTyped(char p_231042_1_, int p_231042_2_) {
-    if (getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
-      TextFieldWidget listener = (TextFieldWidget) getListener();
+    if (getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
+      EditBox listener = (EditBox) getFocused();
       int index = rawMappings.indexOf(listener);
       boolean pressed = listener.charTyped(p_231042_1_, p_231042_2_);
       if (index != -1) {
-        getMappings().get(index).setRaw(listener.getText());
+        getMappings().get(index).setRaw(listener.getValue());
         updateMappings();
       }
       return pressed;
@@ -152,47 +153,47 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
 
   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
-      minecraft.player.closeScreen();
+      minecraft.player.closeContainer();
     else if (keyCode == GLFW.GLFW_KEY_ENTER) {
-      for (TextFieldWidget rawMapping : rawMappings)
-        rawMapping.setFocused2(false);
-      TextFieldWidget mapping = createMappingTextField("", getMappings().size());
+      for (EditBox rawMapping : rawMappings)
+        rawMapping.setFocus(false);
+      EditBox mapping = createMappingTextField("", getMappings().size());
       if (canScroll(rawMappings.size()))
         currentScroll = 1.0F;
       else
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
-      children.add(mapping);
+      addRenderableWidget(mapping);
       getMappings().add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST,
         routerTE.getTier()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
-      mapping.setFocused2(true);
-      setListener(mapping);
+      mapping.setFocus(true);
+      setFocused(mapping);
       updateMappings();
       return true;
-    } else if (keyCode == GLFW.GLFW_KEY_DELETE && getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
+    } else if (keyCode == GLFW.GLFW_KEY_DELETE && getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
       if (rawMappings.size() < 1) return true;
-      int index = rawMappings.indexOf(getListener());
+      int index = rawMappings.indexOf(getFocused());
       if (index != -1) {
         //currentScroll = (currentScroll * rawMappings.size() - 1) / (rawMappings.size() - 1);
-        container.disableFilterSlots();
+        menu.disableFilterSlots();
         lastFocusedMapping = -1;
         rawMappings.remove(index);
         getMappings().remove(index);
-        children.remove(getListener());
-        setListener(null);
+        removeWidget(getFocused());
+        setFocused(null);
         scrollTo(currentScroll);
         lastFocusedMapping = -1;
         updateMappings();
         updateMappingGUI();
       }
       return true;
-    } else if (getListener() != null && getListener() instanceof TextFieldWidget && ((TextFieldWidget) getListener()).canWrite()) {
-      TextFieldWidget listener = (TextFieldWidget) getListener();
+    } else if (getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
+      EditBox listener = (EditBox) getFocused();
       int index = rawMappings.indexOf(listener);
       boolean pressed = listener.keyPressed(keyCode, scanCode, modifiers);
       if (pressed && index != -1) {
-        getMappings().get(index).setRaw(listener.getText());
+        getMappings().get(index).setRaw(listener.getValue());
         updateMappings();
       }
       return pressed;
@@ -200,44 +201,48 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     return super.keyPressed(keyCode, scanCode, modifiers);
   }
 
+  @Override
   @ParametersAreNonnullByDefault
-  public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+  public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
     renderBackground(matrixStack);
     super.render(matrixStack, mouseX, mouseY, partialTicks);
-    renderHoveredTooltip(matrixStack, mouseX, mouseY);
 
-    for (TextFieldWidget mapping : rawMappings)
+    if (this.menu.getCarried().isEmpty() && this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+      this.renderTooltip(matrixStack, this.hoveredSlot.getItem(), mouseX, mouseY);
+    }
+
+    for (EditBox mapping : rawMappings)
       mapping.render(matrixStack, mouseX, mouseY, partialTicks);
   }
 
-  public void renderScrollbar(MatrixStack matrixStack) {
+  public void renderScrollbar(PoseStack matrixStack) {
     if (canScroll(rawMappings.size()))
-      blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(matrixStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
     else
-      blit(matrixStack, guiLeft + SCROLL_BAR_X, (int) (guiTop + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(matrixStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
   }
 
   @Override
-  public void setListener(@Nullable IGuiEventListener listener) {
+  public void setFocused(@Nullable GuiEventListener listener) {
     int index = rawMappings.indexOf(listener);
     if (index != -1) {
       lastFocusedMapping = index;
       updateMappingGUI();
-      container.setFilterSlotContents(getMappings().get(index).getFilterInventory());
+      menu.setFilterSlotContents(getMappings().get(index).getFilterInventory());
     }
-    super.setListener(listener);
+    super.setFocused(listener);
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  protected void handleMouseClick(@Nullable Slot slotIn, int slotId, int mouseButton, ClickType type) {
+  protected void slotClicked(@Nullable Slot slotIn, int slotId, int mouseButton, ClickType type) {
     if (slotIn instanceof FilterSlot) {
       getLastFocusedMapping().ifPresent((focused) -> {
-        super.handleMouseClick(slotIn, slotId, mouseButton, type);
-        container.copySlotContents(focused.getFilterInventory());
+        super.slotClicked(slotIn, slotId, mouseButton, type);
+        menu.copySlotContents(focused.getFilterInventory());
         updateMappings();
       });
-    } else super.handleMouseClick(slotIn, slotId, mouseButton, type);
+    } else super.slotClicked(slotIn, slotId, mouseButton, type);
   }
 
   @Override
@@ -247,31 +252,31 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     createMappingTextFields();
     scrollTo(currentScroll);
 
-    this.addButton(distributeNaturallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X, guiTop + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, NATURAL_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(distributeNaturallyButton = new ToggleImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, NATURAL_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.NATURAL);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.natural"), this));
+    }, new TranslatableComponent("gui.graphio.natural"), this));
 
-    this.addButton(distributeCyclicallyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24, guiTop + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, CYCLIC_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(distributeCyclicallyButton = new ToggleImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X + 24, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, CYCLIC_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.CYCLIC);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.cyclic"), this));
+    }, new TranslatableComponent("gui.graphio.cyclic"), this));
 
-    this.addButton(distributeRandomlyButton = new ToggleImageButton(this.guiLeft + DISTRIBUTION_BUTTONS_X + 24 * 2, guiTop + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, RANDOM_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(distributeRandomlyButton = new ToggleImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X + 24 * 2, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, RANDOM_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.RANDOM);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.random"), this));
+    }, new TranslatableComponent("gui.graphio.random"), this));
 
-    this.addButton(filterSchemeButton = new ToggleImageButton(this.guiLeft - 20, guiTop + INVENTORY_Y, 20, 18, 0, 0, 19, FILTER_SCHEME_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(filterSchemeButton = new ToggleImageButton(this.leftPos - 20, topPos + INVENTORY_Y, 20, 18, 0, 0, 19, FILTER_SCHEME_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         if (filterSchemeButton.isEnabled())
           mapping.setFilterScheme(Mapping.FilterScheme.BLACK_LIST);
@@ -280,71 +285,71 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.black_list"), new TranslationTextComponent("gui.graphio.white_list"), this));
+    }, new TranslatableComponent("gui.graphio.black_list"), new TranslatableComponent("gui.graphio.white_list"), this));
 
-    this.addButton(decreaseStackSizeButton = new ImageButton(this.guiLeft - 80, guiTop + 28, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(decreaseStackSizeButton = new ImageButton(this.leftPos - 80, topPos + 28, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeItemsPerTick(-1);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(increaseStackSizeButton = new ImageButton(this.guiLeft - 50, guiTop + 28, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(increaseStackSizeButton = new ImageButton(this.leftPos - 50, topPos + 28, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeItemsPerTick(1);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(decreaseBucketsButton = new ImageButton(this.guiLeft - 80, guiTop + 59, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(decreaseBucketsButton = new ImageButton(this.leftPos - 80, topPos + 59, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeBucketsPerTick(-1 * (hasShiftDown() ? 1000 : 100));
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(increaseBucketsButton = new ImageButton(this.guiLeft - 50, guiTop + 59, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(increaseBucketsButton = new ImageButton(this.leftPos - 50, topPos + 59, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeBucketsPerTick(hasShiftDown() ? 1000 : 100);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(decreaseEnergyButton = new ImageButton(this.guiLeft - 80, guiTop + 90, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(decreaseEnergyButton = new ImageButton(this.leftPos - 80, topPos + 90, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeEnergyPerTick(-1 * (hasShiftDown() ? 1000 : 100));
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(increaseEnergyButton = new ImageButton(this.guiLeft - 50, guiTop + 90, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(increaseEnergyButton = new ImageButton(this.leftPos - 50, topPos + 90, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeEnergyPerTick(hasShiftDown() ? 100 : 1);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(decreaseTickDelay = new ImageButton(this.guiLeft - 80, guiTop + 121, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(decreaseTickDelay = new ImageButton(this.leftPos - 80, topPos + 121, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeTickDelay(-1);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addButton(increaseTickDelay = new ImageButton(this.guiLeft - 50, guiTop + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addRenderableWidget(increaseTickDelay = new ImageButton(this.leftPos - 50, topPos + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeTickDelay(1);
         updateMappingGUI();
         updateMappings();
       });
-    }, new TranslationTextComponent("gui.graphio.decrease_stack_size")));
+    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
   }
 
@@ -353,7 +358,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     return Optional.of(getMappings().get(lastFocusedMapping));
   }
 
-  public Optional<TextFieldWidget> getLastFocusedMappingTF() {
+  public Optional<EditBox> getLastFocusedMappingTF() {
     if (lastFocusedMapping < 0 || lastFocusedMapping >= rawMappings.size()) return Optional.empty();
     return Optional.of(rawMappings.get(lastFocusedMapping));
   }
@@ -361,31 +366,31 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   private void createMappingTextFields() {
     rawMappings.clear();
     for (int i = 0; i < getMappings().size(); ++i) {
-      TextFieldWidget mapping = createMappingTextField(getMappings().get(i).getRaw(), i);
+      EditBox mapping = createMappingTextField(getMappings().get(i).getRaw(), i);
       if (i >= MAPPINGS_PER_PAGE)
         mapping.setVisible(false);
-      children.add(mapping);
+      addRenderableWidget(mapping);
       rawMappings.add(mapping);
     }
   }
 
-  public TextFieldWidget createMappingTextField(String contents, int index) {
-    TextFieldWidget mapping = new TextFieldWidget(font, guiLeft + MAPPING_X, guiTop + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslationTextComponent("container.repair"));
+  public EditBox createMappingTextField(String contents, int index) {
+    EditBox mapping = new EditBox(font, leftPos + MAPPING_X, topPos + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslatableComponent("container.repair"));
     mapping.setCanLoseFocus(true);
     mapping.setTextColor(TEXT_COLOR);
-    mapping.setDisabledTextColour(-1);
-    mapping.setEnableBackgroundDrawing(true);
+    mapping.setTextColorUneditable(-1);
+    mapping.setBordered(true);
     mapping.setResponder(this::onTextChanged);
-    mapping.setMaxStringLength(40);
-    mapping.setEnabled(true);
-    mapping.setText(contents);
+    mapping.setMaxLength(40);
+    mapping.setEditable(true);
+    mapping.setValue(contents);
     return mapping;
   }
 
   public boolean mouseDragged(double mouseX, double mouseY, int p_231045_5_, double dragX, double dragY) {
     if (isScrolling) {
-      int i = guiTop + SCROLL_BAR_Y;
-      currentScroll = (float) MathHelper.clamp((mouseY - i - (SCROLL_BAR_HEIGHT / 2.0D)) / (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT), 0.0D, 1.0D);
+      int i = topPos + SCROLL_BAR_Y;
+      currentScroll = (float) Mth.clamp((mouseY - i - (SCROLL_BAR_HEIGHT / 2.0D)) / (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT), 0.0D, 1.0D);
       scrollTo(currentScroll);
       return true;
     } else
@@ -400,12 +405,12 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
     // The current scroll pos in as an index of the scrollable items
     int discretePos = (int) ((rawMappings.size() - 1) * pos);
     // The index of the top element being displayed
-    int discreteTop = MathHelper.clamp(discretePos, 0, Math.max(0, rawMappings.size() - MAPPINGS_PER_PAGE));
+    int discreteTop = Mth.clamp(discretePos, 0, Math.max(0, rawMappings.size() - MAPPINGS_PER_PAGE));
 
     for (int mappingNum = 0; mappingNum < rawMappings.size(); ++mappingNum) {
-      TextFieldWidget mapping = rawMappings.get(mappingNum);
+      EditBox mapping = rawMappings.get(mappingNum);
       if (mappingNum >= discreteTop && mappingNum < discreteTop + MAPPINGS_PER_PAGE) {
-        mapping.y = guiTop + MAPPING_Y + (mappingNum - discreteTop) * (MAPPING_HEIGHT + 6);
+        mapping.y = topPos + MAPPING_Y + (mappingNum - discreteTop) * (MAPPING_HEIGHT + 6);
         mapping.setVisible(true);
       } else
         mapping.setVisible(false);
@@ -414,13 +419,13 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
   }
 
   public boolean mouseClicked(double mouseX, double mouseY, int button) {
-    if (canScroll(rawMappings.size()) && mouseX > (double) (guiLeft + SCROLL_BAR_X) && mouseX < (double) (guiLeft + SCROLL_BAR_X + SCROLL_BAR_WIDTH) && mouseY > (double) (guiTop + SCROLL_BAR_Y) && mouseY <= (double) (guiTop + SCROLL_BAR_Y + SCROLL_AREA_HEIGHT))
+    if (canScroll(rawMappings.size()) && mouseX > (double) (leftPos + SCROLL_BAR_X) && mouseX < (double) (leftPos + SCROLL_BAR_X + SCROLL_BAR_WIDTH) && mouseY > (double) (topPos + SCROLL_BAR_Y) && mouseY <= (double) (topPos + SCROLL_BAR_Y + SCROLL_AREA_HEIGHT))
       isScrolling = true;
     return super.mouseClicked(mouseX, mouseY, button);
   }
 
   @Override
-  protected boolean itemStackMoved(int keyCode, int scanCode) {
+  protected boolean checkHotbarKeyPressed(int keyCode, int scanCode) {
     return false;
   }
 
@@ -432,24 +437,24 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
 
   @Override
   @ParametersAreNonnullByDefault
-  protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y) {
-    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-    minecraft.getTextureManager().bindTexture(BACKGROUND);
-    blit(matrixStack, guiLeft, guiTop, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
-    blit(matrixStack, guiLeft - 89, guiTop, getBlitOffset(), 276, 27, 89, 166, 256, 512);
+  protected void renderBg(PoseStack matrixStack, float partialTicks, int x, int y) {
+    //RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    RenderSystem.setShaderTexture(0, BACKGROUND);
+    blit(matrixStack, leftPos, topPos, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
+    blit(matrixStack, leftPos - 89, topPos, getBlitOffset(), 276, 27, 89, 166, 256, 512);
     renderScrollbar(matrixStack);
     getLastFocusedMapping().ifPresent(mapping -> {
       // Draw the filter slots
-      for (int i = 0; i < mapping.getFilterInventory().getSizeInventory(); ++i)
-        blit(matrixStack, guiLeft + 4 + (i % 5) * SLOT_SIZE, guiTop + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 256, 512);
+      for (int i = 0; i < mapping.getFilterInventory().getContainerSize(); ++i)
+        blit(matrixStack, leftPos + 4 + (i % 5) * SLOT_SIZE, topPos + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 256, 512);
     });
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
-    super.drawGuiContainerForegroundLayer(matrixStack, x, y);
-    font.func_243248_b(matrixStack, playerInventory.getDisplayName(), (float) playerInventoryTitleX, (float) playerInventoryTitleY, 4210752);
+  protected void renderLabels(PoseStack matrixStack, int x, int y) {
+    super.renderLabels(matrixStack, x, y);
+    font.draw(matrixStack, playerInventoryTitle, (float) inventoryLabelX, (float) inventoryLabelY, 4210752);
 
     String itemsPerTickStr = "?";
     String bucketsPerTickStr = "?";
@@ -463,16 +468,16 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
       energyPerTickStr = focused.getEnergyPerTick() + "";
       tickDelayStr = focused.getTickDelay() + "";
     }
-    font.func_243248_b(matrixStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
-    font.drawString(matrixStack, itemsPerTickStr, -80, 19, TEXT_COLOR);
-    font.func_243248_b(matrixStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
-    font.drawString(matrixStack, bucketsPerTickStr, -80, 50, TEXT_COLOR);
-    font.func_243248_b(matrixStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
-    font.drawString(matrixStack, energyPerTickStr, -80, 81, TEXT_COLOR);
-    font.func_243248_b(matrixStack, TICK_DELAY, -80, 103, TEXT_COLOR);
-    font.drawString(matrixStack, tickDelayStr, -80, 112, TEXT_COLOR);
-    font.func_243248_b(matrixStack, ENERGY, -80, 134, TEXT_COLOR);
-    font.drawString(matrixStack, energyStr, -80, 144, TEXT_COLOR);
+    font.draw(matrixStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
+    font.draw(matrixStack, itemsPerTickStr, -80, 19, TEXT_COLOR);
+    font.draw(matrixStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
+    font.draw(matrixStack, bucketsPerTickStr, -80, 50, TEXT_COLOR);
+    font.draw(matrixStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
+    font.draw(matrixStack, energyPerTickStr, -80, 81, TEXT_COLOR);
+    font.draw(matrixStack, TICK_DELAY, -80, 103, TEXT_COLOR);
+    font.draw(matrixStack, tickDelayStr, -80, 112, TEXT_COLOR);
+    font.draw(matrixStack, ENERGY, -80, 134, TEXT_COLOR);
+    font.draw(matrixStack, energyStr, -80, 144, TEXT_COLOR);
   }
 
   private boolean canScroll(int items) {
@@ -481,7 +486,7 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
 
   public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
     if (canScroll(rawMappings.size())) {
-      currentScroll = (float) MathHelper.clamp((currentScroll - scroll / rawMappings.size()), 0.0D, 1.0D);
+      currentScroll = (float) Mth.clamp((currentScroll - scroll / rawMappings.size()), 0.0D, 1.0D);
       scrollTo(currentScroll);
     }
     return true;
@@ -489,12 +494,12 @@ public class RouterScreen extends ContainerScreen<RouterContainer> implements IH
 
   public void update() {
     final int cursorPos = getLastFocusedMappingTF().isPresent() ? getLastFocusedMappingTF().get().getCursorPosition() : -1;
-    for (TextFieldWidget rawMapping : rawMappings)
-      children.remove(rawMapping);
+    for (EditBox rawMapping : rawMappings)
+      removeWidget(rawMapping);
     createMappingTextFields();
     getLastFocusedMappingTF().ifPresentOrElse((focused) -> {
-      setListener(focused);
-      focused.setFocused2(true);
+      setFocused(focused);
+      focused.setFocus(true);
       if (cursorPos != -1)
         focused.setCursorPosition(cursorPos);
     }, () -> {

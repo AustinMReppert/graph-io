@@ -1,20 +1,19 @@
 package xyz.austinmreppert.graph_io.item;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.IdentifierCapabilityProvider;
@@ -26,7 +25,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 public class IdentifierItem extends Item {
 
-  private static final TranslationTextComponent POINTS_TO = new TranslationTextComponent("graphio.chat.identifier_points_to");
+  private static final TranslatableComponent POINTS_TO = new TranslatableComponent("graphio.chat.identifier_points_to");
 
   public IdentifierItem(Properties properties) {
     super(properties);
@@ -35,34 +34,34 @@ public class IdentifierItem extends Item {
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-    Vector3d playerEyePos = playerIn.getPositionVec().add(0, playerIn.getEyeHeight(), 0);
-    Vector3d lookVec = playerEyePos.add(playerIn.getLookVec().scale(5.0F));
-    BlockRayTraceResult res = worldIn.rayTraceBlocks(new RayTraceContext(playerEyePos, lookVec, RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.ANY, playerIn));
-    ItemStack is = playerIn.getHeldItem(handIn);
+  public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
+    Vec3 playerEyePos = playerIn.position().add(0, playerIn.getEyeHeight(), 0);
+    Vec3 lookVec = playerEyePos.add(playerIn.getLookAngle().scale(5.0F));
+    BlockHitResult res = worldIn.clip(new ClipContext(playerEyePos, lookVec, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, playerIn));
+    ItemStack is = playerIn.getItemInHand(handIn);
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
-      if (playerIn.isSneaking() && res.getType() == RayTraceResult.Type.BLOCK) {
+      if (playerIn.isCrouching() && res.getType() == BlockHitResult.Type.BLOCK) {
         // TODO: SYNC from server to client
-        if (worldIn.isRemote) {
+        if (worldIn.isClientSide) {
           if (identifierCapability.getBlockPos() != null)
             Highlighter.unhighlightBlock(identifierCapability.getBlockPos());
         }
-        identifierCapability.setBlockPos(res.getPos());
-      } else if (!playerIn.isSneaking() && identifierCapability.getBlockPos() != null) {
+        identifierCapability.setBlockPos(res.getBlockPos());
+      } else if (!playerIn.isCrouching() && identifierCapability.getBlockPos() != null) {
         BlockPos identifierPos = identifierCapability.getBlockPos();
-        if (worldIn.isRemote) {
-          Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(ITextComponent.func_244388_a(POINTS_TO.getString() +  " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ")"));
+        if (worldIn.isClientSide) {
+          Minecraft.getInstance().gui.getChat().addMessage(Component.nullToEmpty(POINTS_TO.getString() +  " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ")"));
           Highlighter.toggleHighlightBlock(identifierPos, 0.01F, 255, 0, 0, 125);
         }
       }
     });
 
-    return super.onItemRightClick(worldIn, playerIn, handIn);
+    return super.use(worldIn, playerIn, handIn);
   }
 
   @Nullable
   @Override
-  public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
+  public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
     return new IdentifierCapabilityProvider();
   }
 

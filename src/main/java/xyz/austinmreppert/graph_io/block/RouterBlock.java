@@ -1,36 +1,41 @@
 package xyz.austinmreppert.graph_io.block;
 
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ContainerBlock;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.data.tiers.BaseTier;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
+import xyz.austinmreppert.graph_io.tileentity.TileEntityTypes;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-public class RouterBlock extends ContainerBlock {
+public class RouterBlock extends BaseEntityBlock {
 
   private BaseTier baseTier;
 
   private RouterBlock() {
-    super(Properties.create(Material.REDSTONE_LIGHT).setLightLevel((bs) -> 15));
+    super(Properties.of(Material.HEAVY_METAL).lightLevel((bs) -> 15));
   }
 
   public RouterBlock(BaseTier baseTier) {
@@ -41,52 +46,47 @@ public class RouterBlock extends ContainerBlock {
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public BlockRenderType getRenderType(BlockState state) {
-    return BlockRenderType.MODEL;
-  }
-
-  @Override
-  public boolean hasTileEntity(BlockState state) {
-    return true;
-  }
-
-  @Override
-  @Nullable
-  public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-    return new RouterTE(baseTier);
-  }
-
-  @Nullable
-  @Override
-  @ParametersAreNonnullByDefault
-  public TileEntity createNewTileEntity(IBlockReader blockReader) {
-    return new RouterTE(baseTier);
+  public RenderShape getRenderShape(BlockState state) {
+    return RenderShape.MODEL;
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-    super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+  public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    super.setPlacedBy(worldIn, pos, state, placer, stack);
+  }
+
+  @Nullable
+  @Override
+  public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+    return level.isClientSide() ? null : createTickerHelper(blockEntityType, TileEntityTypes.ROUTER, (Level routerLevel, BlockPos blockPos, BlockState blockState, RouterTE routerTE) -> {
+      routerTE.serverTick(blockPos);
+    });
   }
 
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-    if (!worldIn.isRemote) {
-      final TileEntity tileEntity = worldIn.getTileEntity(pos);
+  public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+    if (!worldIn.isClientSide) {
+      final BlockEntity tileEntity = worldIn.getBlockEntity(pos);
       if (tileEntity instanceof RouterTE) {
         RouterTE router = (RouterTE) tileEntity;
-        if (player.isSneaking())
-          NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, pos);
+        if (player.isCrouching())
+          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) tileEntity, pos);
         else
-          NetworkHooks.openGui((ServerPlayerEntity) player, (INamedContainerProvider) tileEntity, (packetBuffer) -> {
+          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) tileEntity, (packetBuffer) -> {
             packetBuffer.writeBlockPos(pos);
-            packetBuffer.writeCompoundTag(Mapping.write(router.getMappings()));
+            packetBuffer.writeNbt(Mapping.write(router.getMappings()));
           });
       }
     }
-    return ActionResultType.SUCCESS;
+    return InteractionResult.SUCCESS;
   }
 
+  @Nullable
+  @Override
+  public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    return new RouterTE(baseTier, pos, state);
+  }
 }

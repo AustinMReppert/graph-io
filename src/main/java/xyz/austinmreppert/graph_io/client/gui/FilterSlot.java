@@ -1,9 +1,10 @@
 package xyz.austinmreppert.graph_io.client.gui;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -12,56 +13,56 @@ public class FilterSlot extends Slot {
 
   private boolean enabled;
 
-  public FilterSlot(IInventory inventoryIn, int index, int xPosition, int yPosition) {
+  public FilterSlot(Container inventoryIn, int index, int xPosition, int yPosition) {
     super(inventoryIn, index, xPosition, yPosition);
     enabled = true;
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public boolean canTakeStack(PlayerEntity playerIn) {
+  public boolean mayPickup(Player playerIn) {
     return false;
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public boolean isItemValid(ItemStack stack) {
+  public boolean mayPlace(ItemStack stack) {
     return true;
   }
 
   @Override
   @Nonnull
-  public ItemStack decrStackSize(int amount) {
+  public ItemStack remove(int amount) {
     return ItemStack.EMPTY;
   }
 
   @Override
-  public void putStack(ItemStack stack) {
+  public void set(ItemStack stack) {
     ItemStack is = stack.copy();
     if (!is.isEmpty())
       is.setCount(1);
-    super.putStack(is);
+    super.set(is);
   }
 
   @Override
-  public int getSlotStackLimit() {
+  public int getMaxStackSize() {
     return 0;
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public int getItemStackLimit(ItemStack stack) {
+  public int getMaxStackSize(ItemStack stack) {
     return 1;
   }
 
   @Override
   @Nonnull
-  public ItemStack getStack() {
-    return inventory.getStackInSlot(getSlotIndex());
+  public ItemStack getItem() {
+    return container.getItem(getSlotIndex());
   }
 
   @Override
-  public boolean isEnabled() {
+  public boolean isActive() {
     return enabled;
   }
 

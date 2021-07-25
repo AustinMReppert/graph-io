@@ -1,15 +1,15 @@
 package xyz.austinmreppert.graph_io.network;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
@@ -18,10 +18,10 @@ import java.util.function.Supplier;
 public class SetMappingsPacket {
 
   private final BlockPos blockPos;
-  private final CompoundNBT routerTENBT;
+  private final CompoundTag routerTENBT;
   private final int windowID;
 
-  public SetMappingsPacket(BlockPos blockPos, CompoundNBT routerTENBT, int windowID) {
+  public SetMappingsPacket(BlockPos blockPos, CompoundTag routerTENBT, int windowID) {
     super();
     this.blockPos = blockPos;
     this.routerTENBT = routerTENBT;
@@ -31,17 +31,17 @@ public class SetMappingsPacket {
   public static void handle(SetMappingsPacket packet, Supplier<NetworkEvent.Context> context) {
     context.get().enqueueWork(() -> {
       if(context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
-        ServerPlayerEntity sender = context.get().getSender();
-        TileEntity te = context.get().getSender().getEntityWorld().getTileEntity(packet.blockPos);
+        ServerPlayer sender = context.get().getSender();
+        BlockEntity te = context.get().getSender().getCommandSenderWorld().getBlockEntity(packet.blockPos);
         if (te instanceof RouterTE) {
           RouterTE routerTE = (RouterTE) te;
           routerTE.readMappings(packet.routerTENBT);
-          routerTE.markDirty();
+          routerTE.setChanged();
         }
       } else {
-        PlayerEntity playerentity = Minecraft.getInstance().player;
-        Container openContainer = playerentity.openContainer;
-        if (openContainer instanceof RouterContainer && playerentity.openContainer.windowId == packet.windowID) {
+        Player playerentity = Minecraft.getInstance().player;
+        AbstractContainerMenu openContainer = playerentity.containerMenu;
+        if (openContainer instanceof RouterContainer && playerentity.containerMenu.containerId == packet.windowID) {
           RouterContainer router = (RouterContainer) openContainer;
           router.getTrackedMappingsReference().set.accept(packet.routerTENBT);
         }
@@ -50,15 +50,15 @@ public class SetMappingsPacket {
     context.get().setPacketHandled(true);
   }
 
-  public static void encode(SetMappingsPacket packet, PacketBuffer packetBuffer) {
+  public static void encode(SetMappingsPacket packet, FriendlyByteBuf packetBuffer) {
     packetBuffer.writeBlockPos(packet.blockPos);
-    packetBuffer.writeCompoundTag(packet.routerTENBT);
+    packetBuffer.writeNbt(packet.routerTENBT);
     packetBuffer.writeInt(packet.windowID);
   }
 
-  public static SetMappingsPacket decode(PacketBuffer packetBuffer) {
+  public static SetMappingsPacket decode(FriendlyByteBuf packetBuffer) {
     BlockPos routerPos = packetBuffer.readBlockPos();
-    CompoundNBT routerTENBT = packetBuffer.readCompoundTag();
+    CompoundTag routerTENBT = packetBuffer.readNbt();
     int windowID = packetBuffer.readInt();
     return new SetMappingsPacket(routerPos, routerTENBT, windowID);
   }

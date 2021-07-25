@@ -1,27 +1,30 @@
 package xyz.austinmreppert.graph_io.tileentity;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.ItemStackHelper;
-import net.minecraft.inventory.container.ChestContainer;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.LockableLootTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.core.NonNullList;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
@@ -30,6 +33,8 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
+import org.apache.logging.log4j.LogManager;
+import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.DynamicEnergyStorage;
@@ -47,22 +52,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-public class RouterTE extends LockableLootTileEntity implements ITickableTileEntity, INamedContainerProvider {
+public class RouterTE extends RandomizableContainerBlockEntity implements MenuProvider {
 
-  private final Random random;
-  private final HashMap<String, BlockPos> identifiers;
-  private final DynamicEnergyStorage energyStorage;
-  private final LazyOptional<IEnergyStorage> energyCapabilityLO;
+  private Random random;
+  private HashMap<String, BlockPos> identifiers;
+  private DynamicEnergyStorage energyStorage;
+  private LazyOptional<IEnergyStorage> energyCapabilityLO;
   private ArrayList<Mapping> mappings;
-  private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
+  private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
   private int ticks;
   private RouterTier tier;
   protected Block tieredRouter;
   private int lastTick;
   private int energyPerMappingTick = 1000;
 
-  public RouterTE() {
-    super(TileEntityTypes.ROUTER);
+  public RouterTE(BlockPos pos, BlockState state) {
+    super(TileEntityTypes.ROUTER, pos, state);
     identifiers = new HashMap<>();
     random = new Random(System.currentTimeMillis());
     mappings = new ArrayList<>();
@@ -71,8 +76,8 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     energyCapabilityLO = LazyOptional.of(() -> energyStorage);
   }
 
-  public RouterTE(BaseTier tier) {
-    this();
+  public RouterTE(BaseTier tier, BlockPos pos, BlockState state) {
+    this(pos, state);
     setTier(tier);
   }
 
@@ -84,23 +89,22 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
     return false;
   }
 
-  @Override
-  public void tick() {
-    if (world == null || world.isRemote) return;
+  public void serverTick(BlockPos p_155254_) {
+    if (level == null || level.isClientSide) return;
     ++ticks;
 
     if (shouldTick()) {
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
-        TileEntity te = world.getTileEntity(pos.offset(direction));
+        BlockEntity te = level.getBlockEntity(p_155254_);
         if (te != null) {
           te.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             int extracted = -1;
             final int simulatedReceived = energyStorage.receiveEnergy(extracted = cap.extractEnergy(tier.maxEnergyPerTick, true), true);
             energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false);
-            te.markDirty();
-            markDirty();
+            te.setChanged();
+            setChanged();
           });
         }
       }
@@ -115,7 +119,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
       else
         continue;
 
-      Inventory filterInventory = mapping.getFilterInventory();
+      SimpleContainer filterInventory = mapping.getFilterInventory();
       Mapping.FilterScheme filterScheme = mapping.getFilterScheme();
       if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;
 
@@ -123,11 +127,14 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
       final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier());
       final BlockPos outputPos = identifiers.get(outputNodeInfo.getIdentifier());
+      //System.out.println(identifiers.size());
+      //System.out.println(identifiers.get(inputNodeInfo.getIdentifier()));
+      System.out.println(outputPos);
       if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
         continue;
 
-      final TileEntity inputTE = world.getTileEntity(inputPos);
-      final TileEntity outputTE = world.getTileEntity(outputPos);
+      final BlockEntity inputTE = level.getBlockEntity(inputPos);
+      final BlockEntity outputTE = level.getBlockEntity(outputPos);
       if (inputTE == null || outputTE == null) return;
 
       inputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
@@ -136,8 +143,8 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
           for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
             final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
             boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
-            for (int i = 0; i < filterInventory.getSizeInventory(); ++i) {
-              if (filterInventory.getStackInSlot(i).getItem() == inputStack.getItem()) {
+            for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
+              if (filterInventory.getItem(i).getItem() == inputStack.getItem()) {
                 filtered = !filtered;
                 break;
               }
@@ -147,13 +154,13 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
               if (transferredItems >= mapping.getItemsPerTick()) return;
               final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
               if (outputItemHandler.isItemValid(outputSlotIndex, inputStack) && !inputStack.isEmpty() && outputStack.isEmpty() || (!inputStack.isEmpty() && inputStack.getItem() == outputStack.getItem() && outputStack.getCount() < outputStack.getMaxStackSize())) {
-                final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(inputSlotIndex, MathHelper.clamp(inputStack.getCount(), 0, mapping.getItemsPerTick() - transferredItems), true);
+                final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(inputSlotIndex, Mth.clamp(inputStack.getCount(), 0, mapping.getItemsPerTick() - transferredItems), true);
                 final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
                 final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
                 final ItemStack insertedIS = outputItemHandler.insertItem(outputSlotIndex, extractedIS, false);
                 transferredItems += extractedIS.getCount() - insertedIS.getCount();
-                inputTE.markDirty();
-                outputTE.markDirty();
+                inputTE.setChanged();
+                outputTE.setChanged();
               }
             }
           }
@@ -165,8 +172,8 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
           for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
             final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
             boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
-            for (int i = 0; i < filterInventory.getSizeInventory(); ++i) {
-              if (inputStack.isFluidEqual(filterInventory.getStackInSlot(i))) {
+            for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
+              if (inputStack.isFluidEqual(filterInventory.getItem(i))) {
                 filtered = !filtered;
                 break;
               }
@@ -176,12 +183,12 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
               if (transferredFluids >= mapping.getBucketsPerTick()) return;
               final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
               if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
-                final FluidStack simulatedDrainedFS = inputFluidHandler.drain(MathHelper.clamp(inputStack.getAmount(), 0, mapping.getBucketsPerTick() - transferredFluids), IFluidHandler.FluidAction.SIMULATE);
+                final FluidStack simulatedDrainedFS = inputFluidHandler.drain(Mth.clamp(inputStack.getAmount(), 0, mapping.getBucketsPerTick() - transferredFluids), IFluidHandler.FluidAction.SIMULATE);
                 final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
                 final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
                 transferredFluids += outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
-                inputTE.markDirty();
-                outputTE.markDirty();
+                inputTE.setChanged();
+                outputTE.setChanged();
                 break;
               }
             }
@@ -192,7 +199,7 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
         outputTE.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
           int transferredEnergy = 0;
           if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
-            final int simulatedExtracted = inputEnergyHandler.extractEnergy(MathHelper.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerTick() - transferredEnergy), true);
+            final int simulatedExtracted = inputEnergyHandler.extractEnergy(Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerTick() - transferredEnergy), true);
             final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
             final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
             transferredEnergy += outputEnergyHandler.receiveEnergy(extracted, false);
@@ -219,25 +226,25 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   @Override
   @ParametersAreNonnullByDefault
-  public Container createMenu(int windowID, PlayerInventory inventory, PlayerEntity p_createMenu_3_) {
-    return p_createMenu_3_.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
+  public AbstractContainerMenu createMenu(int windowID, Inventory inventory, Player p_createMenu_3_) {
+    return p_createMenu_3_.isCrouching() ? ChestMenu.sixRows(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  protected Container createMenu(int windowID, PlayerInventory inventory) {
-    return inventory.player.isSneaking() ? ChestContainer.createGeneric9X6(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
+  protected AbstractContainerMenu createMenu(int windowID, Inventory inventory) {
+    return inventory.player.isCrouching() ? ChestMenu.sixRows(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override
   @Nonnull
-  public CompoundNBT write(CompoundNBT compound) {
+  public CompoundTag save(CompoundTag compound) {
     compound.putInt("tier", tier.baseTier.ordinal());
-    compound.put("energyStorage", CapabilityEnergy.ENERGY.writeNBT(energyStorage, null));
+    compound.put("energyStorage", energyStorage.serializeNBT());
     writeMappingsNBT(compound);
     writeInventoryNBT(compound);
-    return super.write(compound);
+    return super.save(compound);
   }
 
   /**
@@ -245,9 +252,9 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
    *
    * @param compound The nbt tag to write to.
    */
-  public void writeInventoryNBT(CompoundNBT compound) {
-    if (!this.checkLootAndWrite(compound))
-      ItemStackHelper.saveAllItems(compound, inventory);
+  public void writeInventoryNBT(CompoundTag compound) {
+    if (!this.trySaveLootTable(compound))
+      ContainerHelper.saveAllItems(compound, inventory);
   }
 
   /**
@@ -255,21 +262,21 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
    *
    * @param compound The nbt tag to write to.
    */
-  private void writeMappingsNBT(CompoundNBT compound) {
+  private void writeMappingsNBT(CompoundTag compound) {
     Mapping.write(mappings, compound);
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public void read(BlockState stateIn, CompoundNBT nbtIn) {
+  public void load(CompoundTag nbtIn) {
     setTier(BaseTier.valueOf(nbtIn.getInt("tier")));
-    INBT energyStorageNBT = nbtIn.get("energyStorage");
+    Tag energyStorageNBT = nbtIn.get("energyStorage");
     if (energyStorageNBT != null) {
-      CapabilityEnergy.ENERGY.readNBT(energyStorage, null, energyStorageNBT);
+      energyStorage.deserializeNBT(energyStorageNBT);
     }
     readInventory(nbtIn);
     mappings = Mapping.read(nbtIn, identifiers, tier);
-    super.read(stateIn, nbtIn);
+    super.load(nbtIn);
   }
 
   /**
@@ -277,52 +284,52 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
    *
    * @param nbt The nbt data to read from.
    */
-  public void readInventory(CompoundNBT nbt) {
-    setItems(NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY));
-    if (!this.checkLootAndRead(nbt))
-      ItemStackHelper.loadAllItems(nbt, inventory);
+  public void readInventory(CompoundTag nbt) {
+    setItems(NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY));
+    if (!this.tryLoadLootTable(nbt))
+      ContainerHelper.loadAllItems(nbt, inventory);
     identifiers.clear();
     for (ItemStack is : inventory)
       cacheIfIdentifier(is);
   }
 
   @Override
-  public void remove() {
-    super.remove();
+  public void setRemoved() {
+    super.setRemoved();
     energyCapabilityLO.invalidate();
   }
 
   @Override
   @Nonnull
-  public CompoundNBT getUpdateTag() {
-    CompoundNBT nbt = super.getUpdateTag();
+  public CompoundTag getUpdateTag() {
+    CompoundTag nbt = super.getUpdateTag();
     nbt.putInt("tier", tier.baseTier.ordinal());
     return nbt;
   }
 
   @Override
-  public void handleUpdateTag(BlockState state, CompoundNBT nbt) {
+  public void handleUpdateTag(CompoundTag nbt) {
     setTier(BaseTier.valueOf(nbt.getInt("tier")));
-    super.handleUpdateTag(state, nbt);
+    super.handleUpdateTag(nbt);
   }
 
   @Override
   @Nonnull
-  public ItemStack removeStackFromSlot(int index) {
+  public ItemStack removeItemNoUpdate(int index) {
     identifiers.clear();
     for (ItemStack is : inventory)
       cacheIfIdentifier(is);
-    return super.removeStackFromSlot(index);
+    return super.removeItemNoUpdate(index);
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public void setInventorySlotContents(int index, ItemStack itemStack) {
+  public void setItem(int index, ItemStack itemStack) {
     identifiers.clear();
     for (ItemStack is : inventory)
       cacheIfIdentifier(is);
     cacheIfIdentifier(itemStack);
-    super.setInventorySlotContents(index, itemStack);
+    super.setItem(index, itemStack);
   }
 
   /**
@@ -347,10 +354,10 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
    *
    * @param nbt The nbt data to read from.
    */
-  public void readMappings(CompoundNBT nbt) {
+  public void readMappings(CompoundTag nbt) {
     mappings = Mapping.read(nbt, identifiers, tier);
-    if (world.isRemote()) {
-      Screen currentTmp = Minecraft.getInstance().currentScreen;
+    if (level.isClientSide()) {
+      Screen currentTmp = Minecraft.getInstance().screen;
       if (currentTmp instanceof RouterScreen) {
         RouterScreen current = (RouterScreen) currentTmp;
         current.update();
@@ -378,13 +385,13 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
 
   @Override
   @Nonnull
-  public ITextComponent getDisplayName() {
-    return tieredRouter.getTranslatedName();
+  public Component getDisplayName() {
+    return tieredRouter.getName();
   }
 
   @Override
   @Nonnull
-  protected ITextComponent getDefaultName() {
+  protected Component getDefaultName() {
     return getDisplayName();
   }
 
@@ -413,11 +420,12 @@ public class RouterTE extends LockableLootTileEntity implements ITickableTileEnt
   }
 
   public DynamicEnergyStorage getEnergyStorage() {
+    energyStorage.setEnergyStored(energyStorage.getMaxEnergyStored());
     return energyStorage;
   }
 
   @Override
-  public int getSizeInventory() {
+  public int getContainerSize() {
     return 56;
   }
 

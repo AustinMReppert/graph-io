@@ -1,6 +1,6 @@
 package xyz.austinmreppert.graph_io.container;
 
-import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.Tag;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 
 import java.util.ArrayList;
@@ -11,13 +11,13 @@ public class MappingsReferenceHolder {
 
   private ArrayList<Mapping> previous;
 
-  public MappingsReferenceHolder(Supplier<ArrayList<Mapping>> get, Consumer<INBT> set) {
+  public MappingsReferenceHolder(Supplier<ArrayList<Mapping>> get, Consumer<Tag> set) {
     this.get = get;
     this.set = set;
   }
 
   public Supplier<ArrayList<Mapping>> get;
-  public Consumer<INBT> set;
+  public Consumer<Tag> set;
 
   public boolean isDirty() {
     ArrayList<Mapping> current = this.get.get();

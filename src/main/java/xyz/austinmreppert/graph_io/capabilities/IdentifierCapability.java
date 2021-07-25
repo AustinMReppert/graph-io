@@ -1,6 +1,6 @@
 package xyz.austinmreppert.graph_io.capabilities;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 public class IdentifierCapability implements IIdentifierCapability {
 

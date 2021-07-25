@@ -1,6 +1,6 @@
 package xyz.austinmreppert.graph_io.client.gui;
 
-import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DeferredWorkQueue;
@@ -14,13 +14,13 @@ public class Screens {
 
   @SubscribeEvent
   public static void onFMLClientSetupEvent(final FMLClientSetupEvent event) {
-    DeferredWorkQueue.runLater(() -> {
+    event.enqueueWork(() -> {
       Screens.register();
     });
   }
 
   public static void register() {
-    ScreenManager.registerFactory(ContainerTypes.ROUTER_CONTAINER, RouterScreen::new);
+    MenuScreens.register(ContainerTypes.ROUTER_CONTAINER, RouterScreen::new);
   }
 
 }

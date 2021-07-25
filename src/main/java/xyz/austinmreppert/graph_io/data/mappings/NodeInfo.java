@@ -1,6 +1,6 @@
 package xyz.austinmreppert.graph_io.data.mappings;
 
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 
 import java.util.ArrayList;
 import java.util.Set;

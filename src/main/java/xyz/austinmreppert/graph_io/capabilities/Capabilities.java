@@ -10,7 +10,7 @@ public class Capabilities {
   public static Capability<IIdentifierCapability> IDENTIFIER_CAPABILITY = null;
 
   public static void register() {
-    CapabilityManager.INSTANCE.register(IIdentifierCapability.class, new IdentifierCapabilityStorage(), IdentifierCapability::new);
+    CapabilityManager.INSTANCE.register(IIdentifierCapability.class);
     System.out.println("REGISTERING AAAAA");
   }
 

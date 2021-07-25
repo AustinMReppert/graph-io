@@ -1,14 +1,11 @@
 package xyz.austinmreppert.graph_io.client.render;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -47,17 +44,17 @@ public class Highlighter {
     highlightedBlocks.removeIf(highlightedBlock -> blockPos.equals(highlightedBlock.blockPos));
   }
 
-  private static void highlightBlock(MatrixStack matrixStack, BlockPos blockPos, float padding, int r, int g, int b, int a) {
-    if (!blockPos.withinDistance(Minecraft.getInstance().player.getPositionVec(), Minecraft.getInstance().gameSettings.renderDistanceChunks * 16))
+  private static void highlightBlock(PoseStack matrixStack, BlockPos blockPos, float padding, int r, int g, int b, int a) {
+    if (!blockPos.closerThan(Minecraft.getInstance().player.position(), Minecraft.getInstance().options.renderDistance * 16))
       return;
     int x = blockPos.getX();
     int y = blockPos.getY();
     int z = blockPos.getZ();
 
-    Tessellator tes = Tessellator.getInstance();
-    BufferBuilder bb = tes.getBuffer();
+    Tesselator tes = Tesselator.getInstance();
+    BufferBuilder bb = tes.getBuilder();
 
-    matrixStack.push();
+    matrixStack.pushPose();
 
     RenderSystem.disableDepthTest();
     RenderSystem.enableCull();
@@ -65,12 +62,12 @@ public class Highlighter {
     RenderSystem.enableBlend();
     RenderSystem.defaultBlendFunc();
 
-    Vector3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
+    Vec3 projectedView = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
     matrixStack.translate(-projectedView.x, -projectedView.y, -projectedView.z);
 
-    Matrix4f mat = matrixStack.getLast().getMatrix();
+    Matrix4f mat = matrixStack.last().pose();
 
-    bb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+    bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
     float x1 = x - padding;
     float x2 = x + padding + 1.0F;
@@ -79,38 +76,38 @@ public class Highlighter {
     float z1 = z - padding;
     float z2 = z + padding + 1.0F;
 
-    bb.pos(mat, x2, y2, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y1, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y1, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y1, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y2, z1).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x1, y2, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y1, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y1, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y2, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y1, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y2, z2).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x1, y2, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y1, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y1, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y2, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y1, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y1, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x2, y2, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y1, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y1, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y2, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y2, z1).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x1, y1, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y1, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y1, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y1, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y1, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y1, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z2).color(r, g, b, a).endVertex();
 
-    bb.pos(mat, x2, y2, z2).color(r, g, b, a).endVertex();
-    bb.pos(mat, x2, y2, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y2, z1).color(r, g, b, a).endVertex();
-    bb.pos(mat, x1, y2, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y2, z2).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
-    tes.draw();
-    matrixStack.pop();
+    tes.end();
+    matrixStack.popPose();
   }
 
   private static class HighlightedBlock {

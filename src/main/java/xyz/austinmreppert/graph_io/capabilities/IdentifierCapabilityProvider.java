@@ -1,8 +1,9 @@
 package xyz.austinmreppert.graph_io.capabilities;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.INBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
@@ -21,15 +22,29 @@ public class IdentifierCapabilityProvider implements ICapabilitySerializable {
   }
 
   @Override
-  public INBT serializeNBT() {
-    return Capabilities.IDENTIFIER_CAPABILITY.getStorage().writeNBT(Capabilities.IDENTIFIER_CAPABILITY,
-      identifierCapabilityLO.orElseThrow(() -> new IllegalArgumentException("LazyOptional cannot be empty.")), null);
+  public Tag serializeNBT() {
+
+    CompoundTag blockPosNBT = new CompoundTag();
+
+    identifierCapabilityLO.ifPresent((instance) -> {
+      if (instance.getBlockPos() != null) {
+        blockPosNBT.putInt("x", instance.getBlockPos().getX());
+        blockPosNBT.putInt("y", instance.getBlockPos().getY());
+        blockPosNBT.putInt("z", instance.getBlockPos().getZ());
+      }
+    });
+
+    return blockPosNBT;
   }
 
   @Override
-  public void deserializeNBT(INBT nbt) {
-    Capabilities.IDENTIFIER_CAPABILITY.getStorage().readNBT(Capabilities.IDENTIFIER_CAPABILITY,
-      identifierCapabilityLO.orElseThrow(() -> new IllegalArgumentException("LazyOptional cannot be empty.")), null, nbt);
+  public void deserializeNBT(Tag nbt) {
+
+    identifierCapabilityLO.ifPresent((instance) -> {
+      CompoundTag blockPosNBT = (CompoundTag) nbt;
+      if (blockPosNBT.contains("x") && blockPosNBT.contains("y") && blockPosNBT.contains("z"))
+        instance.setBlockPos(new BlockPos(blockPosNBT.getInt("x"), blockPosNBT.getInt("y"), blockPosNBT.getInt("z")));
+    });
   }
 
 }
