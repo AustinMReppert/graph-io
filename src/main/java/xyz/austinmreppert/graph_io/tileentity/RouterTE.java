@@ -127,9 +127,10 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
       final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier());
       final BlockPos outputPos = identifiers.get(outputNodeInfo.getIdentifier());
-      //System.out.println(identifiers.size());
-      //System.out.println(identifiers.get(inputNodeInfo.getIdentifier()));
-      System.out.println(outputPos);
+      //System.out.println(identifiers.keySet().toArray()[0]);
+      //System.out.println(identifiers.values().toArray()[0]);
+      //System.out.println(identifiers.get("[a]"));
+      //System.out.println(outputPos);
       if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
         continue;
 
@@ -338,9 +339,10 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
    * @param is The item stack to check.
    */
   private void cacheIfIdentifier(ItemStack is) {
+    System.out.println(is.getHoverName().getContents());
     if (is.getItem() == Items.IDENTIFIER)
       is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
-        identifiers.put(is.getDisplayName().getString(), identifierCapability.getBlockPos()));
+        identifiers.put(is.getHoverName().getContents(), identifierCapability.getBlockPos()));
   }
 
   @Nonnull
