@@ -3,26 +3,23 @@ package xyz.austinmreppert.graph_io.tileentity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.core.NonNullList;
 import net.minecraftforge.common.capabilities.Capability;
@@ -33,8 +30,6 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
-import org.apache.logging.log4j.LogManager;
-import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.DynamicEnergyStorage;
@@ -65,6 +60,7 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
   protected Block tieredRouter;
   private int lastTick;
   private int energyPerMappingTick = 1000;
+  private TranslatableComponent name;
 
   public RouterTE(BlockPos pos, BlockState state) {
     super(TileEntityTypes.ROUTER, pos, state);
@@ -127,10 +123,6 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
       final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier());
       final BlockPos outputPos = identifiers.get(outputNodeInfo.getIdentifier());
-      //System.out.println(identifiers.keySet().toArray()[0]);
-      //System.out.println(identifiers.values().toArray()[0]);
-      //System.out.println(identifiers.get("[a]"));
-      //System.out.println(outputPos);
       if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
         continue;
 
@@ -339,7 +331,6 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
    * @param is The item stack to check.
    */
   private void cacheIfIdentifier(ItemStack is) {
-    System.out.println(is.getHoverName().getContents());
     if (is.getItem() == Items.IDENTIFIER)
       is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
         identifiers.put(is.getHoverName().getContents(), identifierCapability.getBlockPos()));
@@ -407,15 +398,17 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
    */
   private void setTier(@Nonnull BaseTier baseTier) {
     this.tier = new RouterTier(baseTier);
-    switch (this.tier.baseTier) {
+    tieredRouter = switch (this.tier.baseTier) {
       case BASIC:
-        tieredRouter = Blocks.BASIC_ROUTER;
+        yield Blocks.BASIC_ROUTER;
       case ADVANCED:
-        tieredRouter = Blocks.ADVANCED_ROUTER;
+        yield Blocks.ADVANCED_ROUTER;
       case ELITE:
-        tieredRouter = Blocks.ELITE_ROUTER;
+        yield Blocks.ELITE_ROUTER;
       case ULTIMATE:
-        tieredRouter = Blocks.ULTIMATE_ROUTER;
+        yield  Blocks.ULTIMATE_ROUTER;
+      default:
+        yield null;
     };
     energyStorage.setCapacity(this.tier.maxEnergy);
     energyStorage.setMaxReceive(this.tier.maxEnergyPerTick);

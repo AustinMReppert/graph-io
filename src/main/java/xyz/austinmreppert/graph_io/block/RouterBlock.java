@@ -1,11 +1,13 @@
 package xyz.austinmreppert.graph_io.block;
 
-import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.material.Material;
@@ -18,7 +20,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.fmllegacy.network.NetworkHooks;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
@@ -89,4 +90,5 @@ public class RouterBlock extends BaseEntityBlock {
   public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
     return new RouterTE(baseTier, pos, state);
   }
+
 }
