@@ -10,8 +10,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
-import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import java.util.function.Supplier;
 
@@ -32,16 +32,16 @@ public class SetMappingsPacket {
     context.get().enqueueWork(() -> {
       if(context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
         ServerPlayer sender = context.get().getSender();
-        BlockEntity te = context.get().getSender().getCommandSenderWorld().getBlockEntity(packet.blockPos);
-        if (te instanceof RouterTE) {
-          RouterTE routerTE = (RouterTE) te;
-          routerTE.readMappings(packet.routerTENBT);
-          routerTE.setChanged();
+        BlockEntity blockEntity = context.get().getSender().getCommandSenderWorld().getBlockEntity(packet.blockPos);
+        if (blockEntity instanceof RouterBlockEntity) {
+          RouterBlockEntity routerBlockEntity = (RouterBlockEntity) blockEntity;
+          routerBlockEntity.readMappings(packet.routerTENBT);
+          routerBlockEntity.setChanged();
         }
       } else {
-        Player playerentity = Minecraft.getInstance().player;
-        AbstractContainerMenu openContainer = playerentity.containerMenu;
-        if (openContainer instanceof RouterContainer && playerentity.containerMenu.containerId == packet.windowID) {
+        Player playerEntity = Minecraft.getInstance().player;
+        AbstractContainerMenu openContainer = playerEntity.containerMenu;
+        if (openContainer instanceof RouterContainer && playerEntity.containerMenu.containerId == packet.windowID) {
           RouterContainer router = (RouterContainer) openContainer;
           router.getTrackedMappingsReference().set.accept(packet.routerTENBT);
         }

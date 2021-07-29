@@ -11,11 +11,11 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fmllegacy.network.NetworkDirection;
+import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 import xyz.austinmreppert.graph_io.client.gui.FilterSlot;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.network.PacketHander;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
-import xyz.austinmreppert.graph_io.tileentity.RouterTE;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -27,7 +27,7 @@ public class RouterContainer extends AbstractContainerMenu {
   private final List<ServerPlayer> listeners;
   private final MappingsReferenceHolder trackedMappingsReference;
 
-  private final RouterTE routerTE;
+  private final RouterBlockEntity routerBlockEntity;
   private final ArrayList<FilterSlot> filterSlots;
   private final SimpleContainer tmpFilterInventory;
 
@@ -38,18 +38,18 @@ public class RouterContainer extends AbstractContainerMenu {
   private final int SLOT_SIZE = 18;
 
   public RouterContainer(int windowId, Inventory inv, FriendlyByteBuf data) {
-    this(windowId, inv, (RouterTE) inv.player.level.getBlockEntity(data.readBlockPos()));
+    this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));
     trackedMappingsReference.set.accept(data.readNbt());
   }
 
-  public RouterContainer(int windowId, Inventory inv, RouterTE routerTE) {
+  public RouterContainer(int windowId, Inventory inv, RouterBlockEntity routerBlockEntity) {
     super(ContainerTypes.ROUTER_CONTAINER, windowId);
 
     listeners = Lists.newArrayList();
 
-    this.routerTE = routerTE;
+    this.routerBlockEntity = routerBlockEntity;
 
-    tmpFilterInventory = new SimpleContainer(routerTE.getTier().filterSize);
+    tmpFilterInventory = new SimpleContainer(routerBlockEntity.getTier().filterSize);
     filterSlots = new ArrayList<>();
 
     // Draw the hotbar
@@ -71,31 +71,31 @@ public class RouterContainer extends AbstractContainerMenu {
     this.addDataSlot(new DataSlot() {
       @Override
       public int get() {
-        return routerTE.getEnergyStorage().getEnergyStored() & 0x0000FFFF;
+        return routerBlockEntity.getEnergyStorage().getEnergyStored() & 0x0000FFFF;
       }
 
       @Override
       public void set(int amount) {
-        routerTE.getEnergyStorage().setEnergyStored((0xFFFF0000 & routerTE.getEnergyStorage().getEnergyStored()) | (amount & 0x0000FFFF), false);
+        routerBlockEntity.getEnergyStorage().setEnergyStored((0xFFFF0000 & routerBlockEntity.getEnergyStorage().getEnergyStored()) | (amount & 0x0000FFFF), false);
       }
     });
     // The last 2 bytes
     this.addDataSlot(new DataSlot() {
       @Override
       public int get() {
-        return routerTE.getEnergyStorage().getEnergyStored() >>> 16;
+        return routerBlockEntity.getEnergyStorage().getEnergyStored() >>> 16;
       }
 
       @Override
       public void set(int amount) {
-        routerTE.getEnergyStorage().setEnergyStored((amount << 16) | (0x0000FFFF & routerTE.getEnergyStorage().getEnergyStored()), true);
+        routerBlockEntity.getEnergyStorage().setEnergyStored((amount << 16) | (0x0000FFFF & routerBlockEntity.getEnergyStorage().getEnergyStored()), true);
       }
     });
 
     this.trackedMappingsReference = new MappingsReferenceHolder(() -> {
-      return routerTE.getMappings();
+      return routerBlockEntity.getMappings();
     }, (Tag mappingsNBT) -> {
-      routerTE.readMappings((CompoundTag) mappingsNBT);
+      routerBlockEntity.readMappings((CompoundTag) mappingsNBT);
     });
   }
 
@@ -125,7 +125,7 @@ public class RouterContainer extends AbstractContainerMenu {
     super.broadcastChanges();
 
     if (trackedMappingsReference.isDirty()) {
-      SetMappingsPacket packet = new SetMappingsPacket(routerTE.getBlockPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundTag()), containerId);
+      SetMappingsPacket packet = new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundTag()), containerId);
       for (ServerPlayer containerListener : listeners) {
         PacketHander.INSTANCE.sendTo(packet, containerListener.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
       }
@@ -186,8 +186,8 @@ public class RouterContainer extends AbstractContainerMenu {
     return ContainerTypes.ROUTER_CONTAINER;
   }
 
-  public RouterTE getRouterTE() {
-    return routerTE;
+  public RouterBlockEntity getRouterTE() {
+    return routerBlockEntity;
   }
 
   public ArrayList<FilterSlot> getFilterSlots() {
@@ -207,7 +207,7 @@ public class RouterContainer extends AbstractContainerMenu {
    * @param inventory The inventory to copy to.
    */
   public void copySlotContents(SimpleContainer inventory) {
-    for (int i = 0; i < routerTE.getTier().filterSize; ++i)
+    for (int i = 0; i < routerBlockEntity.getTier().filterSize; ++i)
       inventory.setItem(i, tmpFilterInventory.getItem(i));
   }
 

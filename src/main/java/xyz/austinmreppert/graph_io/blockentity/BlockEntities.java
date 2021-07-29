@@ -1,4 +1,4 @@
-package xyz.austinmreppert.graph_io.tileentity;
+package xyz.austinmreppert.graph_io.blockentity;
 
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.event.RegistryEvent;
@@ -7,14 +7,14 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.austinmreppert.graph_io.block.Blocks;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-public class TileEntities {
+public class BlockEntities {
 
   @SubscribeEvent
-  public static void registerTE(RegistryEvent.Register<BlockEntityType<?>> tileEntityRegistryEvent) {
-    TileEntityTypes.ROUTER = (BlockEntityType<RouterTE>) BlockEntityType.Builder.of(RouterTE::new,
+  public static void registerBlockEntity(RegistryEvent.Register<BlockEntityType<?>> blockEntityRegistryEvent) {
+    BlockEntityTypes.ROUTER = (BlockEntityType<RouterBlockEntity>) BlockEntityType.Builder.of(RouterBlockEntity::new,
       Blocks.BASIC_ROUTER, Blocks.ADVANCED_ROUTER, Blocks.ELITE_ROUTER,
       Blocks.ULTIMATE_ROUTER).build(null).setRegistryName("router");
-    tileEntityRegistryEvent.getRegistry().registerAll(TileEntityTypes.ROUTER);
+    blockEntityRegistryEvent.getRegistry().registerAll(BlockEntityTypes.ROUTER);
   }
 
 }

@@ -1,9 +1,5 @@
 package xyz.austinmreppert.graph_io.block;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -24,8 +20,8 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.fmllegacy.network.NetworkHooks;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.data.tiers.BaseTier;
-import xyz.austinmreppert.graph_io.tileentity.RouterTE;
-import xyz.austinmreppert.graph_io.tileentity.TileEntityTypes;
+import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
+import xyz.austinmreppert.graph_io.blockentity.BlockEntityTypes;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -60,8 +56,8 @@ public class RouterBlock extends BaseEntityBlock {
   @Nullable
   @Override
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-    return level.isClientSide() ? null : createTickerHelper(blockEntityType, TileEntityTypes.ROUTER, (Level routerLevel, BlockPos blockPos, BlockState blockState, RouterTE routerTE) -> {
-      routerTE.serverTick(blockPos);
+    return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntityTypes.ROUTER, (Level routerLevel, BlockPos blockPos, BlockState blockState, RouterBlockEntity routerBlockEntity) -> {
+      routerBlockEntity.serverTick(blockPos);
     });
   }
 
@@ -70,13 +66,13 @@ public class RouterBlock extends BaseEntityBlock {
   @ParametersAreNonnullByDefault
   public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
     if (!worldIn.isClientSide) {
-      final BlockEntity tileEntity = worldIn.getBlockEntity(pos);
-      if (tileEntity instanceof RouterTE) {
-        RouterTE router = (RouterTE) tileEntity;
+      final BlockEntity blockEntity = worldIn.getBlockEntity(pos);
+      if (blockEntity instanceof RouterBlockEntity) {
+        RouterBlockEntity router = (RouterBlockEntity) blockEntity;
         if (player.isCrouching())
-          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) tileEntity, pos);
+          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) blockEntity, pos);
         else
-          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) tileEntity, (packetBuffer) -> {
+          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) blockEntity, (packetBuffer) -> {
             packetBuffer.writeBlockPos(pos);
             packetBuffer.writeNbt(Mapping.write(router.getMappings()));
           });
@@ -88,7 +84,7 @@ public class RouterBlock extends BaseEntityBlock {
   @Nullable
   @Override
   public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-    return new RouterTE(baseTier, pos, state);
+    return new RouterBlockEntity(baseTier, pos, state);
   }
 
 }

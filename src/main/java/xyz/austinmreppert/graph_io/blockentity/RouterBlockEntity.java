@@ -1,4 +1,4 @@
-package xyz.austinmreppert.graph_io.tileentity;
+package xyz.austinmreppert.graph_io.blockentity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-public class RouterTE extends RandomizableContainerBlockEntity implements MenuProvider {
+public class RouterBlockEntity extends RandomizableContainerBlockEntity implements MenuProvider {
 
   private Random random;
   private HashMap<String, BlockPos> identifiers;
@@ -62,8 +62,8 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
   private int energyPerMappingTick = 1000;
   private TranslatableComponent name;
 
-  public RouterTE(BlockPos pos, BlockState state) {
-    super(TileEntityTypes.ROUTER, pos, state);
+  public RouterBlockEntity(BlockPos pos, BlockState state) {
+    super(BlockEntityTypes.ROUTER, pos, state);
     identifiers = new HashMap<>();
     random = new Random(System.currentTimeMillis());
     mappings = new ArrayList<>();
@@ -72,7 +72,7 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
     energyCapabilityLO = LazyOptional.of(() -> energyStorage);
   }
 
-  public RouterTE(BaseTier tier, BlockPos pos, BlockState state) {
+  public RouterBlockEntity(BaseTier tier, BlockPos pos, BlockState state) {
     this(pos, state);
     setTier(tier);
   }
@@ -93,13 +93,13 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
-        BlockEntity te = level.getBlockEntity(p_155254_);
-        if (te != null) {
-          te.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
+        BlockEntity blockEntity = level.getBlockEntity(p_155254_);
+        if (blockEntity != null) {
+          blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             int extracted = -1;
             final int simulatedReceived = energyStorage.receiveEnergy(extracted = cap.extractEnergy(tier.maxEnergyPerTick, true), true);
             energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false);
-            te.setChanged();
+            blockEntity.setChanged();
             setChanged();
           });
         }
@@ -126,12 +126,12 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
       if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
         continue;
 
-      final BlockEntity inputTE = level.getBlockEntity(inputPos);
-      final BlockEntity outputTE = level.getBlockEntity(outputPos);
-      if (inputTE == null || outputTE == null) return;
+      final BlockEntity inputBlockEntity = level.getBlockEntity(inputPos);
+      final BlockEntity outputBlockEntity = level.getBlockEntity(outputPos);
+      if (inputBlockEntity == null || outputBlockEntity == null) return;
 
-      inputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
-        outputTE.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
+      inputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
+        outputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
           int transferredItems = 0;
           for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
             final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
@@ -152,15 +152,15 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
                 final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
                 final ItemStack insertedIS = outputItemHandler.insertItem(outputSlotIndex, extractedIS, false);
                 transferredItems += extractedIS.getCount() - insertedIS.getCount();
-                inputTE.setChanged();
-                outputTE.setChanged();
+                inputBlockEntity.setChanged();
+                outputBlockEntity.setChanged();
               }
             }
           }
         }));
 
-      inputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler ->
-        outputTE.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
+      inputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler ->
+        outputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
           int transferredFluids = 0;
           for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
             final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
@@ -180,16 +180,16 @@ public class RouterTE extends RandomizableContainerBlockEntity implements MenuPr
                 final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
                 final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
                 transferredFluids += outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
-                inputTE.setChanged();
-                outputTE.setChanged();
+                inputBlockEntity.setChanged();
+                outputBlockEntity.setChanged();
                 break;
               }
             }
           }
         }));
 
-      inputTE.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler ->
-        outputTE.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
+      inputBlockEntity.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler ->
+        outputBlockEntity.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
           int transferredEnergy = 0;
           if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
             final int simulatedExtracted = inputEnergyHandler.extractEnergy(Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerTick() - transferredEnergy), true);

@@ -16,14 +16,13 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.client.event.RenderTooltipEvent;
 import org.lwjgl.glfw.GLFW;
 import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.network.PacketHander;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
-import xyz.austinmreppert.graph_io.tileentity.RouterTE;
+import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -94,11 +93,11 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private ImageButton decreaseStackSizeButton, increaseStackSizeButton, decreaseBucketsButton, increaseBucketsButton,
     decreaseEnergyButton, increaseEnergyButton, decreaseTickDelay, increaseTickDelay;
   private int lastFocusedMapping;
-  private RouterTE routerTE;
+  private RouterBlockEntity routerBlockEntity;
 
   public RouterScreen(AbstractContainerMenu screenContainer, Inventory inv, Component titleIn) {
     super((RouterContainer) screenContainer, inv, titleIn);
-    routerTE = ((RouterContainer) screenContainer).getRouterTE();
+    routerBlockEntity = ((RouterContainer) screenContainer).getRouterTE();
     passEvents = false;
     imageWidth = 276;
     imageHeight = 256;
@@ -129,7 +128,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   }
 
   private void updateMappings() {
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerTE.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
+    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
   }
 
   public ArrayList<Mapping> getMappings() {
@@ -164,7 +163,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       addRenderableWidget(mapping);
       getMappings().add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST,
-        routerTE.getTier()));
+        routerBlockEntity.getTier()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocus(true);
@@ -460,7 +459,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     String bucketsPerTickStr = "?";
     String energyPerTickStr = "?";
     String tickDelayStr = "?";
-    String energyStr = routerTE.getEnergyStorage().getEnergyStored() / 1000 + "/" + routerTE.getEnergyStorage().getMaxEnergyStored() / 1000;
+    String energyStr = routerBlockEntity.getEnergyStorage().getEnergyStored() / 1000 + "/" + routerBlockEntity.getEnergyStorage().getMaxEnergyStored() / 1000;
     if (getLastFocusedMapping().isPresent()) {
       Mapping focused = getLastFocusedMapping().get();
       itemsPerTickStr = focused.getItemsPerTick() + "";
