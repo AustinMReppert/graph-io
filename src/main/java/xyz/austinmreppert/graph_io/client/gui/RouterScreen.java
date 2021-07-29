@@ -387,7 +387,6 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   }
 
   public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dragX, double dragY) {
-    System.out.println(mouseButton);
     if (isScrolling) {
       int i = topPos + SCROLL_BAR_Y;
       currentScroll = (float) Mth.clamp((mouseY - i - (SCROLL_BAR_HEIGHT / 2.0D)) / (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT), 0.0D, 1.0D);
