@@ -136,11 +136,11 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   }
 
   @Override
-  public boolean charTyped(char p_231042_1_, int p_231042_2_) {
+  public boolean charTyped(char typedChar, int modifiers) {
     if (getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
       EditBox listener = (EditBox) getFocused();
       int index = rawMappings.indexOf(listener);
-      boolean pressed = listener.charTyped(p_231042_1_, p_231042_2_);
+      boolean pressed = listener.charTyped(typedChar, modifiers);
       if (index != -1) {
         getMappings().get(index).setRaw(listener.getValue());
         updateMappings();
@@ -342,7 +342,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addRenderableWidget(increaseTickDelay = new ImageButton(this.leftPos - 50, topPos + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (p_214076_1_) -> {
+    this.addRenderableWidget(increaseTickDelay = new ImageButton(this.leftPos - 50, topPos + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeTickDelay(1);
         updateMappingGUI();
@@ -386,15 +386,15 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     return mapping;
   }
 
-  public boolean mouseDragged(double mouseX, double mouseY, int p_231045_5_, double dragX, double dragY) {
+  public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dragX, double dragY) {
+    System.out.println(mouseButton);
     if (isScrolling) {
       int i = topPos + SCROLL_BAR_Y;
       currentScroll = (float) Mth.clamp((mouseY - i - (SCROLL_BAR_HEIGHT / 2.0D)) / (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT), 0.0D, 1.0D);
       scrollTo(currentScroll);
       return true;
     } else
-      return super.mouseDragged(mouseX, mouseY, p_231045_5_, dragX, dragY);
-
+      return super.mouseDragged(mouseX, mouseY, mouseButton, dragX, dragY);
   }
 
   /**

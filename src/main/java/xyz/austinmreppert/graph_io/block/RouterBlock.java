@@ -7,11 +7,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.core.BlockPos;
@@ -47,26 +45,20 @@ public class RouterBlock extends BaseEntityBlock {
     return RenderShape.MODEL;
   }
 
-  @Override
-  @ParametersAreNonnullByDefault
-  public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-    super.setPlacedBy(worldIn, pos, state, placer, stack);
-  }
-
   @Nullable
   @Override
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
     return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntityTypes.ROUTER, (Level routerLevel, BlockPos blockPos, BlockState blockState, RouterBlockEntity routerBlockEntity) -> {
-      routerBlockEntity.serverTick(blockPos);
+      routerBlockEntity.serverTick(level, blockPos);
     });
   }
 
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
-    if (!worldIn.isClientSide) {
-      final BlockEntity blockEntity = worldIn.getBlockEntity(pos);
+  public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+    if (!level.isClientSide) {
+      final BlockEntity blockEntity = level.getBlockEntity(pos);
       if (blockEntity instanceof RouterBlockEntity) {
         RouterBlockEntity router = (RouterBlockEntity) blockEntity;
         if (player.isCrouching())
@@ -77,6 +69,7 @@ public class RouterBlock extends BaseEntityBlock {
             packetBuffer.writeNbt(Mapping.write(router.getMappings()));
           });
       }
+      return InteractionResult.CONSUME;
     }
     return InteractionResult.SUCCESS;
   }

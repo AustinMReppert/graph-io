@@ -9,6 +9,7 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -85,15 +86,14 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     return false;
   }
 
-  public void serverTick(BlockPos p_155254_) {
-    if (level == null || level.isClientSide) return;
+  public void serverTick(Level level, BlockPos pos) {
     ++ticks;
 
     if (shouldTick()) {
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
-        BlockEntity blockEntity = level.getBlockEntity(p_155254_);
+        BlockEntity blockEntity = level.getBlockEntity(pos);
         if (blockEntity != null) {
           blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             int extracted = -1;
@@ -219,8 +219,8 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
 
   @Override
   @ParametersAreNonnullByDefault
-  public AbstractContainerMenu createMenu(int windowID, Inventory inventory, Player p_createMenu_3_) {
-    return p_createMenu_3_.isCrouching() ? ChestMenu.sixRows(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
+  public AbstractContainerMenu createMenu(int windowID, Inventory inventory, Player player) {
+    return player.isCrouching() ? ChestMenu.sixRows(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override
