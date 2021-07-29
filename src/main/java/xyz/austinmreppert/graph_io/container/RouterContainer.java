@@ -146,11 +146,10 @@ public class RouterContainer extends AbstractContainerMenu {
   public void clicked(int slotId, int dragType, ClickType clickType, Player player) {
     Slot slot = slotId < 0 ? null : getSlot(slotId);
     if (slot instanceof FilterSlot) {
-      if (clickType == ClickType.PICKUP && player.getInventory().getSelected().isEmpty())
+      if (clickType == ClickType.PICKUP && getCarried().isEmpty())
         slot.set(ItemStack.EMPTY);
       else
-        slot.set(player.getInventory().getSelected().isEmpty() ? ItemStack.EMPTY : player.getInventory().getSelected().copy());
-      player.getInventory().getSelected();
+        slot.set(getCarried().isEmpty() ? ItemStack.EMPTY : getCarried().copy());
     } else
       super.clicked(slotId, dragType, clickType, player);
   }
