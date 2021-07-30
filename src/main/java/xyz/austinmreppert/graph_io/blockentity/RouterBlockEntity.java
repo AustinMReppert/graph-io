@@ -130,14 +130,23 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
         continue;
 
-      final ResourceKey<Level> inputLevel = identifiers.get(inputNodeInfo.getIdentifier()).getLevel();
-      final ResourceKey<Level> outputLevel = identifiers.get(outputNodeInfo.getIdentifier()).getLevel();
+      final ResourceKey<Level> inputLevelName = identifiers.get(inputNodeInfo.getIdentifier()).getLevel();
+      final ResourceKey<Level> outputLevelName = identifiers.get(outputNodeInfo.getIdentifier()).getLevel();
 
-      if (inputLevel == null || inputLevel == null)
+      if (inputLevelName == null || inputLevelName == null)
         continue;
 
-      final BlockEntity inputBlockEntity = level.getServer().getLevel(inputLevel).getBlockEntity(inputPos);
-      final BlockEntity outputBlockEntity = level.getServer().getLevel(outputLevel).getBlockEntity(outputPos);
+      final Level inputLevel = level.getServer().getLevel(inputLevelName);
+      final Level outputLevel = level.getServer().getLevel(outputLevelName);
+
+      if (inputLevel != null || outputLevel == null)
+        continue;
+
+      if(!inputLevel.isLoaded(inputPos) || !outputLevel.isLoaded(outputPos))
+        continue;
+
+      final BlockEntity inputBlockEntity = inputLevel.getBlockEntity(inputPos);
+      final BlockEntity outputBlockEntity = outputLevel.getBlockEntity(outputPos);
       if (inputBlockEntity == null || outputBlockEntity == null) return;
 
       inputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
