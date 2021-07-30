@@ -133,13 +133,13 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       final ResourceKey<Level> inputLevelName = identifiers.get(inputNodeInfo.getIdentifier()).getLevel();
       final ResourceKey<Level> outputLevelName = identifiers.get(outputNodeInfo.getIdentifier()).getLevel();
 
-      if (inputLevelName == null || inputLevelName == null)
+      if (inputLevelName == null || outputLevelName == null)
         continue;
 
       final Level inputLevel = level.getServer().getLevel(inputLevelName);
       final Level outputLevel = level.getServer().getLevel(outputLevelName);
 
-      if (inputLevel != null || outputLevel == null)
+      if (inputLevel == null || outputLevel == null)
         continue;
 
       if(!inputLevel.isLoaded(inputPos) || !outputLevel.isLoaded(outputPos))
