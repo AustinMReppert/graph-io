@@ -3,6 +3,7 @@ package xyz.austinmreppert.graph_io.blockentity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
@@ -33,6 +34,7 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.DynamicEnergyStorage;
+import xyz.austinmreppert.graph_io.capabilities.IIdentifierCapability;
 import xyz.austinmreppert.graph_io.client.gui.RouterScreen;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
@@ -50,7 +52,7 @@ import java.util.Random;
 public class RouterBlockEntity extends RandomizableContainerBlockEntity implements MenuProvider {
 
   private final Random random;
-  private final HashMap<String, BlockPos> identifiers;
+  private final HashMap<String, IIdentifierCapability> identifiers;
   private final DynamicEnergyStorage energyStorage;
   private final LazyOptional<IEnergyStorage> energyCapabilityLO;
   private ArrayList<Mapping> mappings;
@@ -119,13 +121,23 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
 
       final NodeInfo inputNodeInfo = mapping.getInputs().get(mapping.currentInputIndex);
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
-      final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier());
-      final BlockPos outputPos = identifiers.get(outputNodeInfo.getIdentifier());
+
+      if(identifiers.get(inputNodeInfo.getIdentifier()) == null || identifiers.get(outputNodeInfo.getIdentifier()) == null)
+        continue;
+
+      final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier()).getBlockPos();
+      final BlockPos outputPos = identifiers.get(outputNodeInfo.getIdentifier()).getBlockPos();
       if (inputPos == null || outputPos == null || (inputPos.equals(outputPos) && inputNodeInfo.getFace() == outputNodeInfo.getFace()))
         continue;
 
-      final BlockEntity inputBlockEntity = level.getBlockEntity(inputPos);
-      final BlockEntity outputBlockEntity = level.getBlockEntity(outputPos);
+      final ResourceKey<Level> inputLevel = identifiers.get(inputNodeInfo.getIdentifier()).getLevel();
+      final ResourceKey<Level> outputLevel = identifiers.get(outputNodeInfo.getIdentifier()).getLevel();
+
+      if (inputLevel == null || inputLevel == null)
+        continue;
+
+      final BlockEntity inputBlockEntity = level.getServer().getLevel(inputLevel).getBlockEntity(inputPos);
+      final BlockEntity outputBlockEntity = level.getServer().getLevel(outputLevel).getBlockEntity(outputPos);
       if (inputBlockEntity == null || outputBlockEntity == null) return;
 
       inputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
@@ -331,7 +343,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   private void cacheIfIdentifier(ItemStack is) {
     if (is.getItem() == Items.IDENTIFIER)
       is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
-        identifiers.put(is.getHoverName().getContents(), identifierCapability.getBlockPos()));
+        identifiers.put(is.getHoverName().getContents(), identifierCapability));
   }
 
   @Nonnull

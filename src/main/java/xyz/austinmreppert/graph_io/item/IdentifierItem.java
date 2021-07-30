@@ -2,9 +2,12 @@ package xyz.austinmreppert.graph_io.item;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -15,6 +18,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.fmllegacy.RegistryObject;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryBuilder;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.IdentifierCapabilityProvider;
 import xyz.austinmreppert.graph_io.client.render.Highlighter;
@@ -22,6 +28,8 @@ import xyz.austinmreppert.graph_io.client.render.Highlighter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import static net.minecraft.resources.ResourceKey.createRegistryKey;
 
 public class IdentifierItem extends Item {
 
@@ -47,10 +55,12 @@ public class IdentifierItem extends Item {
             Highlighter.unhighlightBlock(identifierCapability.getBlockPos());
         }
         identifierCapability.setBlockPos(res.getBlockPos());
+        identifierCapability.setLevel(playerIn.level.dimension());
       } else if (!playerIn.isCrouching() && identifierCapability.getBlockPos() != null) {
         BlockPos identifierPos = identifierCapability.getBlockPos();
+        ResourceKey<Level> identifierLevel = identifierCapability.getLevel();
         if (worldIn.isClientSide) {
-          Minecraft.getInstance().gui.getChat().addMessage(Component.nullToEmpty(POINTS_TO.getString() +  " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ")"));
+          Minecraft.getInstance().gui.getChat().addMessage(Component.nullToEmpty(POINTS_TO.getString() +  " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ") " + (identifierLevel != null ? identifierLevel.location() : "")));
           Highlighter.toggleHighlightBlock(identifierPos, 0.01F, 255, 0, 0, 125);
         }
       }

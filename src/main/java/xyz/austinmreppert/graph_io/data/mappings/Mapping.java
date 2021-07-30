@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.Constants;
+import xyz.austinmreppert.graph_io.capabilities.IIdentifierCapability;
 import xyz.austinmreppert.graph_io.data.tiers.RouterTier;
 
 import java.util.ArrayList;
@@ -124,7 +125,7 @@ public class Mapping {
     return nbt;
   }
 
-  public static ArrayList<Mapping> read(CompoundTag tag, HashMap<String, BlockPos> identifiers, RouterTier tier) {
+  public static ArrayList<Mapping> read(CompoundTag tag, HashMap<String, IIdentifierCapability> identifiers, RouterTier tier) {
     ListTag list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
     ArrayList<Mapping> mappings = new ArrayList<>(list.size());
     for (int i = 0; i < list.size(); ++i) {

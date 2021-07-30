@@ -2,8 +2,12 @@ package xyz.austinmreppert.graph_io.capabilities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
@@ -32,6 +36,8 @@ public class IdentifierCapabilityProvider implements ICapabilitySerializable {
         blockPosNBT.putInt("y", instance.getBlockPos().getY());
         blockPosNBT.putInt("z", instance.getBlockPos().getZ());
       }
+      if(instance.getLevel() != null)
+        blockPosNBT.putString("levelLocation", instance.getLevel().location().toString());
     });
 
     return blockPosNBT;
@@ -44,6 +50,8 @@ public class IdentifierCapabilityProvider implements ICapabilitySerializable {
       CompoundTag blockPosNBT = (CompoundTag) nbt;
       if (blockPosNBT.contains("x") && blockPosNBT.contains("y") && blockPosNBT.contains("z"))
         instance.setBlockPos(new BlockPos(blockPosNBT.getInt("x"), blockPosNBT.getInt("y"), blockPosNBT.getInt("z")));
+      if(blockPosNBT.contains("levelLocation"))
+        instance.setLevel(ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(blockPosNBT.getString("levelLocation"))));
     });
   }
 
