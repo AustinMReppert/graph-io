@@ -47,6 +47,7 @@ public class RouterBlock extends BaseEntityBlock {
 
   @Nullable
   @Override
+  @ParametersAreNonnullByDefault
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
     return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntityTypes.ROUTER, (Level routerLevel, BlockPos blockPos, BlockState blockState, RouterBlockEntity routerBlockEntity) -> {
       routerBlockEntity.serverTick(level, blockPos);
@@ -59,8 +60,7 @@ public class RouterBlock extends BaseEntityBlock {
   public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
     if (!level.isClientSide) {
       final BlockEntity blockEntity = level.getBlockEntity(pos);
-      if (blockEntity instanceof RouterBlockEntity) {
-        RouterBlockEntity router = (RouterBlockEntity) blockEntity;
+      if (blockEntity instanceof RouterBlockEntity router) {
         if (player.isCrouching())
           NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) blockEntity, pos);
         else
@@ -74,8 +74,8 @@ public class RouterBlock extends BaseEntityBlock {
     return InteractionResult.SUCCESS;
   }
 
-  @Nullable
   @Override
+  @ParametersAreNonnullByDefault
   public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
     return new RouterBlockEntity(baseTier, pos, state);
   }

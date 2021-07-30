@@ -33,16 +33,14 @@ public class SetMappingsPacket {
       if(context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
         ServerPlayer sender = context.get().getSender();
         BlockEntity blockEntity = context.get().getSender().getCommandSenderWorld().getBlockEntity(packet.blockPos);
-        if (blockEntity instanceof RouterBlockEntity) {
-          RouterBlockEntity routerBlockEntity = (RouterBlockEntity) blockEntity;
+        if (blockEntity instanceof RouterBlockEntity routerBlockEntity) {
           routerBlockEntity.readMappings(packet.routerTENBT);
           routerBlockEntity.setChanged();
         }
       } else {
         Player playerEntity = Minecraft.getInstance().player;
         AbstractContainerMenu openContainer = playerEntity.containerMenu;
-        if (openContainer instanceof RouterContainer && playerEntity.containerMenu.containerId == packet.windowID) {
-          RouterContainer router = (RouterContainer) openContainer;
+        if (openContainer instanceof RouterContainer router && playerEntity.containerMenu.containerId == packet.windowID) {
           router.getTrackedMappingsReference().set.accept(packet.routerTENBT);
         }
       }

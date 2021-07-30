@@ -1,6 +1,6 @@
 package xyz.austinmreppert.graph_io.container;
 
-import net.minecraft.world.inventory.AbstractContainerMenu;;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.event.RegistryEvent;

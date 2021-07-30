@@ -5,7 +5,7 @@ import net.minecraftforge.fmllegacy.network.NetworkRegistry;
 import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
 import xyz.austinmreppert.graph_io.GraphIO;
 
-public class PacketHander {
+public class PacketHandler {
 
   private static final String PROTOCOL_VERSION = "1";
 

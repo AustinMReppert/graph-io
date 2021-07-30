@@ -14,7 +14,7 @@ import net.minecraftforge.fmllegacy.network.NetworkDirection;
 import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 import xyz.austinmreppert.graph_io.client.gui.FilterSlot;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
-import xyz.austinmreppert.graph_io.network.PacketHander;
+import xyz.austinmreppert.graph_io.network.PacketHandler;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
 
 import javax.annotation.Nonnull;
@@ -31,11 +31,11 @@ public class RouterContainer extends AbstractContainerMenu {
   private final ArrayList<FilterSlot> filterSlots;
   private final SimpleContainer tmpFilterInventory;
 
-  private final int HOTBAR_X = 108;
-  private final int HOTBAR_Y = 232;
-  private final int INVENTORY_X = 108;
-  private final int INVENTORY_Y = 174;
-  private final int SLOT_SIZE = 18;
+  private static final int HOTBAR_X = 108;
+  private static final int HOTBAR_Y = 232;
+  private static final int INVENTORY_X = 108;
+  private static final int INVENTORY_Y = 174;
+  private static final int SLOT_SIZE = 18;
 
   public RouterContainer(int windowId, Inventory inv, FriendlyByteBuf data) {
     this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));
@@ -92,11 +92,8 @@ public class RouterContainer extends AbstractContainerMenu {
       }
     });
 
-    this.trackedMappingsReference = new MappingsReferenceHolder(() -> {
-      return routerBlockEntity.getMappings();
-    }, (Tag mappingsNBT) -> {
-      routerBlockEntity.readMappings((CompoundTag) mappingsNBT);
-    });
+    this.trackedMappingsReference = new MappingsReferenceHolder(routerBlockEntity::getMappings, (Tag mappingsNBT)
+        -> routerBlockEntity.readMappings((CompoundTag) mappingsNBT));
   }
 
   public void setFilterSlotContents(SimpleContainer filter) {
@@ -107,6 +104,7 @@ public class RouterContainer extends AbstractContainerMenu {
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void addSlotListener(ContainerListener listener) {
     super.addSlotListener(listener);
     if (listener instanceof ServerPlayer)
@@ -114,6 +112,7 @@ public class RouterContainer extends AbstractContainerMenu {
   }
 
   @Override
+  @ParametersAreNonnullByDefault
   public void removeSlotListener(ContainerListener listener) {
     super.removeSlotListener(listener);
     if (listener instanceof ServerPlayer)
@@ -127,7 +126,7 @@ public class RouterContainer extends AbstractContainerMenu {
     if (trackedMappingsReference.isDirty()) {
       SetMappingsPacket packet = new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundTag()), containerId);
       for (ServerPlayer containerListener : listeners) {
-        PacketHander.INSTANCE.sendTo(packet, containerListener.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+        PacketHandler.INSTANCE.sendTo(packet, containerListener.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
       }
     }
 
@@ -141,7 +140,6 @@ public class RouterContainer extends AbstractContainerMenu {
   }
 
   @Override
-  @Nonnull
   @ParametersAreNonnullByDefault
   public void clicked(int slotId, int dragType, ClickType clickType, Player player) {
     Slot slot = slotId < 0 ? null : getSlot(slotId);
@@ -204,6 +202,7 @@ public class RouterContainer extends AbstractContainerMenu {
 
   /**
    * Copies the slot contents to an inventory.
+   *
    * @param inventory The inventory to copy to.
    */
   public void copySlotContents(SimpleContainer inventory) {

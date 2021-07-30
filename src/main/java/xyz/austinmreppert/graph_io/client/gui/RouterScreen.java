@@ -20,7 +20,7 @@ import org.lwjgl.glfw.GLFW;
 import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
-import xyz.austinmreppert.graph_io.network.PacketHander;
+import xyz.austinmreppert.graph_io.network.PacketHandler;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
 import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 
@@ -128,7 +128,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   }
 
   private void updateMappings() {
-    PacketHander.INSTANCE.sendToServer(new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
+    PacketHandler.INSTANCE.sendToServer(new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
   }
 
   public ArrayList<Mapping> getMappings() {
@@ -137,8 +137,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
 
   @Override
   public boolean charTyped(char typedChar, int modifiers) {
-    if (getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
-      EditBox listener = (EditBox) getFocused();
+    if (getFocused() != null && getFocused() instanceof EditBox listener && ((EditBox) getFocused()).canConsumeInput()) {
       int index = rawMappings.indexOf(listener);
       boolean pressed = listener.charTyped(typedChar, modifiers);
       if (index != -1) {
@@ -187,8 +186,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
       }
       return true;
-    } else if (getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
-      EditBox listener = (EditBox) getFocused();
+    } else if (getFocused() != null && getFocused() instanceof EditBox listener && ((EditBox) getFocused()).canConsumeInput()) {
       int index = rawMappings.indexOf(listener);
       boolean pressed = listener.keyPressed(keyCode, scanCode, modifiers);
       if (pressed && index != -1) {

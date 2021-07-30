@@ -75,8 +75,9 @@ public class Highlighter {
     float z1 = z - padding;
     float z2 = z + padding + 1.0F;
 
-    bb.vertex(mat, x2, y2, z1).color(r, g, b, a).endVertex();
-    bb.vertex(mat, x2, y1, z1).color(r, g, b, a).endVertex();
+    for (float v : new float[]{y2, y1}) {
+      bb.vertex(mat, x2, v, z1).color(r, g, b, a).endVertex();
+    }
     bb.vertex(mat, x1, y1, z1).color(r, g, b, a).endVertex();
     bb.vertex(mat, x1, y2, z1).color(r, g, b, a).endVertex();
 

@@ -3,7 +3,6 @@ package xyz.austinmreppert.graph_io.blockentity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
@@ -50,18 +49,17 @@ import java.util.Random;
 
 public class RouterBlockEntity extends RandomizableContainerBlockEntity implements MenuProvider {
 
-  private Random random;
-  private HashMap<String, BlockPos> identifiers;
-  private DynamicEnergyStorage energyStorage;
-  private LazyOptional<IEnergyStorage> energyCapabilityLO;
+  private final Random random;
+  private final HashMap<String, BlockPos> identifiers;
+  private final DynamicEnergyStorage energyStorage;
+  private final LazyOptional<IEnergyStorage> energyCapabilityLO;
   private ArrayList<Mapping> mappings;
   private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
   private int ticks;
   private RouterTier tier;
   protected Block tieredRouter;
   private int lastTick;
-  private int energyPerMappingTick = 1000;
-  private TranslatableComponent name;
+  private static final int energyPerMappingTick = 1000;
 
   public RouterBlockEntity(BlockPos pos, BlockState state) {
     super(BlockEntityTypes.ROUTER, pos, state);
@@ -241,7 +239,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   }
 
   /**
-   * Writes the router's inventory to an nbt tag.
+   * Writes the router's inventory to a nbt tag.
    *
    * @param compound The nbt tag to write to.
    */
@@ -251,7 +249,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   }
 
   /**
-   * Writes the router's mappings to an nbt tag.
+   * Writes the router's mappings to a nbt tag.
    *
    * @param compound The nbt tag to write to.
    */
@@ -351,8 +349,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     mappings = Mapping.read(nbt, identifiers, tier);
     if (level.isClientSide()) {
       Screen currentTmp = Minecraft.getInstance().screen;
-      if (currentTmp instanceof RouterScreen) {
-        RouterScreen current = (RouterScreen) currentTmp;
+      if (currentTmp instanceof RouterScreen current) {
         current.update();
       }
     }
