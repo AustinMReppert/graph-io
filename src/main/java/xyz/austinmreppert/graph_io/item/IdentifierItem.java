@@ -18,9 +18,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.fmllegacy.RegistryObject;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryBuilder;
 import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.IdentifierCapabilityProvider;
 import xyz.austinmreppert.graph_io.client.render.Highlighter;
@@ -28,8 +25,6 @@ import xyz.austinmreppert.graph_io.client.render.Highlighter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import static net.minecraft.resources.ResourceKey.createRegistryKey;
 
 public class IdentifierItem extends Item {
 
@@ -49,7 +44,6 @@ public class IdentifierItem extends Item {
     ItemStack is = playerIn.getItemInHand(handIn);
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
       if (playerIn.isCrouching() && res.getType() == BlockHitResult.Type.BLOCK) {
-        // TODO: SYNC from server to client
         if (worldIn.isClientSide) {
           if (identifierCapability.getBlockPos() != null)
             Highlighter.unhighlightBlock(identifierCapability.getBlockPos());
@@ -65,8 +59,35 @@ public class IdentifierItem extends Item {
         }
       }
     });
+    return InteractionResultHolder.consume(is);
+  }
 
-    return super.use(worldIn, playerIn, handIn);
+  @Nullable
+  @Override
+  public CompoundTag getShareTag(ItemStack is) {
+    CompoundTag nbt = new CompoundTag();
+    is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
+      if (identifierCapability.getBlockPos() != null) {
+        nbt.putInt("x", identifierCapability.getBlockPos().getX());
+        nbt.putInt("y", identifierCapability.getBlockPos().getY());
+        nbt.putInt("z", identifierCapability.getBlockPos().getZ());
+      }
+      if(identifierCapability.getLevel() != null)
+        nbt.putString("levelLocation", identifierCapability.getLevel().location().toString());
+    });
+    return nbt;
+  }
+
+  @Override
+  public void readShareTag(ItemStack is, @Nullable CompoundTag nbt) {
+    if(nbt == null)
+      return;
+    is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
+      if (nbt.contains("x") && nbt.contains("y") && nbt.contains("z"))
+        identifierCapability.setBlockPos(new BlockPos(nbt.getInt("x"), nbt.getInt("y"), nbt.getInt("z")));
+      if(nbt.contains("levelLocation"))
+        identifierCapability.setLevel(ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(nbt.getString("levelLocation"))));
+    });
   }
 
   @Nullable

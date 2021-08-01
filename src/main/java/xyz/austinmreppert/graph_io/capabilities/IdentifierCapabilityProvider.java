@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
@@ -39,14 +38,13 @@ public class IdentifierCapabilityProvider implements ICapabilitySerializable {
       if(instance.getLevel() != null)
         blockPosNBT.putString("levelLocation", instance.getLevel().location().toString());
     });
-
     return blockPosNBT;
   }
 
   @Override
   public void deserializeNBT(Tag nbt) {
-
     identifierCapabilityLO.ifPresent((instance) -> {
+
       CompoundTag blockPosNBT = (CompoundTag) nbt;
       if (blockPosNBT.contains("x") && blockPosNBT.contains("y") && blockPosNBT.contains("z"))
         instance.setBlockPos(new BlockPos(blockPosNBT.getInt("x"), blockPosNBT.getInt("y"), blockPosNBT.getInt("z")));
