@@ -64,7 +64,7 @@ public class IdentifierItem extends Item {
 
   @Nullable
   @Override
-  public CompoundTag getShareTag(ItemStack is) {
+    public CompoundTag getShareTag(ItemStack is) {
     CompoundTag nbt = new CompoundTag();
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
       if (identifierCapability.getBlockPos() != null) {

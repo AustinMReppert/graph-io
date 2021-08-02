@@ -10,6 +10,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.PacketDistributor;
 import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 
@@ -32,15 +33,23 @@ public class SetMappingsPacket {
     context.get().enqueueWork(() -> {
       if(context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
         ServerPlayer sender = context.get().getSender();
+        PacketHandler.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> {
+          return sender.getLevel().getChunkAt(sender.blockPosition());
+        }), packet);
+
+
+
         BlockEntity blockEntity = context.get().getSender().getCommandSenderWorld().getBlockEntity(packet.blockPos);
         if (blockEntity instanceof RouterBlockEntity routerBlockEntity) {
           routerBlockEntity.readMappings(packet.routerTENBT);
           routerBlockEntity.setChanged();
         }
       } else {
+        // TODO: PACKET IS SENT TO THE SENDER! FIX LATER
         Player playerEntity = Minecraft.getInstance().player;
         AbstractContainerMenu openContainer = playerEntity.containerMenu;
-        if (openContainer instanceof RouterContainer router && playerEntity.containerMenu.containerId == packet.windowID) {
+        BlockEntity be = playerEntity.level.getBlockEntity(packet.blockPos);
+        if (openContainer instanceof RouterContainer router && be instanceof RouterBlockEntity routerBlockEntity && packet.blockPos.equals(routerBlockEntity.getBlockPos())) {
           router.getTrackedMappingsReference().set.accept(packet.routerTENBT);
         }
       }

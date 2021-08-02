@@ -490,6 +490,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
 
   public void update() {
     final int cursorPos = getLastFocusedMappingTF().isPresent() ? getLastFocusedMappingTF().get().getCursorPosition() : -1;
+    final int highlightPos = getLastFocusedMappingTF().isPresent() ? getLastFocusedMappingTF().get().highlightPos : -1;
     for (EditBox rawMapping : rawMappings)
       removeWidget(rawMapping);
     createMappingTextFields();
@@ -498,6 +499,8 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       focused.setFocus(true);
       if (cursorPos != -1)
         focused.setCursorPosition(cursorPos);
+      if(highlightPos != -1)
+        focused.setHighlightPos(highlightPos);
     }, () -> {
       lastFocusedMapping = getMappings().size() - 1;
     });
