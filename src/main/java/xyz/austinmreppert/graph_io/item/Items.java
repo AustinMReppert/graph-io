@@ -11,7 +11,7 @@ import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.block.Blocks;
 import xyz.austinmreppert.graph_io.item_group.ItemGroups;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = GraphIO.MOD_ID)
 public class Items {
 
   public static final Item IDENTIFIER = register(new IdentifierItem(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "identifier");
@@ -33,12 +33,7 @@ public class Items {
   }
 
   public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final String name) {
-    return register(entry, new ResourceLocation(GraphIO.MOD_ID, name));
-  }
-
-  public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final ResourceLocation registryName) {
-    entry.setRegistryName(registryName);
-    return entry;
+    return entry.setRegistryName(new ResourceLocation(GraphIO.MOD_ID, name));
   }
 
 }

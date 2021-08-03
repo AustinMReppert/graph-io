@@ -28,12 +28,8 @@ public class Blocks {
   }
 
   public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final String name) {
-    return register(entry, new ResourceLocation(GraphIO.MOD_ID, name));
+    return entry.setRegistryName(new ResourceLocation(GraphIO.MOD_ID, name));
   }
 
-  public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final ResourceLocation registryName) {
-    entry.setRegistryName(registryName);
-    return entry;
-  }
 
 }
