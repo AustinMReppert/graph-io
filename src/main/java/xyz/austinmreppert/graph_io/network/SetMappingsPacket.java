@@ -1,18 +1,14 @@
 package xyz.austinmreppert.graph_io.network;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import net.minecraftforge.fmllegacy.network.PacketDistributor;
 import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
-import xyz.austinmreppert.graph_io.container.RouterContainer;
 
 import java.util.function.Supplier;
 
@@ -45,13 +41,7 @@ public class SetMappingsPacket {
           routerBlockEntity.setChanged();
         }
       } else {
-        // TODO: PACKET IS SENT TO THE SENDER! FIX LATER
-        Player playerEntity = Minecraft.getInstance().player;
-        AbstractContainerMenu openContainer = playerEntity.containerMenu;
-        BlockEntity be = playerEntity.level.getBlockEntity(packet.blockPos);
-        if (openContainer instanceof RouterContainer router && be instanceof RouterBlockEntity routerBlockEntity && packet.blockPos.equals(routerBlockEntity.getBlockPos())) {
-          router.getTrackedMappingsReference().set.accept(packet.routerTENBT);
-        }
+        SetMappingPacketClient.handle(packet);
       }
     });
     context.get().setPacketHandled(true);
@@ -70,5 +60,16 @@ public class SetMappingsPacket {
     return new SetMappingsPacket(routerPos, routerTENBT, windowID);
   }
 
+  public CompoundTag getRouterTENBT() {
+    return routerTENBT;
+  }
+
+  public BlockPos getBlockPos() {
+    return blockPos;
+  }
+
+  public int getWindowID() {
+    return windowID;
+  }
 
 }

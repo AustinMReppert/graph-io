@@ -18,11 +18,11 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import org.lwjgl.glfw.GLFW;
 import xyz.austinmreppert.graph_io.GraphIO;
+import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.network.PacketHandler;
 import xyz.austinmreppert.graph_io.network.SetMappingsPacket;
-import xyz.austinmreppert.graph_io.blockentity.RouterBlockEntity;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;

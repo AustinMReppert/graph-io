@@ -125,8 +125,8 @@ repositories {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.17.1-37.0.22'
 
-    runtimeOnly fg.deobf("blank:itank-1.17.1:1.6.0")
-    runtimeOnly fg.deobf("blank:bibliotheca-1.17.1:1.7.2")
+    //runtimeOnly fg.deobf("blank:itank-1.17.1:1.6.0")
+    //runtimeOnly fg.deobf("blank:bibliotheca-1.17.1:1.7.2")
 
 }
 

@@ -1,11 +1,10 @@
 package xyz.austinmreppert.graph_io.data.mappings;
 
-import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.Constants;
 import xyz.austinmreppert.graph_io.capabilities.IIdentifierCapability;
 import xyz.austinmreppert.graph_io.data.tiers.RouterTier;
