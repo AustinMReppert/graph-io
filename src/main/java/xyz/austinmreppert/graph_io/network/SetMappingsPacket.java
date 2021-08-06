@@ -33,8 +33,6 @@ public class SetMappingsPacket {
           return sender.getLevel().getChunkAt(sender.blockPosition());
         }), packet);
 
-
-
         BlockEntity blockEntity = context.get().getSender().getCommandSenderWorld().getBlockEntity(packet.blockPos);
         if (blockEntity instanceof RouterBlockEntity routerBlockEntity) {
           routerBlockEntity.readMappings(packet.routerTENBT);

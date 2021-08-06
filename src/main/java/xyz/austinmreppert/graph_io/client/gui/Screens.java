@@ -20,6 +20,7 @@ public class Screens {
 
   public static void register() {
     MenuScreens.register(ContainerTypes.ROUTER_CONTAINER, RouterScreen::new);
+    MenuScreens.register(ContainerTypes.ROUTER_STORAGE_CONTAINER, RouterStorageScreen::new);
   }
 
 }

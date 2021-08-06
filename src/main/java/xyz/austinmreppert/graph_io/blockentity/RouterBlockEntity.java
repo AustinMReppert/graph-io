@@ -17,6 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -36,7 +37,9 @@ import xyz.austinmreppert.graph_io.capabilities.Capabilities;
 import xyz.austinmreppert.graph_io.capabilities.DynamicEnergyStorage;
 import xyz.austinmreppert.graph_io.capabilities.IIdentifierCapability;
 import xyz.austinmreppert.graph_io.client.gui.RouterScreen;
+import xyz.austinmreppert.graph_io.container.ContainerTypes;
 import xyz.austinmreppert.graph_io.container.RouterContainer;
+import xyz.austinmreppert.graph_io.container.RouterStorageContainer;
 import xyz.austinmreppert.graph_io.data.mappings.Mapping;
 import xyz.austinmreppert.graph_io.data.mappings.NodeInfo;
 import xyz.austinmreppert.graph_io.data.tiers.BaseTier;
@@ -56,15 +59,17 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   private final DynamicEnergyStorage energyStorage;
   private final LazyOptional<IEnergyStorage> energyCapabilityLO;
   private ArrayList<Mapping> mappings;
-  private NonNullList<ItemStack> inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
+  private NonNullList<ItemStack> inventory;
   private int ticks;
   private RouterTier tier;
   protected Block tieredRouter;
   private int lastTick;
   private static final int energyPerMappingTick = 1000;
+  private int containerSize;
 
   public RouterBlockEntity(BlockPos pos, BlockState state) {
     super(BlockEntityTypes.ROUTER, pos, state);
+    containerSize = 3;
     identifiers = new HashMap<>();
     random = new Random(System.currentTimeMillis());
     mappings = new ArrayList<>();
@@ -239,14 +244,15 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   @Override
   @ParametersAreNonnullByDefault
   public AbstractContainerMenu createMenu(int windowID, Inventory inventory, Player player) {
-    return player.isCrouching() ? ChestMenu.sixRows(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
+    return player.isCrouching() ? new RouterStorageContainer(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
   protected AbstractContainerMenu createMenu(int windowID, Inventory inventory) {
-    return inventory.player.isCrouching() ? ChestMenu.sixRows(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
+    return inventory.player.isCrouching() ?
+    new RouterStorageContainer(windowID, inventory, this): new RouterContainer(windowID, inventory, this);
   }
 
   @Override
@@ -428,6 +434,19 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       default:
         yield null;
     };
+    containerSize = switch (this.tier.baseTier) {
+      case BASIC:
+        yield 3;
+      case ADVANCED:
+          yield 6;
+      case ELITE:
+        yield 9;
+      case ULTIMATE:
+        yield 12;
+      default:
+        yield 0;
+    };
+    inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
     energyStorage.setCapacity(this.tier.maxEnergy);
     energyStorage.setMaxReceive(this.tier.maxEnergyPerTick);
   }
@@ -439,7 +458,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
 
   @Override
   public int getContainerSize() {
-    return 56;
+    return containerSize;
   }
 
 }
