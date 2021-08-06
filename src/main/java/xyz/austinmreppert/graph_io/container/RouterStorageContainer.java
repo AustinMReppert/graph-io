@@ -17,7 +17,7 @@ public class RouterStorageContainer extends AbstractContainerMenu {
   private final Container container;
   private final int containerRows;
   private RouterBlockEntity routerBlockEntity;
-  private static final int SLOT_SIZE = 18;
+  public static final int SLOT_SIZE = 18;
 
   public RouterStorageContainer(int windowId, Inventory inv, FriendlyByteBuf data) {
     this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));

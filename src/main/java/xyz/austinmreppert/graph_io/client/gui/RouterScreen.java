@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -434,7 +435,8 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   @Override
   @ParametersAreNonnullByDefault
   protected void renderBg(PoseStack matrixStack, float partialTicks, int x, int y) {
-    //RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    RenderSystem.setShader(GameRenderer::getPositionTexShader);
+    RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     RenderSystem.setShaderTexture(0, BACKGROUND);
     blit(matrixStack, leftPos, topPos, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
     blit(matrixStack, leftPos - 89, topPos, getBlitOffset(), 276, 27, 89, 166, 256, 512);

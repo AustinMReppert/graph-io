@@ -14,35 +14,39 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import xyz.austinmreppert.graph_io.GraphIO;
 import xyz.austinmreppert.graph_io.container.RouterStorageContainer;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 @OnlyIn(Dist.CLIENT)
 public class RouterStorageScreen extends AbstractContainerScreen<RouterStorageContainer> implements MenuAccess<RouterStorageContainer> {
+
   private static final ResourceLocation CONTAINER_BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/router_storage.png");
   private final int containerRows;
-  private RouterStorageContainer routerStorageContainer;
 
   public RouterStorageScreen(AbstractContainerMenu container, Inventory inventory, Component title) {
     super((RouterStorageContainer) container, inventory, title);
-    routerStorageContainer = (RouterStorageContainer) container;
+    RouterStorageContainer routerStorageContainer = (RouterStorageContainer) container;
 
     this.passEvents = false;
     this.containerRows = routerStorageContainer.getRowCount();
-    this.imageHeight = 114 + this.containerRows * 18;
+    this.imageHeight = 114 + this.containerRows * RouterStorageContainer.SLOT_SIZE;
     this.inventoryLabelY = this.imageHeight - 94;
   }
 
-  public void render(PoseStack p_98418_, int p_98419_, int p_98420_, float p_98421_) {
-    this.renderBackground(p_98418_);
-    super.render(p_98418_, p_98419_, p_98420_, p_98421_);
-    this.renderTooltip(p_98418_, p_98419_, p_98420_);
+  @ParametersAreNonnullByDefault
+  public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
+    this.renderBackground(poseStack);
+    super.render(poseStack, mouseX, mouseY, partialTicks);
+    this.renderTooltip(poseStack, mouseX, mouseY);
   }
 
-  protected void renderBg(PoseStack p_98413_, float p_98414_, int p_98415_, int p_98416_) {
+  @ParametersAreNonnullByDefault
+  protected void renderBg(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
     RenderSystem.setShader(GameRenderer::getPositionTexShader);
     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     RenderSystem.setShaderTexture(0, CONTAINER_BACKGROUND);
-    int var5 = (this.width - this.imageWidth) / 2;
-    int var6 = (this.height - this.imageHeight) / 2;
-    this.blit(p_98413_, var5, var6, 0, 0, this.imageWidth, this.containerRows * 18 + 17);
-    this.blit(p_98413_, var5, var6 + this.containerRows * 18 + 17, 0, 126, this.imageWidth, 96);
+    int left = (this.width - this.imageWidth) / 2;
+    int top = (this.height - this.imageHeight) / 2;
+    this.blit(poseStack, left, top, 0, 0, this.imageWidth, this.containerRows * RouterStorageContainer.SLOT_SIZE + 17);
+    this.blit(poseStack, left, top + this.containerRows * RouterStorageContainer.SLOT_SIZE + 17, 0, 126, this.imageWidth, 96);
   }
 }
