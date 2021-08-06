@@ -19,9 +19,6 @@ public class RouterStorageContainer extends AbstractContainerMenu {
   private RouterBlockEntity routerBlockEntity;
   private static final int SLOT_SIZE = 18;
 
-/*  private RouterStorageContainer(MenuType<?> menuType, int windowID, Inventory inventory, int rows) {
-    this(ContainerTypes.ROUTER_STORAGE_CONTAINER, windowID, inventory, new SimpleContainer(SLOTS_PER_ROW * rows), rows);
-  }*/
   public RouterStorageContainer(int windowId, Inventory inv, FriendlyByteBuf data) {
     this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));
   }
@@ -96,4 +93,5 @@ public class RouterStorageContainer extends AbstractContainerMenu {
   public int getRowCount() {
     return this.containerRows;
   }
+
 }
