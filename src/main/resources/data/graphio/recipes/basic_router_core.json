@@ -1,31 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "ucm",
-    "ete",
-    "pcl"
+    "ici",
+    "cec",
+    "ici"
   ],
   "key": {
-    "e": {
-      "item": "minecraft:ender_pearl"
+    "i": {
+      "item": "minecraft:iron_ingot"
     },
     "c": {
-      "item": "mekanism:basic_control_circuit"
+      "item": "minecraft:coal"
     },
-    "u": {
-      "item": "mekanism:basic_universal_cable"
-    },
-    "m": {
-      "item": "mekanism:basic_mechanical_pipe"
-    },
-    "p": {
-      "item": "mekanism:basic_pressurized_tube"
-    },
-    "l": {
-      "item": "mekanism:basic_logistical_transporter"
-    },
-    "t": {
-      "item": "mekanism:basic_thermodynamic_conductor"
+    "e": {
+      "item": "minecraft:ender_pearl"
     }
   },
   "result": {

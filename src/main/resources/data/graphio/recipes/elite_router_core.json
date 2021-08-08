@@ -1,31 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "ucm",
-    "ete",
-    "pcl"
+    "grg",
+    "rer",
+    "grg"
   ],
   "key": {
+    "g": {
+      "item": "minecraft:gold_ingot"
+    },
+    "r": {
+      "item": "graphio:advanced_router_core"
+    },
     "e": {
       "item": "minecraft:end_crystal"
-    },
-    "c": {
-      "item": "mekanism:elite_control_circuit"
-    },
-    "u": {
-      "item": "mekanism:elite_universal_cable"
-    },
-    "m": {
-      "item": "mekanism:elite_mechanical_pipe"
-    },
-    "p": {
-      "item": "mekanism:elite_pressurized_tube"
-    },
-    "l": {
-      "item": "mekanism:elite_logistical_transporter"
-    },
-    "t": {
-      "item": "mekanism:elite_thermodynamic_conductor"
     }
   },
   "result": {

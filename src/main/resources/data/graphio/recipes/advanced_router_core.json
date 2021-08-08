@@ -1,31 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "ucm",
-    "ete",
-    "pcl"
+    "crc",
+    "rer",
+    "crc"
   ],
   "key": {
+    "c": {
+      "item": "minecraft:copper_ingot"
+    },
+    "r": {
+      "item": "graphio:basic_router_core"
+    },
     "e": {
       "item": "minecraft:ender_eye"
-    },
-    "c": {
-      "item": "mekanism:advanced_control_circuit"
-    },
-    "u": {
-      "item": "mekanism:advanced_universal_cable"
-    },
-    "m": {
-      "item": "mekanism:advanced_mechanical_pipe"
-    },
-    "p": {
-      "item": "mekanism:advanced_pressurized_tube"
-    },
-    "l": {
-      "item": "mekanism:advanced_logistical_transporter"
-    },
-    "t": {
-      "item": "mekanism:advanced_thermodynamic_conductor"
     }
   },
   "result": {

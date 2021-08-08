@@ -1,31 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "ucm",
-    "ete",
-    "pcl"
+    "nrn",
+    "rer",
+    "nrn"
   ],
   "key": {
+    "n": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "r": {
+      "item": "graphio:elite_router_core"
+    },
     "e": {
-      "item": "mekanism:teleportation_core"
-    },
-    "c": {
-      "item": "mekanism:ultimate_control_circuit"
-    },
-    "u": {
-      "item": "mekanism:ultimate_universal_cable"
-    },
-    "m": {
-      "item": "mekanism:ultimate_mechanical_pipe"
-    },
-    "p": {
-      "item": "mekanism:ultimate_pressurized_tube"
-    },
-    "l": {
-      "item": "mekanism:ultimate_logistical_transporter"
-    },
-    "t": {
-      "item": "mekanism:ultimate_thermodynamic_conductor"
+      "item": "minecraft:nether_star"
     }
   },
   "result": {
