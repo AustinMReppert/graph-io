@@ -59,7 +59,7 @@ public class IdentifierItem extends Item {
         }
       }
     });
-    return InteractionResultHolder.consume(is);
+    return InteractionResultHolder.success(is);
   }
 
   @Nullable
