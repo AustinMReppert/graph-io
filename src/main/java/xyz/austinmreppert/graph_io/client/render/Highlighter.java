@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -22,29 +24,29 @@ public class Highlighter {
   @SubscribeEvent
   public static void onRenderWorld(RenderWorldLastEvent e) {
     for (HighlightedBlock highlightedBlock : highlightedBlocks)
-      highlightBlock(e.getMatrixStack(), highlightedBlock.blockPos, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
+      highlightBlock(e.getMatrixStack(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
   }
 
-  public static void highlightBlock(BlockPos blockPos, float padding, int r, int g, int b, int a) {
-    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, padding, r, g, b, a);
+  public static void highlightBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
+    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
       highlightedBlocks.add(highlightedBlock);
   }
 
-  public static void toggleHighlightBlock(BlockPos blockPos, float padding, int r, int g, int b, int a) {
-    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, padding, r, g, b, a);
+  public static void toggleHighlightBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
+    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
       highlightedBlocks.add(highlightedBlock);
     else
-      unhighlightBlock(blockPos);
+      unhighlightBlock(blockPos, level);
   }
 
-  public static void unhighlightBlock(BlockPos blockPos) {
-    highlightedBlocks.removeIf(highlightedBlock -> blockPos.equals(highlightedBlock.blockPos));
+  public static void unhighlightBlock(BlockPos blockPos, ResourceKey<Level> level) {
+    highlightedBlocks.removeIf(highlightedBlock-> highlightedBlock.level.equals(level) && blockPos.equals(highlightedBlock.blockPos));
   }
 
-  private static void highlightBlock(PoseStack matrixStack, BlockPos blockPos, float padding, int r, int g, int b, int a) {
-    if (!blockPos.closerThan(Minecraft.getInstance().player.position(), Minecraft.getInstance().options.renderDistance * 16))
+  private static void highlightBlock(PoseStack matrixStack, BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
+    if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.position(), Minecraft.getInstance().options.renderDistance * 16))
       return;
     int x = blockPos.getX();
     int y = blockPos.getY();
@@ -113,14 +115,16 @@ public class Highlighter {
   private static class HighlightedBlock {
 
     public BlockPos blockPos;
+    public ResourceKey<Level> level;
     public float padding;
     public int r;
     public int g;
     public int b;
     public int a;
 
-    public HighlightedBlock(BlockPos blockPos, float padding, int r, int g, int b, int a) {
+    public HighlightedBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
       this.blockPos = blockPos;
+      this.level = level;
       this.padding = padding;
       this.r = r;
       this.g = g;
@@ -133,7 +137,8 @@ public class Highlighter {
       if (this == o) return true;
       if (!(o instanceof HighlightedBlock)) return false;
       BlockPos blockPos = ((HighlightedBlock) o).blockPos;
-      return this.blockPos.getX() == blockPos.getX() && this.blockPos.getY() == blockPos.getY() && this.blockPos.getZ() == blockPos.getZ();
+      ResourceKey<Level> level = ((HighlightedBlock) o).level;
+      return this.blockPos.getX() == blockPos.getX() && this.blockPos.getY() == blockPos.getY() && this.blockPos.getZ() == blockPos.getZ() && this.level.equals(level);
     }
 
   }

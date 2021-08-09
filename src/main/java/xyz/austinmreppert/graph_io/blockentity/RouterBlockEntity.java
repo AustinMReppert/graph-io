@@ -449,7 +449,6 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   }
 
   public DynamicEnergyStorage getEnergyStorage() {
-    energyStorage.setEnergyStored(energyStorage.getMaxEnergyStored());
     return energyStorage;
   }
 

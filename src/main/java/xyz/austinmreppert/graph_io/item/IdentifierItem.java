@@ -45,8 +45,8 @@ public class IdentifierItem extends Item {
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
       if (playerIn.isCrouching() && res.getType() == BlockHitResult.Type.BLOCK) {
         if (worldIn.isClientSide) {
-          if (identifierCapability.getBlockPos() != null)
-            Highlighter.unhighlightBlock(identifierCapability.getBlockPos());
+          if (identifierCapability.getBlockPos() != null && identifierCapability.getLevel() != null)
+            Highlighter.unhighlightBlock(identifierCapability.getBlockPos(), identifierCapability.getLevel());
         }
         identifierCapability.setBlockPos(res.getBlockPos());
         identifierCapability.setLevel(playerIn.level.dimension());
@@ -55,11 +55,21 @@ public class IdentifierItem extends Item {
         ResourceKey<Level> identifierLevel = identifierCapability.getLevel();
         if (worldIn.isClientSide) {
           Minecraft.getInstance().gui.getChat().addMessage(Component.nullToEmpty(POINTS_TO.getString() +  " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ") " + (identifierLevel != null ? identifierLevel.location() : "")));
-          Highlighter.toggleHighlightBlock(identifierPos, 0.01F, 255, 0, 0, 125);
+          Highlighter.toggleHighlightBlock(identifierPos, identifierLevel, 0.01F, 255, 0, 0, 125);
         }
       }
     });
     return InteractionResultHolder.success(is);
+  }
+
+  public static void removeHighlight(ItemStack is) {
+    is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent(identifierCapability -> {
+      var bp = identifierCapability.getBlockPos();
+      var level = identifierCapability.getLevel();
+      if(bp != null && level != null) {
+        Highlighter.unhighlightBlock(bp, level);
+      }
+    });
   }
 
   @Nullable

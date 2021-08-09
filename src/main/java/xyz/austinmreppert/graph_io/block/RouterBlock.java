@@ -69,7 +69,6 @@ public class RouterBlock extends BaseEntityBlock {
             packetBuffer.writeNbt(Mapping.write(router.getMappings()));
           });
       }
-      return InteractionResult.CONSUME;
     }
     return InteractionResult.SUCCESS;
   }
