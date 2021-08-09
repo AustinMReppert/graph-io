@@ -30,7 +30,7 @@ public class RouterBlock extends BaseEntityBlock {
   private BaseTier baseTier;
 
   private RouterBlock() {
-    super(Properties.of(Material.HEAVY_METAL).lightLevel((bs) -> 15));
+    super(Properties.of(Material.HEAVY_METAL).lightLevel((bs) -> 0).strength(2));
   }
 
   public RouterBlock(BaseTier baseTier) {
