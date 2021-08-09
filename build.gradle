@@ -7,6 +7,11 @@ buildscript {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
     }
 }
+
+plugins {
+    id "com.matthewprenger.cursegradle" version "1.4.0"
+}
+
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
@@ -129,4 +134,15 @@ processResources {
 
 classes.configure {
     dependsOn(expandTomlVars);
+}
+
+curseforge {
+    apiKey = System.getenv("CURSEFORGE_KEY")
+    project {
+        id = '513951'
+        addGameVersion(minecraft_version)
+        changelog = 'changelog.md'
+        changelogType = 'markdown'
+        releaseType = 'alpha'
+    }
 }

@@ -13,8 +13,8 @@ displayName="Graph IO"
 
 # A URL to query for updates for this mod. See the JSON update specification https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/
 #updateJSONURL="https://change.me.example.invalid/updates.json"
-displayURL="https://github.com/AustinMReppert/graph-io/" #optional
-logoFile="logo.png" #optional
+displayURL="https://github.com/AustinMReppert/graph-io/"
+logoFile="logo.png"
 credits="This mod was inspired by XNet."
 authors="Austin M. Reppert"
 description='''
