@@ -1,48 +1,22 @@
 # TOML format, v0.5.0.
 
-# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
-modLoader="javafml" #mandatory
-
-# A version range to match for said mod loader - for regular FML @Mod it will be the forge version
-loaderVersion="[37,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
-
-# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
-# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
+modLoader="javafml"
+loaderVersion="${loader_version}"
 license="The Unlicense"
-
-# A URL to refer people to when problems occur with this mod
 issueTrackerURL="https://github.com/AustinMReppert/graph-io/issues"
 
-# A list of mods - how many allowed here is determined by the individual mod loader
-[[mods]] #mandatory
+[[mods]]
 
-# The modid of the mod
-modId="graphio" #mandatory
-
-# The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-# ${file.jarVersion} will substitute the value of the Implementation-Version as read from the mod's JAR file metadata
-# see the associated build.gradle script for how to populate this completely automatically during a build
-version="${file.jarVersion}" #mandatory
-
- # A display name for the mod
-displayName="Graph IO" #mandatory
+modId="graphio"
+version="${version}"
+displayName="Graph IO"
 
 # A URL to query for updates for this mod. See the JSON update specification https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/
-#updateJSONURL="https://change.me.example.invalid/updates.json" #optional
-
-# A URL for the "homepage" for this mod, displayed in the mod UI
+#updateJSONURL="https://change.me.example.invalid/updates.json"
 displayURL="https://github.com/AustinMReppert/graph-io/" #optional
-
-# A file name (in the root of the mod JAR) containing a logo for display
-logoFile="examplemod.png" #optional
-
-# A text field displayed in the mod UI
-credits="This mod was inspired by XNet." #optional
-
-# A text field displayed in the mod UI
-authors="Austin M. Reppert" #optional
-
-# The description text for the mod (multi line!) (#mandatory)
+logoFile="logo.png" #optional
+credits="This mod was inspired by XNet."
+authors="Austin M. Reppert"
 description='''
 This is a simple mod meant for transport items, energy, fluids, etc. in a performant manner.
 '''
