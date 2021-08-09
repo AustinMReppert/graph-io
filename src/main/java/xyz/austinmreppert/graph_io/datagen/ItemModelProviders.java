@@ -36,6 +36,10 @@ public class ItemModelProviders extends ItemModelProvider {
     singleTexture(Items.ULTIMATE_ROUTER_CORE.getRegistryName().getPath(),
         new ResourceLocation("item/generated"), "layer0",
         new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.ULTIMATE_ROUTER_CORE.getRegistryName().getPath()));
+
+    singleTexture(Items.ROUTER_CIRCUIT.getRegistryName().getPath(),
+        new ResourceLocation("item/generated"), "layer0",
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.ROUTER_CIRCUIT.getRegistryName().getPath()));
   }
 
 }

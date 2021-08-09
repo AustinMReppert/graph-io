@@ -1,0 +1,60 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "graphio:elite_router"
+    ]
+  },
+  "criteria": {
+    "has_basic_router_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "graphio:basic_router_core"
+            ]
+          }
+        ]
+      }
+    },
+    "has_router_circuit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "graphio:router_circuit"
+            ]
+          }
+        ]
+      }
+    },
+    "has_iron_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:iron_ingot"
+            ]
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "graphio:elite_router"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_basic_router_core",
+      "has_router_circuit",
+      "has_iron_ingot",
+      "has_the_recipe"
+    ]
+  ]
+}

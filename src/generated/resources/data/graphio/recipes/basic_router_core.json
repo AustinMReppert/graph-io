@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "tutorial",
+  "pattern": [
+    "ici",
+    "cec",
+    "ici"
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "c": {
+      "item": "minecraft:coal"
+    },
+    "e": {
+      "tag": "forge:ender_pearls"
+    }
+  },
+  "result": {
+    "item": "graphio:basic_router_core"
+  }
+}

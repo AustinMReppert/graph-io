@@ -1,0 +1,52 @@
+{
+  "pools": [
+    {
+      "name": "basic_router",
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "function": "minecraft:copy_nbt",
+              "source": "block_entity",
+              "ops": [
+                {
+                  "source": "Items",
+                  "target": "BlockEntityTag.Items",
+                  "op": "replace"
+                },
+                {
+                  "source": "tier",
+                  "target": "BlockEntityTag.tier",
+                  "op": "replace"
+                },
+                {
+                  "source": "energyStorage",
+                  "target": "BlockEntityTag.energyStorage",
+                  "op": "replace"
+                },
+                {
+                  "source": "mappings",
+                  "target": "BlockEntityTag.mappings",
+                  "op": "replace"
+                }
+              ]
+            },
+            {
+              "function": "minecraft:set_contents",
+              "entries": [
+                {
+                  "type": "minecraft:dynamic",
+                  "name": "minecraft:contents"
+                }
+              ]
+            }
+          ],
+          "name": "graphio:basic_router"
+        }
+      ]
+    }
+  ]
+}

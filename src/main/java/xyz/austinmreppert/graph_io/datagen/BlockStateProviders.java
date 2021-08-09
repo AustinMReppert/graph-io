@@ -15,8 +15,11 @@ public class BlockStateProviders extends BlockStateProvider {
 
   @Override
   protected void registerStatesAndModels() {
-    //simpleBlock(Blocks.ADVANCED_ROUTER);
-    System.out.println(Blocks.BASIC_ROUTER.getRegistryName().getPath());
+    simpleBlock(Blocks.BASIC_ROUTER);
+    simpleBlock(Blocks.ADVANCED_ROUTER);
+    simpleBlock(Blocks.ELITE_ROUTER);
+    simpleBlock(Blocks.ULTIMATE_ROUTER);
+
     simpleBlockItem(Blocks.BASIC_ROUTER, models().getExistingFile(new ResourceLocation(
         GraphIO.MOD_ID, "block/" + Blocks.BASIC_ROUTER.getRegistryName().getPath()
     )));

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "tutorial",
+  "pattern": [
+    "pdp",
+    "rer",
+    "coc"
+  ],
+  "key": {
+    "p": {
+      "item": "minecraft:repeater"
+    },
+    "d": {
+      "item": "minecraft:dropper"
+    },
+    "r": {
+      "tag": "forge:dusts/redstone"
+    },
+    "e": {
+      "tag": "forge:chests/ender"
+    },
+    "c": {
+      "item": "minecraft:comparator"
+    },
+    "o": {
+      "item": "minecraft:observer"
+    }
+  },
+  "result": {
+    "item": "graphio:router_circuit"
+  }
+}

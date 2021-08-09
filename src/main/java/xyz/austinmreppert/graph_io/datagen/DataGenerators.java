@@ -16,6 +16,7 @@ public class DataGenerators {
       generator.addProvider(new ItemModelProviders(generator, existingFileHelper));
       generator.addProvider(new BlockStateProviders(generator, existingFileHelper));
       generator.addProvider(new RecipeProviders(generator));
+      generator.addProvider(new LootTableProviders(generator));
     }
   }
 

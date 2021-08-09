@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "tutorial",
+  "pattern": [
+    "crc",
+    "rer",
+    "crc"
+  ],
+  "key": {
+    "r": {
+      "item": "graphio:basic_router_core"
+    },
+    "c": {
+      "item": "minecraft:copper_ingot"
+    },
+    "e": {
+      "item": "minecraft:ender_eye"
+    }
+  },
+  "result": {
+    "item": "graphio:advanced_router_core"
+  }
+}

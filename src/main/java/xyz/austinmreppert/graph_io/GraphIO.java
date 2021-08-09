@@ -12,7 +12,7 @@ import xyz.austinmreppert.graph_io.network.PacketHandler;
 @Mod(GraphIO.MOD_ID)
 public class GraphIO {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  public static final Logger LOGGER = LogManager.getLogger();
   public static final String MOD_ID = "graphio";
 
   public GraphIO() {

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "graphio:block/basic_router"
+    }
+  }
+}
