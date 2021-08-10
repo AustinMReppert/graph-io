@@ -61,7 +61,10 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   private RouterTier tier;
   protected Block tieredRouter;
   private int lastTick;
-  private static final int energyPerMappingTick = 1000;
+  private static int energyPerMappingTick = 1000;
+  private static int itemTransferCost = 100;
+  private static int fluidTransferCost = 500;
+  private static int energyTransferCost = 100;
   private int containerSize;
 
   public RouterBlockEntity(BlockPos pos, BlockState state) {
@@ -90,12 +93,11 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
 
   public void serverTick(Level level, BlockPos pos) {
     ++ticks;
-
     if (shouldTick()) {
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
-        BlockEntity blockEntity = level.getBlockEntity(pos);
+        BlockEntity blockEntity = level.getBlockEntity(pos.relative(direction));
         if (blockEntity != null) {
           blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             int extracted = -1;
@@ -112,11 +114,6 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       if (!mapping.isValid() || !mapping.shouldTick(ticks))
         continue;
 
-      if (energyStorage.getEnergyStored() - energyPerMappingTick >= 0)
-        energyStorage.extractEnergy(energyPerMappingTick, false);
-      else
-        continue;
-
       SimpleContainer filterInventory = mapping.getFilterInventory();
       Mapping.FilterScheme filterScheme = mapping.getFilterScheme();
       if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;
@@ -124,7 +121,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       final NodeInfo inputNodeInfo = mapping.getInputs().get(mapping.currentInputIndex);
       final NodeInfo outputNodeInfo = mapping.getOutputs().get(mapping.currentOutputIndex);
 
-      if(identifiers.get(inputNodeInfo.getIdentifier()) == null || identifiers.get(outputNodeInfo.getIdentifier()) == null)
+      if (identifiers.get(inputNodeInfo.getIdentifier()) == null || identifiers.get(outputNodeInfo.getIdentifier()) == null)
         continue;
 
       final BlockPos inputPos = identifiers.get(inputNodeInfo.getIdentifier()).getBlockPos();
@@ -144,7 +141,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       if (inputLevel == null || outputLevel == null)
         continue;
 
-      if(!inputLevel.isLoaded(inputPos) || !outputLevel.isLoaded(outputPos))
+      if (!inputLevel.isLoaded(inputPos) || !outputLevel.isLoaded(outputPos))
         continue;
 
       final BlockEntity inputBlockEntity = inputLevel.getBlockEntity(inputPos);
@@ -152,73 +149,92 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       if (inputBlockEntity == null || outputBlockEntity == null) return;
 
       inputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
-        outputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
-          int transferredItems = 0;
-          for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
-            final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
-            boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
-            for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
-              if (filterInventory.getItem(i).getItem() == inputStack.getItem()) {
-                filtered = !filtered;
-                break;
+          outputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
+            int transferredItems = 0;
+            for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
+              final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
+              boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
+              for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
+                if (filterInventory.getItem(i).getItem() == inputStack.getItem()) {
+                  filtered = !filtered;
+                  break;
+                }
+              }
+              if (filtered) continue;
+              for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
+                if (transferredItems >= mapping.getItemsPerTick()) return;
+                final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
+                if (outputItemHandler.isItemValid(outputSlotIndex, inputStack) && !inputStack.isEmpty() && outputStack.isEmpty() || (!inputStack.isEmpty() && inputStack.getItem() == outputStack.getItem() && outputStack.getCount() < outputStack.getMaxStackSize())) {
+                  final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(
+                      inputSlotIndex,
+                      Mth.clamp(inputStack.getCount(), 0,
+                          Math.min(mapping.getItemsPerTick() - transferredItems, energyStorage.getEnergyStored() / itemTransferCost)),
+                      true);
+                  final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
+                  final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
+                  final ItemStack insertedIS = outputItemHandler.insertItem(outputSlotIndex, extractedIS, false);
+                  final int transferredItemsCount = extractedIS.getCount() - insertedIS.getCount();
+                  transferredItems += transferredItemsCount;
+                  inputBlockEntity.setChanged();
+                  outputBlockEntity.setChanged();
+
+                  energyStorage.setEnergyStored(energyStorage.getEnergyStored() - itemTransferCost * transferredItemsCount, false);
+                }
               }
             }
-            if (filtered) continue;
-            for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
-              if (transferredItems >= mapping.getItemsPerTick()) return;
-              final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
-              if (outputItemHandler.isItemValid(outputSlotIndex, inputStack) && !inputStack.isEmpty() && outputStack.isEmpty() || (!inputStack.isEmpty() && inputStack.getItem() == outputStack.getItem() && outputStack.getCount() < outputStack.getMaxStackSize())) {
-                final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(inputSlotIndex, Mth.clamp(inputStack.getCount(), 0, mapping.getItemsPerTick() - transferredItems), true);
-                final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
-                final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
-                final ItemStack insertedIS = outputItemHandler.insertItem(outputSlotIndex, extractedIS, false);
-                transferredItems += extractedIS.getCount() - insertedIS.getCount();
-                inputBlockEntity.setChanged();
-                outputBlockEntity.setChanged();
-              }
-            }
-          }
-        }));
+          }));
 
       inputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler ->
-        outputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
-          int transferredFluids = 0;
-          for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
-            final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
-            boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
-            for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
-              if (inputStack.isFluidEqual(filterInventory.getItem(i))) {
-                filtered = !filtered;
-                break;
+          outputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
+            int transferredFluids = 0;
+            for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
+              final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
+              boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
+              for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
+                if (inputStack.isFluidEqual(filterInventory.getItem(i))) {
+                  filtered = !filtered;
+                  break;
+                }
+              }
+              if (filtered) continue;
+              for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
+                if (transferredFluids >= mapping.getBucketsPerTick()) return;
+                final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
+                if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
+                  final FluidStack simulatedDrainedFS = inputFluidHandler.drain(
+                      Mth.clamp(inputStack.getAmount(), 0,
+                          Math.min(mapping.getBucketsPerTick() - transferredFluids, energyStorage.getEnergyStored()/fluidTransferCost)),
+                      IFluidHandler.FluidAction.SIMULATE);
+                  final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
+                  final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
+                  final int transferredFluidsCount = outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);;
+                  transferredFluids += transferredFluidsCount;
+                  inputBlockEntity.setChanged();
+                  outputBlockEntity.setChanged();
+
+                  energyStorage.setEnergyStored(energyStorage.getEnergyStored() - fluidTransferCost * transferredFluidsCount, false);
+
+                  break;
+                }
               }
             }
-            if (filtered) continue;
-            for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
-              if (transferredFluids >= mapping.getBucketsPerTick()) return;
-              final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
-              if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
-                final FluidStack simulatedDrainedFS = inputFluidHandler.drain(Mth.clamp(inputStack.getAmount(), 0, mapping.getBucketsPerTick() - transferredFluids), IFluidHandler.FluidAction.SIMULATE);
-                final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
-                final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
-                transferredFluids += outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
-                inputBlockEntity.setChanged();
-                outputBlockEntity.setChanged();
-                break;
-              }
-            }
-          }
-        }));
+          }));
 
       inputBlockEntity.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler ->
-        outputBlockEntity.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
-          int transferredEnergy = 0;
-          if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
-            final int simulatedExtracted = inputEnergyHandler.extractEnergy(Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerTick() - transferredEnergy), true);
-            final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
-            final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
-            transferredEnergy += outputEnergyHandler.receiveEnergy(extracted, false);
-          }
-        }));
+          outputBlockEntity.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
+            int transferredEnergy = 0;
+            if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
+              final int simulatedExtracted = inputEnergyHandler.extractEnergy(
+                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, Math.min(mapping.getEnergyPerTick() - transferredEnergy, energyStorage.getEnergyStored()/energyTransferCost)),
+                  true);
+              final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
+              final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
+              final var transferredEnergyCount = outputEnergyHandler.receiveEnergy(extracted, false);;
+              transferredEnergy += transferredEnergyCount;
+
+              energyStorage.setEnergyStored(energyStorage.getEnergyStored() - transferredEnergyCount/energyTransferCost, false);
+            }
+          }));
 
       if (mapping.getDistributionScheme() == Mapping.DistributionScheme.CYCLIC) {
         mapping.currentInputIndex = (mapping.currentInputIndex + 1) % Math.max(mapping.getInputs().size(), 1);
@@ -249,7 +265,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   @ParametersAreNonnullByDefault
   protected AbstractContainerMenu createMenu(int windowID, Inventory inventory) {
     return inventory.player.isCrouching() ?
-    new RouterStorageContainer(windowID, inventory, this): new RouterContainer(windowID, inventory, this);
+        new RouterStorageContainer(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
   }
 
   @Override
@@ -355,7 +371,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   private void cacheIfIdentifier(ItemStack is) {
     if (is.getItem() == Items.IDENTIFIER)
       is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
-        identifiers.put(is.getHoverName().getContents(), identifierCapability));
+          identifiers.put(is.getHoverName().getContents(), identifierCapability));
   }
 
   @Nonnull
@@ -415,6 +431,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
 
   /**
    * Sets the router's tier and updates the energy storage capability and tieredRouter block.
+   *
    * @param baseTier The tier to be set to.
    */
   private void setTier(@Nonnull BaseTier baseTier) {
@@ -427,7 +444,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       case ELITE:
         yield Blocks.ELITE_ROUTER;
       case ULTIMATE:
-        yield  Blocks.ULTIMATE_ROUTER;
+        yield Blocks.ULTIMATE_ROUTER;
       default:
         yield null;
     };
@@ -435,13 +452,25 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       case BASIC:
         yield 3;
       case ADVANCED:
-          yield 6;
+        yield 6;
       case ELITE:
         yield 9;
       case ULTIMATE:
         yield 12;
       default:
         yield 0;
+    };
+    energyPerMappingTick = switch (this.tier.baseTier) {
+      case BASIC:
+        yield 1000;
+      case ADVANCED:
+        yield 2000;
+      case ELITE:
+        yield 3000;
+      case ULTIMATE:
+        yield 4000;
+      default:
+        yield 1000;
     };
     inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
     energyStorage.setCapacity(this.tier.maxEnergy);
