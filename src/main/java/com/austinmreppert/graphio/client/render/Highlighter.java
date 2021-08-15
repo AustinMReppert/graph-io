@@ -16,46 +16,97 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 
+/**
+ * Highlights blocks.
+ */
 @Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, value = Dist.CLIENT)
 public class Highlighter {
 
   private static final ArrayList<HighlightedBlock> highlightedBlocks = new ArrayList<>();
 
+  /**
+   * Called after the world has been rendered. Highlights all the blocks in {@code highlightedBlocks} within render distance.
+   *
+   * @param e The {@link RenderWorldLastEvent}.
+   */
   @SubscribeEvent
-  public static void onRenderWorld(RenderWorldLastEvent e) {
-    for (HighlightedBlock highlightedBlock : highlightedBlocks)
+  public static void onRenderWorld(final RenderWorldLastEvent e) {
+    for (final var highlightedBlock : highlightedBlocks)
       highlightBlock(e.getMatrixStack(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
   }
 
-  public static void highlightBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
-    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
+  /**
+   * Adds a block to the list of blocks to be highlighted.
+   *
+   * @param blockPos The position of the block.
+   * @param level    The dimension the block is in.
+   * @param padding  The amount of space between the highlight and the block.
+   * @param r        Red.
+   * @param g        Green.
+   * @param b        Blue.
+   * @param a        Alpha.
+   */
+  public static void highlightBlock(final BlockPos blockPos, final ResourceKey<Level> level, final float padding,
+                                    final int r, final int g, final int b, final int a) {
+    final var highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
       highlightedBlocks.add(highlightedBlock);
   }
 
-  public static void toggleHighlightBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
-    HighlightedBlock highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
+  /**
+   * Adds or removes a block to be highlighted.
+   *
+   * @param blockPos The position of the block.
+   * @param level    The level of the block.
+   * @param padding  The amount of space between the highlight and the block.
+   * @param r        Red.
+   * @param g        Green.
+   * @param b        Blue.
+   * @param a        Alpha.
+   */
+  public static void toggleHighlightBlock(final BlockPos blockPos, final ResourceKey<Level> level, final float padding,
+                                          final int r, final int g, final int b, final int a) {
+    final var highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
       highlightedBlocks.add(highlightedBlock);
     else
       unhighlightBlock(blockPos, level);
   }
 
-  public static void unhighlightBlock(BlockPos blockPos, ResourceKey<Level> level) {
-    highlightedBlocks.removeIf(highlightedBlock-> highlightedBlock.level.equals(level) && blockPos.equals(highlightedBlock.blockPos));
+  /**
+   * Unhighlights a block.
+   *
+   * @param blockPos The position of the block.
+   * @param level    The level of the block.
+   */
+  public static void unhighlightBlock(final BlockPos blockPos, final ResourceKey<Level> level) {
+    highlightedBlocks.removeIf(highlightedBlock -> highlightedBlock.level.equals(level) && blockPos.equals(highlightedBlock.blockPos));
   }
 
-  private static void highlightBlock(PoseStack matrixStack, BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
+  /**
+   * Highlights a block.
+   *
+   * @param poseStack The {@link PoseStack} to use.
+   * @param blockPos  The position of the block.
+   * @param level     The level of the block.
+   * @param padding   The amount of space between the highlight and the block.
+   * @param r         Red.
+   * @param g         Green.
+   * @param b         Blue.
+   * @param a         Alpha.
+   */
+  private static void highlightBlock(final PoseStack poseStack, final BlockPos blockPos, final ResourceKey<Level> level,
+                                     final float padding, final int r, final int g, final int b, final int a) {
     if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.position(), Minecraft.getInstance().options.renderDistance * 16))
       return;
-    int x = blockPos.getX();
-    int y = blockPos.getY();
-    int z = blockPos.getZ();
+    final int x = blockPos.getX();
+    final int y = blockPos.getY();
+    final int z = blockPos.getZ();
 
-    Tesselator tes = Tesselator.getInstance();
-    BufferBuilder bb = tes.getBuilder();
+    final var tes = Tesselator.getInstance();
+    final BufferBuilder bb = tes.getBuilder();
 
-    matrixStack.pushPose();
+    poseStack.pushPose();
 
     RenderSystem.disableDepthTest();
     RenderSystem.enableCull();
@@ -63,23 +114,22 @@ public class Highlighter {
     RenderSystem.enableBlend();
     RenderSystem.defaultBlendFunc();
 
-    Vec3 projectedView = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-    matrixStack.translate(-projectedView.x, -projectedView.y, -projectedView.z);
+    final Vec3 projectedView = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+    poseStack.translate(-projectedView.x, -projectedView.y, -projectedView.z);
 
-    Matrix4f mat = matrixStack.last().pose();
+    final Matrix4f mat = poseStack.last().pose();
 
     bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-    float x1 = x - padding;
-    float x2 = x + padding + 1.0F;
-    float y1 = y - padding;
-    float y2 = y + padding + 1.0F;
-    float z1 = z - padding;
-    float z2 = z + padding + 1.0F;
+    final float x1 = x - padding;
+    final float x2 = x + padding + 1.0F;
+    final float y1 = y - padding;
+    final float y2 = y + padding + 1.0F;
+    final float z1 = z - padding;
+    final float z2 = z + padding + 1.0F;
 
-    for (float v : new float[]{y2, y1}) {
-      bb.vertex(mat, x2, v, z1).color(r, g, b, a).endVertex();
-    }
+    bb.vertex(mat, x2, y2, z1).color(r, g, b, a).endVertex();
+    bb.vertex(mat, x2, y1, z1).color(r, g, b, a).endVertex();
     bb.vertex(mat, x1, y1, z1).color(r, g, b, a).endVertex();
     bb.vertex(mat, x1, y2, z1).color(r, g, b, a).endVertex();
 
@@ -109,29 +159,18 @@ public class Highlighter {
     bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
     tes.end();
-    matrixStack.popPose();
+    poseStack.popPose();
   }
 
-  private static class HighlightedBlock {
+  private record HighlightedBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b,
+                                  int a) {
 
-    public BlockPos blockPos;
-    public ResourceKey<Level> level;
-    public float padding;
-    public int r;
-    public int g;
-    public int b;
-    public int a;
-
-    public HighlightedBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b, int a) {
-      this.blockPos = blockPos;
-      this.level = level;
-      this.padding = padding;
-      this.r = r;
-      this.g = g;
-      this.b = b;
-      this.a = a;
-    }
-
+    /**
+     * Gets whether two highlighted blocks are the same.
+     *
+     * @param o The other {@link HighlightedBlock}.
+     * @return Whether two highlighted blocks are the same. True if they have the same block pos and level, false otherwise.
+     */
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;

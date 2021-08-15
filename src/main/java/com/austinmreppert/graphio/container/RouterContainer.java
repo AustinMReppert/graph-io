@@ -1,7 +1,10 @@
 package com.austinmreppert.graphio.container;
 
 import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
+import com.austinmreppert.graphio.client.gui.FilterSlot;
 import com.austinmreppert.graphio.data.mappings.Mapping;
+import com.austinmreppert.graphio.network.PacketHandler;
+import com.austinmreppert.graphio.network.SetRouterBEMappingsPacket;
 import com.google.common.collect.Lists;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -13,15 +16,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fmllegacy.network.NetworkDirection;
-import com.austinmreppert.graphio.client.gui.FilterSlot;
-import com.austinmreppert.graphio.network.PacketHandler;
-import com.austinmreppert.graphio.network.SetMappingsPacket;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Synchronizes data between client and server for the {@link com.austinmreppert.graphio.client.gui.RouterScreen}.
+ */
 public class RouterContainer extends AbstractContainerMenu {
 
   private final List<ServerPlayer> listeners;
@@ -37,12 +40,12 @@ public class RouterContainer extends AbstractContainerMenu {
   private static final int INVENTORY_Y = 174;
   private static final int SLOT_SIZE = 18;
 
-  public RouterContainer(int windowId, Inventory inv, FriendlyByteBuf data) {
+  public RouterContainer(final int windowId, final Inventory inv, final FriendlyByteBuf data) {
     this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));
     trackedMappingsReference.set.accept(data.readNbt());
   }
 
-  public RouterContainer(int windowId, Inventory inv, RouterBlockEntity routerBlockEntity) {
+  public RouterContainer(final int windowId, final Inventory inv, final RouterBlockEntity routerBlockEntity) {
     super(ContainerTypes.ROUTER_CONTAINER, windowId);
 
     listeners = Lists.newArrayList();
@@ -96,35 +99,53 @@ public class RouterContainer extends AbstractContainerMenu {
         -> routerBlockEntity.readMappings((CompoundTag) mappingsNBT));
   }
 
-  public void setFilterSlotContents(SimpleContainer filter) {
+  /**
+   * Sets the contents of the filter.
+   *
+   * @param filter The filter items.
+   */
+  public void setFilterSlotContents(final SimpleContainer filter) {
     for (int i = 0; i < tmpFilterInventory.getContainerSize(); ++i) {
       filterSlots.get(i).setEnabled(true);
       tmpFilterInventory.setItem(i, filter.getItem(i));
     }
   }
 
+  /**
+   * Adds a slot listener and records {@link ServerPlayer}s with the container opened.
+   *
+   * @param listener The listener.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public void addSlotListener(ContainerListener listener) {
+  public void addSlotListener(final ContainerListener listener) {
     super.addSlotListener(listener);
     if (listener instanceof ServerPlayer)
       listeners.add((ServerPlayer) listener);
   }
 
+  /**
+   * Removed a slot listener and removes the {@link ServerPlayer}s from the list of players with the container opened.
+   *
+   * @param listener The listener.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public void removeSlotListener(ContainerListener listener) {
+  public void removeSlotListener(final ContainerListener listener) {
     super.removeSlotListener(listener);
     if (listener instanceof ServerPlayer)
       listeners.remove(listener);
   }
 
+  /**
+   * Sends changes to players with the container opened.
+   */
   @Override
   public void broadcastChanges() {
     super.broadcastChanges();
 
     if (trackedMappingsReference.isDirty()) {
-      SetMappingsPacket packet = new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundTag()), containerId);
+      SetRouterBEMappingsPacket packet = new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundTag()), containerId);
       for (ServerPlayer containerListener : listeners) {
         PacketHandler.INSTANCE.sendTo(packet, containerListener.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
       }
@@ -132,17 +153,22 @@ public class RouterContainer extends AbstractContainerMenu {
 
   }
 
+  /***
+   * Get whether the slot can take ownership of items.
+   * @param slot The slot.
+   * @return Whether the slot can take ownership of items.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public boolean canDragTo(Slot slot) {
+  public boolean canDragTo(final Slot slot) {
     if (slot instanceof FilterSlot) return false;
     return super.canDragTo(slot);
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public void clicked(int slotId, int dragType, ClickType clickType, Player player) {
-    Slot slot = slotId < 0 ? null : getSlot(slotId);
+  public void clicked(final int slotId, final int dragType, final ClickType clickType, final Player player) {
+    final Slot slot = slotId < 0 ? null : getSlot(slotId);
     if (slot instanceof FilterSlot) {
       if (clickType == ClickType.PICKUP && getCarried().isEmpty())
         slot.set(ItemStack.EMPTY);
@@ -162,40 +188,65 @@ public class RouterContainer extends AbstractContainerMenu {
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public ItemStack quickMoveStack(Player playerIn, int index) {
+  public ItemStack quickMoveStack(final Player player, final int index) {
     return ItemStack.EMPTY;
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public void removed(Player player) {
+  public void removed(final Player player) {
     super.removed(player);
   }
 
   @Override
   @ParametersAreNonnullByDefault
-  public boolean stillValid(Player player) {
+  public boolean stillValid(final Player player) {
     return true;
   }
 
+  /**
+   * Gets the {@link MenuType} of this container.
+   *
+   * @return The {@link MenuType} of this container.
+   */
   @Override
   @Nonnull
   public MenuType<?> getType() {
     return ContainerTypes.ROUTER_CONTAINER;
   }
 
-  public RouterBlockEntity getRouterTE() {
+  /**
+   * Gets the {@link RouterBlockEntity} that is associated with this container.
+   *
+   * @return The {@link RouterBlockEntity} that is associated with this container.
+   */
+  public RouterBlockEntity getRouterBlockEntity() {
     return routerBlockEntity;
   }
 
+  /**
+   * Gets the filter slots.
+   *
+   * @return The filter slots.
+   */
   public ArrayList<FilterSlot> getFilterSlots() {
     return filterSlots;
   }
 
+  /**
+   * Gets the temporary inventory used to store filtered items.
+   *
+   * @return The temporary inventory used to store filtered items.
+   */
   public SimpleContainer getTmpFilterInventory() {
     return tmpFilterInventory;
   }
 
+  /**
+   * Gets the {@link MappingsReferenceHolder} that keeps mappings up to date.
+   *
+   * @return The {@link MappingsReferenceHolder} that keeps mappings up to date.
+   */
   public MappingsReferenceHolder getTrackedMappingsReference() {
     return trackedMappingsReference;
   }

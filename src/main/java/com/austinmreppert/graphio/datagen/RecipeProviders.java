@@ -10,14 +10,17 @@ import net.minecraftforge.common.Tags;
 
 import java.util.function.Consumer;
 
+/**
+ * Generates recipes.
+ */
 public class RecipeProviders extends RecipeProvider {
 
-  public RecipeProviders(DataGenerator dataGenerator) {
+  public RecipeProviders(final DataGenerator dataGenerator) {
     super(dataGenerator);
   }
 
   @Override
-  protected void buildCraftingRecipes(Consumer<FinishedRecipe> finishedRecipes) {
+  protected void buildCraftingRecipes(final Consumer<FinishedRecipe> finishedRecipes) {
     ShapedRecipeBuilder.shaped(Items.IDENTIFIER)
         .pattern(" p ")
         .pattern(" e ")

@@ -4,6 +4,9 @@ import com.austinmreppert.graphio.block.Blocks;
 import com.austinmreppert.graphio.capabilities.Capabilities;
 import com.austinmreppert.graphio.capabilities.DynamicEnergyStorage;
 import com.austinmreppert.graphio.capabilities.IIdentifierCapability;
+import com.austinmreppert.graphio.client.gui.RouterScreen;
+import com.austinmreppert.graphio.container.RouterContainer;
+import com.austinmreppert.graphio.container.RouterStorageContainer;
 import com.austinmreppert.graphio.data.mappings.Mapping;
 import com.austinmreppert.graphio.data.mappings.NodeInfo;
 import com.austinmreppert.graphio.data.tiers.BaseTier;
@@ -39,9 +42,6 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
-import com.austinmreppert.graphio.client.gui.RouterScreen;
-import com.austinmreppert.graphio.container.RouterContainer;
-import com.austinmreppert.graphio.container.RouterStorageContainer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -61,13 +61,12 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   private RouterTier tier;
   protected Block tieredRouter;
   private int lastTick;
-  private static int energyPerMappingTick = 1000;
   private static int itemTransferCost = 100;
   private static int fluidTransferCost = 500;
   private static int energyTransferCost = 100;
   private int containerSize;
 
-  public RouterBlockEntity(BlockPos pos, BlockState state) {
+  public RouterBlockEntity(final BlockPos pos, final BlockState state) {
     super(BlockEntityTypes.ROUTER, pos, state);
     containerSize = 3;
     identifiers = new HashMap<>();
@@ -78,11 +77,16 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     energyCapabilityLO = LazyOptional.of(() -> energyStorage);
   }
 
-  public RouterBlockEntity(BaseTier tier, BlockPos pos, BlockState state) {
+  public RouterBlockEntity(final BaseTier tier, final BlockPos pos, final BlockState state) {
     this(pos, state);
     setTier(tier);
   }
 
+  /**
+   * Determines whether the router should tick or not.
+   *
+   * @return Whether the router should tick or not.
+   */
   public boolean shouldTick() {
     if (ticks - lastTick >= tier.minTickDelay) {
       lastTick = ticks;
@@ -91,13 +95,22 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     return false;
   }
 
-  public void serverTick(Level level, BlockPos pos) {
+  // TODO: Refactor
+
+  /**
+   * Performs updates for the Router.
+   */
+  public void serverTick() {
     ++ticks;
+
+    if (this.level == null)
+      return;
+
     if (shouldTick()) {
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
-        BlockEntity blockEntity = level.getBlockEntity(pos.relative(direction));
+        final BlockEntity blockEntity = this.level.getBlockEntity(getBlockPos().relative(direction));
         if (blockEntity != null) {
           blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             int extracted = -1;
@@ -133,6 +146,9 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       final ResourceKey<Level> outputLevelName = identifiers.get(outputNodeInfo.getIdentifier()).getLevel();
 
       if (inputLevelName == null || outputLevelName == null)
+        continue;
+
+      if (level.getServer() == null)
         continue;
 
       final Level inputLevel = level.getServer().getLevel(inputLevelName);
@@ -203,11 +219,12 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
                   final FluidStack simulatedDrainedFS = inputFluidHandler.drain(
                       Mth.clamp(inputStack.getAmount(), 0,
-                          Math.min(mapping.getBucketsPerTick() - transferredFluids, energyStorage.getEnergyStored()/fluidTransferCost)),
+                          Math.min(mapping.getBucketsPerTick() - transferredFluids, energyStorage.getEnergyStored() / fluidTransferCost)),
                       IFluidHandler.FluidAction.SIMULATE);
                   final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
                   final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
-                  final int transferredFluidsCount = outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);;
+                  final int transferredFluidsCount = outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
+                  ;
                   transferredFluids += transferredFluidsCount;
                   inputBlockEntity.setChanged();
                   outputBlockEntity.setChanged();
@@ -225,14 +242,15 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             int transferredEnergy = 0;
             if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
               final int simulatedExtracted = inputEnergyHandler.extractEnergy(
-                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, Math.min(mapping.getEnergyPerTick() - transferredEnergy, energyStorage.getEnergyStored()/energyTransferCost)),
+                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, Math.min(mapping.getEnergyPerTick() - transferredEnergy, energyStorage.getEnergyStored() / energyTransferCost)),
                   true);
               final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
               final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
-              final var transferredEnergyCount = outputEnergyHandler.receiveEnergy(extracted, false);;
+              final var transferredEnergyCount = outputEnergyHandler.receiveEnergy(extracted, false);
+              ;
               transferredEnergy += transferredEnergyCount;
 
-              energyStorage.setEnergyStored(energyStorage.getEnergyStored() - transferredEnergyCount/energyTransferCost, false);
+              energyStorage.setEnergyStored(energyStorage.getEnergyStored() - transferredEnergyCount / energyTransferCost, false);
             }
           }));
 
@@ -254,36 +272,57 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     }
   }
 
+  /**
+   * @param windowID  The ID for the new menu.
+   * @param inventory The player's inventory.
+   * @param player    The player that opened the container.
+   * @return A {@link RouterStorageContainer} if the player is crouching or a {@link RouterContainer}.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public AbstractContainerMenu createMenu(int windowID, Inventory inventory, Player player) {
-    return player.isCrouching() ? new RouterStorageContainer(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
-  }
-
-  @Override
-  @Nonnull
-  @ParametersAreNonnullByDefault
-  protected AbstractContainerMenu createMenu(int windowID, Inventory inventory) {
-    return inventory.player.isCrouching() ?
-        new RouterStorageContainer(windowID, inventory, this) : new RouterContainer(windowID, inventory, this);
-  }
-
-  @Override
-  @Nonnull
-  public CompoundTag save(CompoundTag compound) {
-    compound.putInt("tier", tier.baseTier.ordinal());
-    compound.put("energyStorage", energyStorage.serializeNBT());
-    writeMappingsNBT(compound);
-    writeInventoryNBT(compound);
-    return super.save(compound);
+  public AbstractContainerMenu createMenu(final int windowID, final Inventory inventory, final Player player) {
+    return createMenu(windowID, inventory);
   }
 
   /**
-   * Writes the router's inventory to a nbt tag.
+   * Creates an {@link AbstractContainerMenu} instance.
    *
-   * @param compound The nbt tag to write to.
+   * @param windowID  The ID for the new menu.
+   * @param inventory The player's inventory.
+   * @return A {@link RouterStorageContainer} if the player is crouching or a {@link RouterContainer}.
    */
-  public void writeInventoryNBT(CompoundTag compound) {
+  @Override
+  @Nonnull
+  @ParametersAreNonnullByDefault
+  protected AbstractContainerMenu createMenu(final int windowID, final Inventory inventory) {
+    if (inventory.player.isCrouching())
+      return new RouterStorageContainer(windowID, inventory, this);
+    else
+      return new RouterContainer(windowID, inventory, this);
+  }
+
+  /**
+   * Saves the router's data into a {@link CompoundTag}.
+   *
+   * @param nbtOut The {@link CompoundTag} to save to.
+   * @return The updated {@code nbtOut}.
+   */
+  @Override
+  @Nonnull
+  public CompoundTag save(final CompoundTag nbtOut) {
+    nbtOut.putInt("tier", tier.baseTier.ordinal());
+    nbtOut.put("energyStorage", energyStorage.serializeNBT());
+    writeMappingsNBT(nbtOut);
+    writeInventoryNBT(nbtOut);
+    return super.save(nbtOut);
+  }
+
+  /**
+   * Writes the router's inventory to a {@link CompoundTag}.
+   *
+   * @param compound The {@link CompoundTag} used to store the inventory data.
+   */
+  public void writeInventoryNBT(final CompoundTag compound) {
     if (!this.trySaveLootTable(compound))
       ContainerHelper.saveAllItems(compound, inventory);
   }
@@ -293,15 +332,20 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    *
    * @param compound The nbt tag to write to.
    */
-  private void writeMappingsNBT(CompoundTag compound) {
+  private void writeMappingsNBT(final CompoundTag compound) {
     Mapping.write(mappings, compound);
   }
 
+  /**
+   * Loads NBT data into the {@link RouterBlockEntity}.
+   *
+   * @param nbtIn The {@link CompoundTag} to read from.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public void load(CompoundTag nbtIn) {
+  public void load(final CompoundTag nbtIn) {
     setTier(BaseTier.valueOf(nbtIn.getInt("tier")));
-    Tag energyStorageNBT = nbtIn.get("energyStorage");
+    final Tag energyStorageNBT = nbtIn.get("energyStorage");
     if (energyStorageNBT != null) {
       energyStorage.deserializeNBT(energyStorageNBT);
     }
@@ -368,26 +412,33 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    *
    * @param is The item stack to check.
    */
-  private void cacheIfIdentifier(ItemStack is) {
+  private void cacheIfIdentifier(final ItemStack is) {
     if (is.getItem() == Items.IDENTIFIER)
       is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
           identifiers.put(is.getHoverName().getContents(), identifierCapability));
   }
 
+  /**
+   * Gets the corresponding capability.
+   *
+   * @param capability The capability holder.
+   * @param <T>        The type of capability to get.
+   * @return An {@link LazyOptional<T>} that will contain an instance of the capability, if it exists.
+   */
   @Nonnull
   @Override
-  public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
-    return CapabilityEnergy.ENERGY.orEmpty(cap, energyCapabilityLO);
+  public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability) {
+    return CapabilityEnergy.ENERGY.orEmpty(capability, energyCapabilityLO);
   }
 
   /**
-   * Reads mappings in from nbt data. If the client has the gui open, then update the gui.
+   * Reads mappings in from NBT data. If the client has the GUI open, then update the GUI.
    *
-   * @param nbt The nbt data to read from.
+   * @param nbt The {@link CompoundTag} data to read from.
    */
   public void readMappings(CompoundTag nbt) {
     mappings = Mapping.read(nbt, identifiers, tier);
-    if (level.isClientSide()) {
+    if (level != null && level.isClientSide()) {
       Screen currentTmp = Minecraft.getInstance().screen;
       if (currentTmp instanceof RouterScreen current) {
         current.update();
@@ -395,16 +446,31 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     }
   }
 
+  /**
+   * Gets a list of the router's mappings.
+   *
+   * @return A list of the router's mappings.
+   */
   public ArrayList<Mapping> getMappings() {
     return mappings;
   }
 
+  /**
+   * Gets the inventory of this router.
+   *
+   * @return The inventory of this router.
+   */
   @Override
   @Nonnull
   protected NonNullList<ItemStack> getItems() {
     return inventory;
   }
 
+  /**
+   * Sets the items in the router's inventory.
+   *
+   * @param itemsIn A list of items in the router's inventory.
+   */
   @Override
   protected void setItems(NonNullList<ItemStack> itemsIn) {
     identifiers.clear();
@@ -425,62 +491,56 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     return getDisplayName();
   }
 
+  /**
+   * Gets the {@link RouterTier} of the router.
+   *
+   * @return The {@link RouterTier} of the router.
+   */
   public RouterTier getTier() {
     return tier;
   }
 
   /**
-   * Sets the router's tier and updates the energy storage capability and tieredRouter block.
+   * Sets the router's tier.
    *
    * @param baseTier The tier to be set to.
    */
   private void setTier(@Nonnull BaseTier baseTier) {
     this.tier = new RouterTier(baseTier);
-    tieredRouter = switch (this.tier.baseTier) {
-      case BASIC:
-        yield Blocks.BASIC_ROUTER;
-      case ADVANCED:
-        yield Blocks.ADVANCED_ROUTER;
-      case ELITE:
-        yield Blocks.ELITE_ROUTER;
-      case ULTIMATE:
-        yield Blocks.ULTIMATE_ROUTER;
-      default:
-        yield null;
-    };
-    containerSize = switch (this.tier.baseTier) {
-      case BASIC:
-        yield 3;
-      case ADVANCED:
-        yield 6;
-      case ELITE:
-        yield 9;
-      case ULTIMATE:
-        yield 12;
-      default:
-        yield 0;
-    };
-    energyPerMappingTick = switch (this.tier.baseTier) {
-      case BASIC:
-        yield 1000;
-      case ADVANCED:
-        yield 2000;
-      case ELITE:
-        yield 3000;
-      case ULTIMATE:
-        yield 4000;
-      default:
-        yield 1000;
-    };
+    if (tier.baseTier == BaseTier.BASIC) {
+      tieredRouter = Blocks.BASIC_ROUTER;
+      containerSize = 3;
+    } else if (tier.baseTier == BaseTier.ADVANCED) {
+      tieredRouter = Blocks.ADVANCED_ROUTER;
+      containerSize = 6;
+    } else if (tier.baseTier == BaseTier.ELITE) {
+      tieredRouter = Blocks.ELITE_ROUTER;
+      containerSize = 9;
+    } else if (tier.baseTier == BaseTier.ULTIMATE) {
+      tieredRouter = Blocks.ULTIMATE_ROUTER;
+      containerSize = 12;
+    } else {
+      throw new IllegalStateException("Router has no tier.");
+    }
     inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
     energyStorage.setCapacity(this.tier.maxEnergy);
     energyStorage.setMaxReceive(this.tier.maxEnergyPerTick);
   }
 
+  /**
+   * Gets the {@link DynamicEnergyStorage} capability for this router.
+   *
+   * @return Gets the {@link DynamicEnergyStorage} capability for this router.
+   */
   public DynamicEnergyStorage getEnergyStorage() {
     return energyStorage;
   }
 
+  /**
+   * Gets the size in slots of the router's inventory.
+   *
+   * @return The size in slots of the router's inventory.
+   */
   @Override
   public int getContainerSize() {
     return containerSize;

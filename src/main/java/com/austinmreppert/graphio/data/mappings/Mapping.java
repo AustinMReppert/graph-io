@@ -1,18 +1,21 @@
 package com.austinmreppert.graphio.data.mappings;
 
+import com.austinmreppert.graphio.capabilities.IIdentifierCapability;
+import com.austinmreppert.graphio.data.tiers.RouterTier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.Constants;
-import com.austinmreppert.graphio.capabilities.IIdentifierCapability;
-import com.austinmreppert.graphio.data.tiers.RouterTier;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
+/**
+ * Stores and parses all the data needed to transfer items via a {@link com.austinmreppert.graphio.blockentity.RouterBlockEntity}.
+ */
 public class Mapping {
 
   private final SimpleContainer filterInventory;
@@ -31,41 +34,49 @@ public class Mapping {
   private int tickDelay;
   private int lastTick;
 
-  public Mapping(String raw, Set<String> identifiers, DistributionScheme distributionScheme, FilterScheme filterScheme, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, RouterTier tier) {
+  public Mapping(final String raw, final Set<String> identifiers, final DistributionScheme distributionScheme,
+                 final FilterScheme filterScheme, final int itemsPerTick, final int bucketsPerTick,
+                 final int energyPerTick, final int tickDelay, final RouterTier tier) {
     this(raw, distributionScheme, filterScheme, itemsPerTick, bucketsPerTick, energyPerTick, tickDelay, tier);
     String[] components = raw.split("->");
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
-    if (components.length != 2)
-      return;
     parseMapping(identifiers, components);
   }
 
+  /**
+   * Parses the raw mappings string for inputs and outputs.
+   *
+   * @param identifiers The set of identifiers that can be used in the mapping.
+   * @param components  An {@link String[]} of size 2 that stores the inputs as the first element and the outputs as the 2nd element.
+   */
   private void parseMapping(Set<String> identifiers, String[] components) {
-    String[] inputsTmp = components[0].split(",");
-    String[] outputsTmp = components[1].split(",");
-    ArrayList<String> inputs = new ArrayList<>();
-    ArrayList<String> outputs = new ArrayList<>();
+    if (components.length != 2)
+      return;
+    final String[] inputsTmp = components[0].split(",");
+    final String[] outputsTmp = components[1].split(",");
+    final ArrayList<String> inputs = new ArrayList<>();
+    final ArrayList<String> outputs = new ArrayList<>();
 
     // Only parse unique inputs/outputs
-    for (String input : inputsTmp)
+    for (final String input : inputsTmp)
       if (!inputs.contains(input))
         inputs.add(input);
-    for (String output : outputsTmp)
+    for (final String output : outputsTmp)
       if (!outputs.contains(output))
         outputs.add(output);
 
     // If any inputs or outputs are invalid, then the entire mapping is
-    for (String input : inputs) {
-      ArrayList<NodeInfo> tmp = NodeInfo.getNodeInfo(input, identifiers);
-      for (NodeInfo inputNodeInfo : tmp)
+    for (final String input : inputs) {
+      final ArrayList<NodeInfo> tmp = NodeInfo.getNodeInfo(input, identifiers);
+      for (final NodeInfo inputNodeInfo : tmp)
         if (!inputNodeInfo.isValid())
           return;
       this.inputs.addAll(tmp);
     }
-    for (String output : outputs) {
-      ArrayList<NodeInfo> tmp = NodeInfo.getNodeInfo(output, identifiers);
-      for (NodeInfo outputNodeInfo : tmp)
+    for (final String output : outputs) {
+      final ArrayList<NodeInfo> tmp = NodeInfo.getNodeInfo(output, identifiers);
+      for (final NodeInfo outputNodeInfo : tmp)
         if (!outputNodeInfo.isValid())
           return;
       this.outputs.addAll(tmp);
@@ -74,7 +85,8 @@ public class Mapping {
     valid = true;
   }
 
-  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, int itemsPerTick, int bucketsPerTick, int energyPerTick, int tickDelay, RouterTier tier) {
+  public Mapping(final String raw, final DistributionScheme distributionScheme, final FilterScheme filterScheme,
+                 final int itemsPerTick, final int bucketsPerTick, final int energyPerTick, final int tickDelay, final RouterTier tier) {
     this.raw = raw;
     this.distributionScheme = distributionScheme;
     this.filterScheme = filterScheme;
@@ -86,19 +98,32 @@ public class Mapping {
     this.tickDelay = Mth.clamp(tickDelay, tier.minTickDelay, 20);
   }
 
-  public Mapping(String raw, DistributionScheme distributionScheme, FilterScheme filterScheme, RouterTier tier) {
+  public Mapping(final String raw, final DistributionScheme distributionScheme, final FilterScheme filterScheme, final RouterTier tier) {
     this(raw, distributionScheme, filterScheme, tier.maxItemsPerTick, tier.maxBucketsPerTick, tier.maxEnergyPerTick, tier.minTickDelay, tier);
   }
 
-  public static CompoundTag write(ArrayList<Mapping> mappingsCopy) {
-    CompoundTag mappingsNBT = new CompoundTag();
+  /**
+   * Writes a list of {@link Mapping}s into an {@link CompoundTag}.
+   *
+   * @param mappingsCopy The list of mappings to use.
+   * @return A list of {@link Mapping}s as an {@link CompoundTag}.
+   */
+  public static CompoundTag write(final ArrayList<Mapping> mappingsCopy) {
+    final var mappingsNBT = new CompoundTag();
     return Mapping.write(mappingsCopy, mappingsNBT);
   }
 
+  /**
+   * Writes a list of {@link Mapping}s into an {@link CompoundTag}.
+   *
+   * @param mappingsCopy The list of mappings to use.
+   * @param nbt          The tag to use.
+   * @return A list of {@link Mapping}s stored in {@code nbt}.
+   */
   public static CompoundTag write(ArrayList<Mapping> mappingsCopy, CompoundTag nbt) {
-    ListTag list = new ListTag();
-    for (Mapping mapping : mappingsCopy) {
-      CompoundTag mappingNBT = new CompoundTag();
+    final var list = new ListTag();
+    for (final Mapping mapping : mappingsCopy) {
+      final var mappingNBT = new CompoundTag();
       mappingNBT.putString("mapping", mapping.getRaw());
       mappingNBT.putInt("distributionScheme", mapping.getDistributionSchemeOrdinal());
       mappingNBT.putInt("filterScheme", mapping.getFilterSchemeOrdinal());
@@ -107,7 +132,7 @@ public class Mapping {
       mappingNBT.putInt("energyPerTick", mapping.energyPerTick);
       mappingNBT.putInt("tickDelay", mapping.tickDelay);
 
-      ListTag filterNBT = new ListTag();
+      final var filterNBT = new ListTag();
       mapping.filterInventory.createTag();
       for (int i = 0; i < mapping.filterInventory.getContainerSize(); ++i) {
         if (!mapping.filterInventory.getItem(i).isEmpty()) {
@@ -124,18 +149,26 @@ public class Mapping {
     return nbt;
   }
 
-  public static ArrayList<Mapping> read(CompoundTag tag, HashMap<String, IIdentifierCapability> identifiers, RouterTier tier) {
-    ListTag list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
-    ArrayList<Mapping> mappings = new ArrayList<>(list.size());
+  /**
+   * Reads a list of mappings from a {@link CompoundTag}.
+   *
+   * @param tag         The tag to read from.
+   * @param identifiers A Map of identifier names and {@link com.austinmreppert.graphio.capabilities.IdentifierCapability}s.
+   * @param tier        The tier of router the mapping is stored in
+   * @return A list of {@link Mapping}s.
+   */
+  public static ArrayList<Mapping> read(final CompoundTag tag, final HashMap<String, IIdentifierCapability> identifiers, final RouterTier tier) {
+    final var list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
+    final var mappings = new ArrayList<Mapping>(list.size());
     for (int i = 0; i < list.size(); ++i) {
-      CompoundTag mappingNBT = list.getCompound(i);
-      Mapping mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(),
-        Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")),
-        Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")),
-        mappingNBT.getInt("itemsPerTick"),
-        mappingNBT.getInt("bucketsPerTick"),
-        mappingNBT.getInt("energyPerTick"), mappingNBT.getInt("tickDelay"), tier);
-      ListTag filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
+      final CompoundTag mappingNBT = list.getCompound(i);
+      final var mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(),
+          Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")),
+          Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")),
+          mappingNBT.getInt("itemsPerTick"),
+          mappingNBT.getInt("bucketsPerTick"),
+          mappingNBT.getInt("energyPerTick"), mappingNBT.getInt("tickDelay"), tier);
+      final var filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
       for (int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundTag itemStackNBT = filterItemsNBT.getCompound(j);
         int slot = itemStackNBT.getByte("slot");
@@ -147,64 +180,140 @@ public class Mapping {
     return mappings;
   }
 
+  /**
+   * Gets the distribution scheme.
+   *
+   * @return The distribution scheme.
+   */
   public DistributionScheme getDistributionScheme() {
     return distributionScheme;
   }
 
+  /**
+   * Sets the distribution scheme.
+   *
+   * @param distributionScheme A distribution scheme.
+   */
   public void setDistributionScheme(DistributionScheme distributionScheme) {
     this.distributionScheme = distributionScheme;
   }
 
+  /**
+   * Gets the raw string that the mapping was created from.
+   *
+   * @return The raw string that the mapping was created from.
+   */
   public String getRaw() {
     return raw;
   }
 
+  /**
+   * Sets the raw string that the mapping was created from. Does not cause a re-parse.
+   *
+   * @param raw A mapping string.
+   */
   public void setRaw(String raw) {
     this.raw = raw;
   }
 
+  /**
+   * Gets the list of inputs.
+   *
+   * @return The list of inputs.
+   */
   public ArrayList<NodeInfo> getInputs() {
     return inputs;
   }
 
+  /**
+   * Gets the list of outputs.
+   *
+   * @return The list of outputs.
+   */
   public ArrayList<NodeInfo> getOutputs() {
     return outputs;
   }
 
+  /**
+   * Gets an integer representation of the {Code distributionScheme}.
+   *
+   * @return An integer representation of the {Code distributionScheme}.
+   */
   public int getDistributionSchemeOrdinal() {
     if (distributionScheme == null) return -1;
     else return distributionScheme.ordinal();
   }
 
+  /**
+   * Gets an integer representation of the {@code filterScheme}.
+   *
+   * @return An integer representation of the {@code filterScheme}.
+   */
   public int getFilterSchemeOrdinal() {
     if (filterScheme == null) return -1;
     else return filterScheme.ordinal();
   }
 
+  /**
+   * Gets the filter scheme.
+   *
+   * @return The filter scheme.
+   */
   public FilterScheme getFilterScheme() {
     return filterScheme;
   }
 
+  /**
+   * Sets the filter scheme.
+   *
+   * @param filterScheme The filter scheme.
+   */
   public void setFilterScheme(FilterScheme filterScheme) {
     this.filterScheme = filterScheme;
   }
 
+  /**
+   * Gets whether the mapping is valid.
+   *
+   * @return Whether the mapping is valid.
+   */
   public boolean isValid() {
     return valid;
   }
 
-  public void changeItemsPerTick(int amount) {
+  /**
+   * Changes the amount of items that are transferred per a tick.
+   *
+   * @param amount The amount of change in items.
+   */
+  public void changeItemsPerTick(final int amount) {
     itemsPerTick = Mth.clamp(itemsPerTick + amount, 0, routerTier.maxItemsPerTick);
   }
 
+  /**
+   * Changes the amount of buckets that are transferred per a tick.
+   *
+   * @param amount The amount of change in buckets.
+   */
   public void changeBucketsPerTick(int amount) {
     bucketsPerTick = Mth.clamp(bucketsPerTick + amount, 0, routerTier.maxBucketsPerTick);
   }
 
+  /**
+   * Changes the amount of energy that is transferred per a tick.
+   *
+   * @param amount The amount of change in energy.
+   */
   public void changeEnergyPerTick(int amount) {
     energyPerTick = Mth.clamp(energyPerTick + amount, 0, routerTier.maxEnergyPerTick);
   }
 
+  /**
+   * Determines whether the mapping should tick.
+   *
+   * @param ticks The current amount of ticks.
+   * @return Whether the mapping should tick.
+   */
   public boolean shouldTick(int ticks) {
     if (ticks - lastTick >= tickDelay) {
       lastTick = ticks;
@@ -213,36 +322,69 @@ public class Mapping {
     return false;
   }
 
+  /**
+   * Changes the amount of ticks between updates.
+   *
+   * @param amount The amount of change in ticks.
+   */
   public void changeTickDelay(int amount) {
     tickDelay = Mth.clamp(tickDelay + amount, routerTier.minTickDelay, 20);
   }
 
+  /**
+   * Gets the filter inventory.
+   *
+   * @return The filter inventory.
+   */
   public SimpleContainer getFilterInventory() {
     return filterInventory;
   }
 
+  /**
+   * Gets the amount of items transferred per a tick.
+   *
+   * @return The amount of items transferred per a tick.
+   */
   public int getItemsPerTick() {
     return itemsPerTick;
   }
 
+  /**
+   * Gets the amount of buckets transferred per a tick.
+   *
+   * @return The amount of buckets transferred per a tick.
+   */
   public int getBucketsPerTick() {
     return bucketsPerTick;
   }
 
+  /**
+   * Gets the amount of energy transferred per a tick.
+   *
+   * @return The amount of energy transferred per a tick.
+   */
   public int getEnergyPerTick() {
     return energyPerTick;
   }
 
+  /**
+   * Gets the amount of ticks between updates.
+   *
+   * @return The amount of ticks between updates.
+   */
   public int getTickDelay() {
     return tickDelay;
   }
 
+  /**
+   * The types of distribution schemes.
+   */
   public enum DistributionScheme {
     NATURAL,
     RANDOM,
     CYCLIC;
 
-    public static DistributionScheme valueOf(int ordinal) {
+    public static DistributionScheme valueOf(final int ordinal) {
       if (ordinal == 0) return NATURAL;
       else if (ordinal == 1) return RANDOM;
       else if (ordinal == 2) return CYCLIC;
@@ -251,11 +393,14 @@ public class Mapping {
 
   }
 
+  /**
+   * The types of filter schemes.
+   */
   public enum FilterScheme {
     BLACK_LIST,
     WHITE_LIST;
 
-    public static FilterScheme valueOf(int ordinal) {
+    public static FilterScheme valueOf(final int ordinal) {
       if (ordinal == 0) return BLACK_LIST;
       else if (ordinal == 1) return WHITE_LIST;
       else return null;

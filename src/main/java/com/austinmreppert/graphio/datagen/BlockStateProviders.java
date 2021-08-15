@@ -7,9 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
+/**
+ * Generates block states/models.
+ */
 public class BlockStateProviders extends BlockStateProvider {
 
-  public BlockStateProviders(DataGenerator generator, ExistingFileHelper existingFileHelper) {
+  public BlockStateProviders(final DataGenerator generator, final ExistingFileHelper existingFileHelper) {
     super(generator, GraphIO.MOD_ID, existingFileHelper);
   }
 

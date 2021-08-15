@@ -7,9 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
+/**
+ * Generates item models.
+ */
 public class ItemModelProviders extends ItemModelProvider {
 
-  public ItemModelProviders(DataGenerator dataGenerator, ExistingFileHelper existingFileHelper) {
+  public ItemModelProviders(final DataGenerator dataGenerator, final ExistingFileHelper existingFileHelper) {
     super(dataGenerator, GraphIO.MOD_ID, existingFileHelper);
   }
 

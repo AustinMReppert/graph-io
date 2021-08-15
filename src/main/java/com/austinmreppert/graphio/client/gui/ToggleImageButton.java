@@ -9,10 +9,14 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 
+/**
+ * A toggleable image button.
+ */
 public class ToggleImageButton extends ImageButton {
 
   private final ResourceLocation resourceLocation;
@@ -26,12 +30,16 @@ public class ToggleImageButton extends ImageButton {
   private Component enabledToolTip;
   private final Screen screen;
 
-  public ToggleImageButton(int x, int y, int width, int height, int xTexStart, int yTexStart, int yDiffText, ResourceLocation resourceLocation, int textureWidth, int textureHeight, OnPress onPress, Component toolTip, Component enabledToolTip, Screen screen) {
+  public ToggleImageButton(final int x, final int y, final int width, final int height, final int xTexStart, final int yTexStart,
+                           final int yDiffText, final ResourceLocation resourceLocation, final int textureWidth, final int textureHeight,
+                           final OnPress onPress, final Component toolTip, final Component enabledToolTip, final Screen screen) {
     this(x, y, width, height, xTexStart, yTexStart, yDiffText, resourceLocation, textureWidth, textureHeight, onPress, toolTip, screen);
     this.enabledToolTip = enabledToolTip;
   }
 
-  public ToggleImageButton(int x, int y, int width, int height, int xTexStart, int yTexStart, int yDiffText, ResourceLocation resourceLocationIn, int textureWidth, int textureHeight, OnPress onPressIn, Component toolTip, Screen screen) {
+  public ToggleImageButton(final int x, final int y, final int width, final int height, final int xTexStart, final int yTexStart,
+                           final int yDiffText, final ResourceLocation resourceLocationIn, final int textureWidth,
+                           final int textureHeight, final OnPress onPressIn, final Component toolTip, final Screen screen) {
     super(x, y, width, height, xTexStart, yTexStart, yDiffText, resourceLocationIn, textureWidth, textureHeight, onPressIn, toolTip);
     this.textureWidth = textureWidth;
     this.textureHeight = textureHeight;
@@ -44,10 +52,17 @@ public class ToggleImageButton extends ImageButton {
     enabled = false;
   }
 
+  /**
+   * Renders the button.
+   *
+   * @param poseStack    The {@link PoseStack} used to render the button.
+   * @param mouseX       The x position of the mouse.
+   * @param mouseY       The y position of the mouse.
+   * @param partialTicks Ticks since last frame.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public void renderButton(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-    Minecraft minecraft = Minecraft.getInstance();
+  public void renderButton(final PoseStack poseStack, final int mouseX, final int mouseY, final float partialTicks) {
     RenderSystem.setShaderTexture(0, resourceLocation);
     int i = yTexStart;
     if (!isHovered() && enabled)
@@ -58,32 +73,51 @@ public class ToggleImageButton extends ImageButton {
       i += yDiffText * 3;
 
     RenderSystem.enableDepthTest();
-    blit(matrixStack, x, y, (float) xTexStart, (float) i, width, height, textureWidth, textureHeight);
+    blit(poseStack, x, y, (float) xTexStart, (float) i, width, height, textureWidth, textureHeight);
     if (isHovered)
-      renderToolTip(matrixStack, mouseX, mouseY);
+      renderToolTip(poseStack, mouseX, mouseY);
   }
 
+  /**
+   * Renders the tooltip when hovering over the button.
+   *
+   * @param poseStack The {@link PoseStack} used while rendering the tooltip.
+   * @param mouseX    The x position of the mouse.
+   * @param mouseY    The y positoin of the mouse.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public void renderToolTip(PoseStack matrixStack, int mouseX, int mouseY) {
-    List<Component> list = Lists.newArrayList();
+  public void renderToolTip(final PoseStack poseStack, final int mouseX, final int mouseY) {
+    final List<Component> list = Lists.newArrayList();
     if (enabled && enabledToolTip != null)
       list.add(enabledToolTip);
     else
       list.add(toolTip);
-    Font font = Minecraft.getInstance().font;
-    // TODO: Uncomment once forge adds this
-     // net.minecraftforge.fml.client.gui.GuiUtils.drawHoveringText(matrixStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);
+    final Font font = Minecraft.getInstance().font;
+    GuiUtils.drawHoveringText(poseStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);
   }
 
+  /**
+   * Gets whether the button is enabled.
+   *
+   * @return Whether the button enabled.
+   */
   public boolean isEnabled() {
     return enabled;
   }
 
-  public void setEnabled(boolean enabled) {
+  /**
+   * Sets the button to be enabled/disabled.
+   *
+   * @param enabled Whether the button is enabled.
+   */
+  public void setEnabled(final boolean enabled) {
     this.enabled = enabled;
   }
 
+  /**
+   * Switches the button on/off.
+   */
   public void toggle() {
     enabled = !enabled;
   }

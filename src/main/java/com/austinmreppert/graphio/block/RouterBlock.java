@@ -1,5 +1,9 @@
 package com.austinmreppert.graphio.block;
 
+import com.austinmreppert.graphio.blockentity.BlockEntityTypes;
+import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
+import com.austinmreppert.graphio.data.mappings.Mapping;
+import com.austinmreppert.graphio.data.tiers.BaseTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -16,10 +20,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.fmllegacy.network.NetworkHooks;
-import com.austinmreppert.graphio.blockentity.BlockEntityTypes;
-import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
-import com.austinmreppert.graphio.data.mappings.Mapping;
-import com.austinmreppert.graphio.data.tiers.BaseTier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,7 +33,7 @@ public class RouterBlock extends BaseEntityBlock {
     super(Properties.of(Material.HEAVY_METAL).lightLevel((bs) -> 0).strength(2));
   }
 
-  public RouterBlock(BaseTier baseTier) {
+  public RouterBlock(final BaseTier baseTier) {
     this();
     this.baseTier = baseTier;
   }
@@ -41,23 +41,44 @@ public class RouterBlock extends BaseEntityBlock {
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public RenderShape getRenderShape(BlockState state) {
+  public RenderShape getRenderShape(final BlockState state) {
     return RenderShape.MODEL;
   }
 
+  /**
+   * Creates a block entity ticker for the router.
+   *
+   * @param level           The level of the router.
+   * @param state           The block state of the router.
+   * @param blockEntityType The type of the block entity.
+   * @param <T>             _.
+   * @return A ticker for the router block entity or null for the client.
+   */
   @Nullable
   @Override
   @ParametersAreNonnullByDefault
-  public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-    return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntityTypes.ROUTER, (Level routerLevel, BlockPos blockPos, BlockState blockState, RouterBlockEntity routerBlockEntity) -> {
-      routerBlockEntity.serverTick(level, blockPos);
+  public <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state, final BlockEntityType<T> blockEntityType) {
+    return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntityTypes.ROUTER, (final Level routerLevel, final BlockPos blockPos, final BlockState blockState, final RouterBlockEntity routerBlockEntity) -> {
+      routerBlockEntity.serverTick();
     });
   }
 
+  /**
+   * Opens the appropriate router gui.
+   *
+   * @param state  The block state.
+   * @param level  The block's level.
+   * @param pos    The position of the block.
+   * @param player The player who used the block.
+   * @param handIn The hand that was sued.
+   * @param hit    The type of hit.
+   * @return The event status.
+   */
   @Override
   @Nonnull
   @ParametersAreNonnullByDefault
-  public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+  public InteractionResult use(final BlockState state, final Level level, final BlockPos pos, final Player player,
+                               final InteractionHand handIn, final BlockHitResult hit) {
     if (!level.isClientSide) {
       final BlockEntity blockEntity = level.getBlockEntity(pos);
       if (blockEntity instanceof RouterBlockEntity router) {
@@ -69,13 +90,21 @@ public class RouterBlock extends BaseEntityBlock {
             packetBuffer.writeNbt(Mapping.write(router.getMappings()));
           });
       }
+      return InteractionResult.CONSUME;
     }
     return InteractionResult.SUCCESS;
   }
 
+  /**
+   * Creates the {@link RouterBlockEntity}.
+   *
+   * @param pos   The {@link BlockPos} of the router.
+   * @param state The {@link BlockState} of the router.
+   * @return A {@link RouterBlockEntity} for the router block.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+  public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
     return new RouterBlockEntity(baseTier, pos, state);
   }
 

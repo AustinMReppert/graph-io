@@ -1,15 +1,15 @@
 package com.austinmreppert.graphio.block;
 
+import com.austinmreppert.graphio.GraphIO;
+import com.austinmreppert.graphio.data.tiers.BaseTier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistryEntry;
-import com.austinmreppert.graphio.GraphIO;
-import com.austinmreppert.graphio.data.tiers.BaseTier;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Blocks {
 
   public static final Block BASIC_ROUTER = register(new RouterBlock(BaseTier.BASIC), "basic_router");
@@ -20,10 +20,10 @@ public class Blocks {
   @SubscribeEvent
   public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
     blockRegistryEvent.getRegistry().registerAll(
-      BASIC_ROUTER,
-      ADVANCED_ROUTER,
-      ELITE_ROUTER,
-      ULTIMATE_ROUTER
+        BASIC_ROUTER,
+        ADVANCED_ROUTER,
+        ELITE_ROUTER,
+        ULTIMATE_ROUTER
     );
   }
 

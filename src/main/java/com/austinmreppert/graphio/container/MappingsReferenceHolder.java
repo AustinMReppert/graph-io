@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * Keeps track of changes to a list of mappings.
+ */
 public class MappingsReferenceHolder {
 
   private ArrayList<Mapping> previous;
@@ -19,6 +22,11 @@ public class MappingsReferenceHolder {
   public Supplier<ArrayList<Mapping>> get;
   public Consumer<Tag> set;
 
+  /**
+   * Gets whether the mappings have changed.
+   *
+   * @return Whether the mappings have changed.
+   */
   public boolean isDirty() {
     ArrayList<Mapping> current = this.get.get();
     boolean dirty = !current.equals(previous);

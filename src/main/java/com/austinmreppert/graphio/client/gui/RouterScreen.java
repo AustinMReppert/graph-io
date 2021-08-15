@@ -5,7 +5,7 @@ import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
 import com.austinmreppert.graphio.container.RouterContainer;
 import com.austinmreppert.graphio.data.mappings.Mapping;
 import com.austinmreppert.graphio.network.PacketHandler;
-import com.austinmreppert.graphio.network.SetMappingsPacket;
+import com.austinmreppert.graphio.network.SetRouterBEMappingsPacket;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.EditBox;
@@ -30,6 +30,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.Optional;
 
+/**
+ * The screen used to show the router's mappings.
+ */
 public class RouterScreen extends AbstractContainerScreen<RouterContainer> implements MenuAccess<RouterContainer> {
 
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/router.png");
@@ -92,13 +95,13 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private ToggleImageButton distributeNaturallyButton;
   private ToggleImageButton filterSchemeButton;
   private ImageButton decreaseStackSizeButton, increaseStackSizeButton, decreaseBucketsButton, increaseBucketsButton,
-    decreaseEnergyButton, increaseEnergyButton, decreaseTickDelay, increaseTickDelay;
+      decreaseEnergyButton, increaseEnergyButton, decreaseTickDelay, increaseTickDelay;
   private int lastFocusedMapping;
   private RouterBlockEntity routerBlockEntity;
 
-  public RouterScreen(AbstractContainerMenu screenContainer, Inventory inv, Component titleIn) {
+  public RouterScreen(final AbstractContainerMenu screenContainer, final Inventory inv, final Component titleIn) {
     super((RouterContainer) screenContainer, inv, titleIn);
-    routerBlockEntity = ((RouterContainer) screenContainer).getRouterTE();
+    routerBlockEntity = ((RouterContainer) screenContainer).getRouterBlockEntity();
     passEvents = false;
     imageWidth = 276;
     imageHeight = 256;
@@ -110,7 +113,12 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     rawMappings = new ArrayList<>();
   }
 
-  private void onTextChanged(String text) {
+  /**
+   * Called when a mapping's text component is changed.
+   *
+   * @param text The new text.
+   */
+  private void onTextChanged(final String text) {
   }
 
   private void updateMappingGUI() {
@@ -128,16 +136,31 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     });
   }
 
+  /**
+   * Sends a {@link SetRouterBEMappingsPacket} to notify the server and clients of changes to the mappings.
+   */
   private void updateMappings() {
-    PacketHandler.INSTANCE.sendToServer(new SetMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
+    PacketHandler.INSTANCE.sendToServer(new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(getMappings()), menu.containerId));
   }
 
+  /**
+   * Gets a list of the current mappings.
+   *
+   * @return A list of the current mappings.
+   */
   public ArrayList<Mapping> getMappings() {
     return menu.getTrackedMappingsReference().get.get();
   }
 
+  /**
+   * Called when a user types. Used to update the mappings.
+   *
+   * @param typedChar The character that was types.
+   * @param modifiers The modifiers such as alt, shift, etc.
+   * @return Whether the event was consumed.
+   */
   @Override
-  public boolean charTyped(char typedChar, int modifiers) {
+  public boolean charTyped(final char typedChar, final int modifiers) {
     if (getFocused() != null && getFocused() instanceof EditBox listener && ((EditBox) getFocused()).canConsumeInput()) {
       int index = rawMappings.indexOf(listener);
       boolean pressed = listener.charTyped(typedChar, modifiers);
@@ -150,7 +173,15 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     return false;
   }
 
-  public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+  /**
+   * Used when a keyboard button is pressed.
+   *
+   * @param keyCode   The key of the button with respect to the OS.
+   * @param scanCode  The key of the button.
+   * @param modifiers The modifiers such as alt, shift, etc.
+   * @return Whether the event was consumed.
+   */
+  public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
       minecraft.player.closeContainer();
     else if (keyCode == GLFW.GLFW_KEY_ENTER) {
@@ -163,7 +194,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       addRenderableWidget(mapping);
       getMappings().add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST,
-        routerBlockEntity.getTier()));
+          routerBlockEntity.getTier()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
       mapping.setFocus(true);
@@ -199,41 +230,67 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     return super.keyPressed(keyCode, scanCode, modifiers);
   }
 
+  /**
+   * Renders the black background, mappings, and tool tips.
+   *
+   * @param poseStack    The {@link PoseStack} used to render this gui.
+   * @param mouseX       The x position of the mouse.
+   * @param mouseY       The y position of the mouse.
+   * @param partialTicks Ticks since last frame.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-    renderBackground(matrixStack);
-    super.render(matrixStack, mouseX, mouseY, partialTicks);
+  public void render(final PoseStack poseStack, final int mouseX, final int mouseY, final float partialTicks) {
+    this.renderBackground(poseStack);
+    super.render(poseStack, mouseX, mouseY, partialTicks);
 
     if (this.menu.getCarried().isEmpty() && this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-      this.renderTooltip(matrixStack, this.hoveredSlot.getItem(), mouseX, mouseY);
+      this.renderTooltip(poseStack, this.hoveredSlot.getItem(), mouseX, mouseY);
     }
 
     for (EditBox mapping : rawMappings)
-      mapping.render(matrixStack, mouseX, mouseY, partialTicks);
+      mapping.render(poseStack, mouseX, mouseY, partialTicks);
   }
 
-  public void renderScrollbar(PoseStack matrixStack) {
+  /**
+   * Renders the scrollbar.
+   *
+   * @param poseStack The {@link PoseStack} used to render the scrollbar.
+   */
+  public void renderScrollbar(final PoseStack poseStack) {
     if (canScroll(rawMappings.size()))
-      blit(matrixStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(poseStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
     else
-      blit(matrixStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(poseStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
   }
 
+  /**
+   * Sets the focus to a certain component.
+   *
+   * @param component The component to receive focus.
+   */
   @Override
-  public void setFocused(@Nullable GuiEventListener listener) {
-    int index = rawMappings.indexOf(listener);
+  public void setFocused(final @Nullable GuiEventListener component) {
+    final int index = rawMappings.indexOf(component);
     if (index != -1) {
       lastFocusedMapping = index;
       updateMappingGUI();
       menu.setFilterSlotContents(getMappings().get(index).getFilterInventory());
     }
-    super.setFocused(listener);
+    super.setFocused(component);
   }
 
+  /**
+   * Called when a slot is clicked. This function is used copy items to filter slots.
+   *
+   * @param slotIn      The slot that was clicked.
+   * @param slotId      The id of the clicked slot.
+   * @param mouseButton What mouse button was used.
+   * @param type        The type of click.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  protected void slotClicked(@Nullable Slot slotIn, int slotId, int mouseButton, ClickType type) {
+  protected void slotClicked(final @Nullable Slot slotIn, final int slotId, final int mouseButton, final ClickType type) {
     if (slotIn instanceof FilterSlot) {
       getLastFocusedMapping().ifPresent((focused) -> {
         super.slotClicked(slotIn, slotId, mouseButton, type);
@@ -243,6 +300,9 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     } else super.slotClicked(slotIn, slotId, mouseButton, type);
   }
 
+  /**
+   * Sets up the GUI.
+   */
   @Override
   public void init() {
     super.init();
@@ -351,16 +411,29 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
 
   }
 
+  /**
+   * Gets the last focused mapping.
+   *
+   * @return The last focused mapping.
+   */
   public Optional<Mapping> getLastFocusedMapping() {
     if (lastFocusedMapping < 0 || lastFocusedMapping >= getMappings().size()) return Optional.empty();
     return Optional.of(getMappings().get(lastFocusedMapping));
   }
 
+  /**
+   * Gets the last focused mapping's text field.
+   *
+   * @return The last focused mapping's text field.
+   */
   public Optional<EditBox> getLastFocusedMappingTF() {
     if (lastFocusedMapping < 0 || lastFocusedMapping >= rawMappings.size()) return Optional.empty();
     return Optional.of(rawMappings.get(lastFocusedMapping));
   }
 
+  /**
+   * Creates renderable components for the mappings.
+   */
   private void createMappingTextFields() {
     rawMappings.clear();
     for (int i = 0; i < getMappings().size(); ++i) {
@@ -372,7 +445,14 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     }
   }
 
-  public EditBox createMappingTextField(String contents, int index) {
+  /**
+   * Creates a {@linK EditBox} from a {@link Mapping}.
+   *
+   * @param contents The raw contents of the mapping.
+   * @param index    The index of the Mapping.
+   * @return An {@linK EditBox} with the raw contents of the {@link Mapping}.
+   */
+  public EditBox createMappingTextField(final String contents, final int index) {
     EditBox mapping = new EditBox(font, leftPos + MAPPING_X, topPos + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslatableComponent("container.repair"));
     mapping.setCanLoseFocus(true);
     mapping.setTextColor(TEXT_COLOR);
@@ -385,7 +465,17 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     return mapping;
   }
 
-  public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dragX, double dragY) {
+  /**
+   * Called when the mouse is dragged.
+   *
+   * @param mouseX      The mouse X position.
+   * @param mouseY      The mouse Y position.
+   * @param mouseButton The mouse button used while dragging.
+   * @param dragX       How much the mouse was dragged in the X direction.
+   * @param dragY       How much the mouse was dragged in the U direction.
+   * @return Whether the event was consumed.
+   */
+  public boolean mouseDragged(final double mouseX, final double mouseY, final int mouseButton, final double dragX, final double dragY) {
     if (isScrolling) {
       int i = topPos + SCROLL_BAR_Y;
       currentScroll = (float) Mth.clamp((mouseY - i - (SCROLL_BAR_HEIGHT / 2.0D)) / (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT), 0.0D, 1.0D);
@@ -398,7 +488,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   /**
    * Updates the mappings position int the gui when scrolled.
    */
-  public void scrollTo(float pos) {
+  public void scrollTo(final float pos) {
     // The current scroll pos in as an index of the scrollable items
     int discretePos = (int) ((rawMappings.size() - 1) * pos);
     // The index of the top element being displayed
@@ -415,44 +505,80 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
 
   }
 
-  public boolean mouseClicked(double mouseX, double mouseY, int button) {
+  /**
+   * @param mouseX The mouse X position.
+   * @param mouseY The mouse Y position.
+   * @param button The mouse button that was  used.
+   * @return Whether the event was consumed.
+   */
+  public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
     if (canScroll(rawMappings.size()) && mouseX > (double) (leftPos + SCROLL_BAR_X) && mouseX < (double) (leftPos + SCROLL_BAR_X + SCROLL_BAR_WIDTH) && mouseY > (double) (topPos + SCROLL_BAR_Y) && mouseY <= (double) (topPos + SCROLL_BAR_Y + SCROLL_AREA_HEIGHT))
       isScrolling = true;
     return super.mouseClicked(mouseX, mouseY, button);
   }
 
+  /**
+   * Check if the hotbar keys should be used.
+   *
+   * @param keyCode  The key of the button with respect to the OS.
+   * @param scanCode The key of the button.
+   * @return Wether the hotbar keys should be used.
+   */
   @Override
-  protected boolean checkHotbarKeyPressed(int keyCode, int scanCode) {
+  protected boolean checkHotbarKeyPressed(final int keyCode, final int scanCode) {
     return false;
   }
 
+  /**
+   * Mouse release event.
+   *
+   * @param mouseX The X position of the mouse.
+   * @param mouseY The Y position of the mouse.
+   * @param button The button that was released.
+   * @return Whether the event was consumed.
+   */
   @Override
-  public boolean mouseReleased(double mouseX, double mouseY, int button) {
+  public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
     isScrolling = false;
     return super.mouseReleased(mouseX, mouseY, button);
   }
 
+  /**
+   * Renders the backgrounds textures and slots.
+   *
+   * @param poseStack    The {@link PoseStack} used to render the GUI.
+   * @param partialTicks Ticks since last frame.
+   * @param mouseX       The X position of the mouse.
+   * @param mouseY       The Y position of the mouse.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  protected void renderBg(PoseStack matrixStack, float partialTicks, int x, int y) {
+  protected void renderBg(final PoseStack poseStack, final float partialTicks, final int mouseX, final int mouseY) {
     RenderSystem.setShader(GameRenderer::getPositionTexShader);
     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     RenderSystem.setShaderTexture(0, BACKGROUND);
-    blit(matrixStack, leftPos, topPos, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
-    blit(matrixStack, leftPos - 89, topPos, getBlitOffset(), 276, 27, 89, 166, 256, 512);
-    renderScrollbar(matrixStack);
+    blit(poseStack, leftPos, topPos, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
+    blit(poseStack, leftPos - 89, topPos, getBlitOffset(), 276, 27, 89, 166, 256, 512);
+    renderScrollbar(poseStack);
     getLastFocusedMapping().ifPresent(mapping -> {
       // Draw the filter slots
       for (int i = 0; i < mapping.getFilterInventory().getContainerSize(); ++i)
-        blit(matrixStack, leftPos + 4 + (i % 5) * SLOT_SIZE, topPos + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 256, 512);
+        blit(poseStack, leftPos + 4 + (i % 5) * SLOT_SIZE, topPos + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 256, 512);
     });
   }
 
+  /**
+   * Renders text.
+   *
+   * @param poseStack The {@link PoseStack} to render the text with.
+   * @param mouseX    The x position of the mouse.
+   * @param mouseY    The y position of the mouse.
+   */
   @Override
   @ParametersAreNonnullByDefault
-  protected void renderLabels(PoseStack matrixStack, int x, int y) {
-    super.renderLabels(matrixStack, x, y);
-    font.draw(matrixStack, playerInventoryTitle, (float) inventoryLabelX, (float) inventoryLabelY, 4210752);
+  protected void renderLabels(final PoseStack poseStack, final int mouseX, final int mouseY) {
+    super.renderLabels(poseStack, mouseX, mouseY);
+    font.draw(poseStack, playerInventoryTitle, (float) inventoryLabelX, (float) inventoryLabelY, 4210752);
 
     String itemsPerTickStr = "?";
     String bucketsPerTickStr = "?";
@@ -466,23 +592,38 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       energyPerTickStr = focused.getEnergyPerTick() + "";
       tickDelayStr = focused.getTickDelay() + "";
     }
-    font.draw(matrixStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
-    font.draw(matrixStack, itemsPerTickStr, -80, 19, TEXT_COLOR);
-    font.draw(matrixStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
-    font.draw(matrixStack, bucketsPerTickStr, -80, 50, TEXT_COLOR);
-    font.draw(matrixStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
-    font.draw(matrixStack, energyPerTickStr, -80, 81, TEXT_COLOR);
-    font.draw(matrixStack, TICK_DELAY, -80, 103, TEXT_COLOR);
-    font.draw(matrixStack, tickDelayStr, -80, 112, TEXT_COLOR);
-    font.draw(matrixStack, ENERGY, -80, 134, TEXT_COLOR);
-    font.draw(matrixStack, energyStr, -80, 144, TEXT_COLOR);
+    font.draw(poseStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
+    font.draw(poseStack, itemsPerTickStr, -80, 19, TEXT_COLOR);
+    font.draw(poseStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
+    font.draw(poseStack, bucketsPerTickStr, -80, 50, TEXT_COLOR);
+    font.draw(poseStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
+    font.draw(poseStack, energyPerTickStr, -80, 81, TEXT_COLOR);
+    font.draw(poseStack, TICK_DELAY, -80, 103, TEXT_COLOR);
+    font.draw(poseStack, tickDelayStr, -80, 112, TEXT_COLOR);
+    font.draw(poseStack, ENERGY, -80, 134, TEXT_COLOR);
+    font.draw(poseStack, energyStr, -80, 144, TEXT_COLOR);
   }
 
-  private boolean canScroll(int items) {
-    return items > MAPPINGS_PER_PAGE;
+  /**
+   * Gets whether the user can scroll.
+   *
+   * @param numMappings The current number of mappings.
+   * @return Whether the user can scroll.
+   */
+  private boolean canScroll(final int numMappings) {
+    return numMappings > MAPPINGS_PER_PAGE;
   }
 
-  public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+  /**
+   * Mouse scroll event.
+   *
+   * @param mouseX The x position of the mouse.
+   * @param mouseY The y position of the mouse.
+   * @param scroll How much was scrolled.
+   * @return Whether the event was consumed.
+   */
+  @Override
+  public boolean mouseScrolled(final double mouseX, final double mouseY, final double scroll) {
     if (canScroll(rawMappings.size())) {
       currentScroll = (float) Mth.clamp((currentScroll - scroll / rawMappings.size()), 0.0D, 1.0D);
       scrollTo(currentScroll);
@@ -490,6 +631,9 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     return true;
   }
 
+  /**
+   * Called to force updates due to an external change. Usually this is called from {@link SetRouterBEMappingsPacket}'s handler.
+   */
   public void update() {
     final int cursorPos = getLastFocusedMappingTF().isPresent() ? getLastFocusedMappingTF().get().getCursorPosition() : -1;
     final int highlightPos = getLastFocusedMappingTF().isPresent() ? getLastFocusedMappingTF().get().highlightPos : -1;
@@ -501,7 +645,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       focused.setFocus(true);
       if (cursorPos != -1)
         focused.setCursorPosition(cursorPos);
-      if(highlightPos != -1)
+      if (highlightPos != -1)
         focused.setHighlightPos(highlightPos);
     }, () -> {
       lastFocusedMapping = getMappings().size() - 1;

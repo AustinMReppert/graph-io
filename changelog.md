@@ -1,4 +1,11 @@
 # Changelog
+## 0.2.0
+### Changed
+* Code cleanup.
+* Bumped forge version.
+### Fixed
+* Search in creative tab works.
+* Image toggle buttons now show tooltip.
 ## 0.1.2
 ### Changed
 * Each block/item/energy transfer now consumes some amount of energy instead of per mapping.

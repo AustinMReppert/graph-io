@@ -10,12 +10,12 @@ public class PacketHandler {
   private static final String PROTOCOL_VERSION = "1";
 
   public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(new ResourceLocation(GraphIO.MOD_ID, "main"),
-    () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals
+      () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals
   );
 
   public static void init() {
     int i = 0;
-    INSTANCE.registerMessage(i++, SetMappingsPacket.class, SetMappingsPacket::encode, SetMappingsPacket::decode, SetMappingsPacket::handle);
+    INSTANCE.registerMessage(i++, SetRouterBEMappingsPacket.class, SetRouterBEMappingsPacket::encode, SetRouterBEMappingsPacket::decode, SetRouterBEMappingsPacket::handle);
   }
 
 }
