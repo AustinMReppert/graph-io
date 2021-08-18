@@ -184,7 +184,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
       minecraft.player.closeContainer();
-    else if (keyCode == GLFW.GLFW_KEY_ENTER) {
+    else if (keyCode == GLFW.GLFW_KEY_ENTER && routerBlockEntity.getMappings().size() < routerBlockEntity.getMaxMappings()) {
       for (EditBox rawMapping : rawMappings)
         rawMapping.setFocus(false);
       EditBox mapping = createMappingTextField("", getMappings().size());

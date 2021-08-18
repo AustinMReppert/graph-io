@@ -1,4 +1,14 @@
 # Changelog
+## 0.3.0
+### Changed
+* Switches to parchment mappings.
+* Bumped forge version.
+* Bumped minor version.
+### Fixed
+* Routers now limit energy intake correctly.
+### Added
+* A config file.
+* Routers now limit the number mappings.
 ## 0.2.0
 ### Changed
 * Code cleanup.

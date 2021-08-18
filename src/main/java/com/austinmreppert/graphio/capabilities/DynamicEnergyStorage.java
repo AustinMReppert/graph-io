@@ -63,4 +63,11 @@ public class DynamicEnergyStorage extends EnergyStorage {
     this.maxExtract = maxExtract;
   }
 
+  /**
+   * Gets the maximum amount of energy that can be received.
+   * @return The maximum amount of energy that can be received.
+   */
+  public int getMaxReceive() {
+    return maxReceive;
+  }
 }

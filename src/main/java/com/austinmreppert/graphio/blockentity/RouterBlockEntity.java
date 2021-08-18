@@ -1,5 +1,6 @@
 package com.austinmreppert.graphio.blockentity;
 
+import com.austinmreppert.graphio.Config;
 import com.austinmreppert.graphio.block.Blocks;
 import com.austinmreppert.graphio.capabilities.Capabilities;
 import com.austinmreppert.graphio.capabilities.DynamicEnergyStorage;
@@ -48,6 +49,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RouterBlockEntity extends RandomizableContainerBlockEntity implements MenuProvider {
 
@@ -61,9 +63,10 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   private RouterTier tier;
   protected Block tieredRouter;
   private int lastTick;
-  private static int itemTransferCost = 100;
-  private static int fluidTransferCost = 500;
-  private static int energyTransferCost = 100;
+  public static int ITEM_TRANSFER_COST;
+  public static int ENERGY_TRANSFER_COST;
+  public static int FLUID_TRANSFER_COST;
+  private static int maxMappings;
   private int containerSize;
 
   public RouterBlockEntity(final BlockPos pos, final BlockState state) {
@@ -106,6 +109,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (this.level == null)
       return;
 
+    AtomicInteger receivedEnergy = new AtomicInteger();
     if (shouldTick()) {
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
@@ -113,15 +117,17 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
         final BlockEntity blockEntity = this.level.getBlockEntity(getBlockPos().relative(direction));
         if (blockEntity != null) {
           blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
-            int extracted = -1;
-            final int simulatedReceived = energyStorage.receiveEnergy(extracted = cap.extractEnergy(tier.maxEnergyPerTick, true), true);
-            energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false);
+            final int simulatedReceived = energyStorage.receiveEnergy(cap.extractEnergy(energyStorage.getMaxReceive() - receivedEnergy.get(), true), true);
+            receivedEnergy.addAndGet(energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false));
             blockEntity.setChanged();
             setChanged();
           });
         }
       }
     }
+
+    if(mappings.size() > maxMappings)
+      return;
 
     for (Mapping mapping : mappings) {
       if (!mapping.isValid() || !mapping.shouldTick(ticks))
@@ -184,7 +190,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                   final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(
                       inputSlotIndex,
                       Mth.clamp(inputStack.getCount(), 0,
-                          Math.min(mapping.getItemsPerTick() - transferredItems, energyStorage.getEnergyStored() / itemTransferCost)),
+                          Math.min(mapping.getItemsPerTick() - transferredItems, energyStorage.getEnergyStored() / ITEM_TRANSFER_COST)),
                       true);
                   final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
                   final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
@@ -194,7 +200,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                   inputBlockEntity.setChanged();
                   outputBlockEntity.setChanged();
 
-                  energyStorage.setEnergyStored(energyStorage.getEnergyStored() - itemTransferCost * transferredItemsCount, false);
+                  energyStorage.setEnergyStored(energyStorage.getEnergyStored() - ITEM_TRANSFER_COST * transferredItemsCount, false);
                 }
               }
             }
@@ -219,7 +225,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
                   final FluidStack simulatedDrainedFS = inputFluidHandler.drain(
                       Mth.clamp(inputStack.getAmount(), 0,
-                          Math.min(mapping.getBucketsPerTick() - transferredFluids, energyStorage.getEnergyStored() / fluidTransferCost)),
+                          Math.min(mapping.getBucketsPerTick() - transferredFluids, energyStorage.getEnergyStored() / FLUID_TRANSFER_COST)),
                       IFluidHandler.FluidAction.SIMULATE);
                   final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
                   final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
@@ -229,7 +235,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                   inputBlockEntity.setChanged();
                   outputBlockEntity.setChanged();
 
-                  energyStorage.setEnergyStored(energyStorage.getEnergyStored() - fluidTransferCost * transferredFluidsCount, false);
+                  energyStorage.setEnergyStored(energyStorage.getEnergyStored() - FLUID_TRANSFER_COST * transferredFluidsCount, false);
 
                   break;
                 }
@@ -242,7 +248,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             int transferredEnergy = 0;
             if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
               final int simulatedExtracted = inputEnergyHandler.extractEnergy(
-                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, Math.min(mapping.getEnergyPerTick() - transferredEnergy, energyStorage.getEnergyStored() / energyTransferCost)),
+                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, Math.min(mapping.getEnergyPerTick() - transferredEnergy, energyStorage.getEnergyStored() / ENERGY_TRANSFER_COST)),
                   true);
               final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
               final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
@@ -250,7 +256,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
               ;
               transferredEnergy += transferredEnergyCount;
 
-              energyStorage.setEnergyStored(energyStorage.getEnergyStored() - transferredEnergyCount / energyTransferCost, false);
+              energyStorage.setEnergyStored(energyStorage.getEnergyStored() - transferredEnergyCount / ENERGY_TRANSFER_COST, false);
             }
           }));
 
@@ -364,7 +370,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (!this.tryLoadLootTable(nbt))
       ContainerHelper.loadAllItems(nbt, inventory);
     identifiers.clear();
-    for (ItemStack is : inventory)
+    for (final ItemStack is : inventory)
       cacheIfIdentifier(is);
   }
 
@@ -401,7 +407,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   @ParametersAreNonnullByDefault
   public void setItem(int index, ItemStack itemStack) {
     identifiers.clear();
-    for (ItemStack is : inventory)
+    for (final ItemStack is : inventory)
       cacheIfIdentifier(is);
     cacheIfIdentifier(itemStack);
     super.setItem(index, itemStack);
@@ -427,7 +433,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    */
   @Nonnull
   @Override
-  public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability) {
+  public <T> LazyOptional<T> getCapability(@Nonnull final Capability<T> capability) {
     return CapabilityEnergy.ENERGY.orEmpty(capability, energyCapabilityLO);
   }
 
@@ -439,7 +445,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public void readMappings(CompoundTag nbt) {
     mappings = Mapping.read(nbt, identifiers, tier);
     if (level != null && level.isClientSide()) {
-      Screen currentTmp = Minecraft.getInstance().screen;
+      final Screen currentTmp = Minecraft.getInstance().screen;
       if (currentTmp instanceof RouterScreen current) {
         current.update();
       }
@@ -510,21 +516,31 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (tier.baseTier == BaseTier.BASIC) {
       tieredRouter = Blocks.BASIC_ROUTER;
       containerSize = 3;
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setCapacity(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_CAPACITY.get());
+      maxMappings = Config.SERVER_CONFIG.BASIC_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ADVANCED) {
       tieredRouter = Blocks.ADVANCED_ROUTER;
       containerSize = 6;
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setCapacity(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_CAPACITY.get());
+      maxMappings = Config.SERVER_CONFIG.ADVANCED_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ELITE) {
       tieredRouter = Blocks.ELITE_ROUTER;
       containerSize = 9;
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setCapacity(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_CAPACITY.get());
+      maxMappings = Config.SERVER_CONFIG.ELITE_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ULTIMATE) {
       tieredRouter = Blocks.ULTIMATE_ROUTER;
       containerSize = 12;
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setCapacity(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_CAPACITY.get());
+      maxMappings = Config.SERVER_CONFIG.ULTIMATE_ROUTER_NUM_MAPPINGS.get();
     } else {
       throw new IllegalStateException("Router has no tier.");
     }
     inventory = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-    energyStorage.setCapacity(this.tier.maxEnergy);
-    energyStorage.setMaxReceive(this.tier.maxEnergyPerTick);
   }
 
   /**
@@ -546,4 +562,11 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     return containerSize;
   }
 
+  /**
+   * Gets the maximum number of mappings this router supports.
+   * @return the maximum number of mappings this router supports.
+   */
+  public static int getMaxMappings() {
+    return maxMappings;
+  }
 }
