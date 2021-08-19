@@ -28,16 +28,16 @@ public class Mapping {
   private boolean valid;
   private DistributionScheme distributionScheme;
   private FilterScheme filterScheme;
-  private int itemsPerTick;
-  private int bucketsPerTick;
-  private int energyPerTick;
-  private int tickDelay;
+  private int itemsPerUpdate;
+  private int fluidPerUpdate;
+  private int energyPerUpdate;
+  private int updateDelay;
   private int lastTick;
 
   public Mapping(final String raw, final Set<String> identifiers, final DistributionScheme distributionScheme,
-                 final FilterScheme filterScheme, final int itemsPerTick, final int bucketsPerTick,
-                 final int energyPerTick, final int tickDelay, final RouterTier tier) {
-    this(raw, distributionScheme, filterScheme, itemsPerTick, bucketsPerTick, energyPerTick, tickDelay, tier);
+                 final FilterScheme filterScheme, final int itemsPerUpdate, final int fluidPerUpdate,
+                 final int energyPerTick, final int updateDelay, final RouterTier tier) {
+    this(raw, distributionScheme, filterScheme, itemsPerUpdate, fluidPerUpdate, energyPerTick, updateDelay, tier);
     String[] components = raw.split("->");
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
@@ -86,20 +86,20 @@ public class Mapping {
   }
 
   public Mapping(final String raw, final DistributionScheme distributionScheme, final FilterScheme filterScheme,
-                 final int itemsPerTick, final int bucketsPerTick, final int energyPerTick, final int tickDelay, final RouterTier tier) {
+                 final int itemsPerTick, final int fluidPerTick, final int energyPerTick, final int updateDelay, final RouterTier tier) {
     this.raw = raw;
     this.distributionScheme = distributionScheme;
     this.filterScheme = filterScheme;
     this.routerTier = tier;
     filterInventory = new SimpleContainer(tier.filterSize);
-    this.itemsPerTick = Mth.clamp(itemsPerTick, 0, tier.maxItemsPerTick);
-    this.bucketsPerTick = Mth.clamp(bucketsPerTick, 0, tier.maxBucketsPerTick);
-    this.energyPerTick = Mth.clamp(energyPerTick, 0, tier.maxEnergyPerTick);
-    this.tickDelay = Mth.clamp(tickDelay, tier.minTickDelay, 20);
+    this.itemsPerUpdate = Mth.clamp(itemsPerTick, 0, tier.maxItemsPerUpdate);
+    this.fluidPerUpdate = Mth.clamp(fluidPerTick, 0, tier.maxFluidPerUpdate);
+    this.energyPerUpdate = Mth.clamp(energyPerTick, 0, tier.maxEnergyPerUpdate);
+    this.updateDelay = Mth.clamp(updateDelay, tier.updateDelay, 20);
   }
 
   public Mapping(final String raw, final DistributionScheme distributionScheme, final FilterScheme filterScheme, final RouterTier tier) {
-    this(raw, distributionScheme, filterScheme, tier.maxItemsPerTick, tier.maxBucketsPerTick, tier.maxEnergyPerTick, tier.minTickDelay, tier);
+    this(raw, distributionScheme, filterScheme, tier.maxItemsPerUpdate, tier.maxFluidPerUpdate, tier.maxEnergyPerUpdate, tier.updateDelay, tier);
   }
 
   /**
@@ -127,10 +127,10 @@ public class Mapping {
       mappingNBT.putString("mapping", mapping.getRaw());
       mappingNBT.putInt("distributionScheme", mapping.getDistributionSchemeOrdinal());
       mappingNBT.putInt("filterScheme", mapping.getFilterSchemeOrdinal());
-      mappingNBT.putInt("itemsPerTick", mapping.itemsPerTick);
-      mappingNBT.putInt("bucketsPerTick", mapping.bucketsPerTick);
-      mappingNBT.putInt("energyPerTick", mapping.energyPerTick);
-      mappingNBT.putInt("tickDelay", mapping.tickDelay);
+      mappingNBT.putInt("itemsPerUpdate", mapping.itemsPerUpdate);
+      mappingNBT.putInt("fluidPerUpdate", mapping.fluidPerUpdate);
+      mappingNBT.putInt("energyPerUpdate", mapping.energyPerUpdate);
+      mappingNBT.putInt("updateDelay", mapping.updateDelay);
 
       final var filterNBT = new ListTag();
       mapping.filterInventory.createTag();
@@ -165,9 +165,9 @@ public class Mapping {
       final var mapping = new Mapping(mappingNBT.getString("mapping"), identifiers.keySet(),
           Mapping.DistributionScheme.valueOf(mappingNBT.getInt("distributionScheme")),
           Mapping.FilterScheme.valueOf(mappingNBT.getInt("filterScheme")),
-          mappingNBT.getInt("itemsPerTick"),
-          mappingNBT.getInt("bucketsPerTick"),
-          mappingNBT.getInt("energyPerTick"), mappingNBT.getInt("tickDelay"), tier);
+          mappingNBT.getInt("itemsPerUpdate"),
+          mappingNBT.getInt("fluidPerUpdate"),
+          mappingNBT.getInt("energyPerUpdate"), mappingNBT.getInt("updateDelay"), tier);
       final var filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
       for (int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundTag itemStackNBT = filterItemsNBT.getCompound(j);
@@ -194,7 +194,7 @@ public class Mapping {
    *
    * @param distributionScheme A distribution scheme.
    */
-  public void setDistributionScheme(DistributionScheme distributionScheme) {
+  public void setDistributionScheme(final DistributionScheme distributionScheme) {
     this.distributionScheme = distributionScheme;
   }
 
@@ -268,7 +268,7 @@ public class Mapping {
    *
    * @param filterScheme The filter scheme.
    */
-  public void setFilterScheme(FilterScheme filterScheme) {
+  public void setFilterScheme(final FilterScheme filterScheme) {
     this.filterScheme = filterScheme;
   }
 
@@ -282,30 +282,30 @@ public class Mapping {
   }
 
   /**
-   * Changes the amount of items that are transferred per a tick.
+   * Changes the amount of items that are transferred per an update.
    *
    * @param amount The amount of change in items.
    */
   public void changeItemsPerTick(final int amount) {
-    itemsPerTick = Mth.clamp(itemsPerTick + amount, 0, routerTier.maxItemsPerTick);
+    itemsPerUpdate = Mth.clamp(itemsPerUpdate + amount, 0, routerTier.maxItemsPerUpdate);
   }
 
   /**
-   * Changes the amount of buckets that are transferred per a tick.
+   * Changes the amount of fluid in millibuckets that is transferred per an update.
    *
-   * @param amount The amount of change in buckets.
+   * @param amount The amount of change in millibuckets.
    */
-  public void changeBucketsPerTick(int amount) {
-    bucketsPerTick = Mth.clamp(bucketsPerTick + amount, 0, routerTier.maxBucketsPerTick);
+  public void changeFluidPerUpdate(final int amount) {
+    fluidPerUpdate = Mth.clamp(fluidPerUpdate + amount, 0, routerTier.maxFluidPerUpdate);
   }
 
   /**
-   * Changes the amount of energy that is transferred per a tick.
+   * Changes the amount of energy that is transferred per an update.
    *
    * @param amount The amount of change in energy.
    */
-  public void changeEnergyPerTick(int amount) {
-    energyPerTick = Mth.clamp(energyPerTick + amount, 0, routerTier.maxEnergyPerTick);
+  public void changeEnergyPerUpdate(final int amount) {
+    energyPerUpdate = Mth.clamp(energyPerUpdate + amount, 0, routerTier.maxEnergyPerUpdate);
   }
 
   /**
@@ -314,8 +314,8 @@ public class Mapping {
    * @param ticks The current amount of ticks.
    * @return Whether the mapping should tick.
    */
-  public boolean shouldTick(int ticks) {
-    if (ticks - lastTick >= tickDelay) {
+  public boolean shouldUpdate(final int ticks) {
+    if (ticks - lastTick >= updateDelay) {
       lastTick = ticks;
       return true;
     }
@@ -327,8 +327,8 @@ public class Mapping {
    *
    * @param amount The amount of change in ticks.
    */
-  public void changeTickDelay(int amount) {
-    tickDelay = Mth.clamp(tickDelay + amount, routerTier.minTickDelay, 20);
+  public void changeUpdateDelay(final int amount) {
+    updateDelay = Mth.clamp(updateDelay + amount, routerTier.updateDelay, 20);
   }
 
   /**
@@ -341,30 +341,30 @@ public class Mapping {
   }
 
   /**
-   * Gets the amount of items transferred per a tick.
+   * Gets the amount of items transferred per an update.
    *
    * @return The amount of items transferred per a tick.
    */
-  public int getItemsPerTick() {
-    return itemsPerTick;
+  public int getItemsPerUpdate() {
+    return itemsPerUpdate;
   }
 
   /**
-   * Gets the amount of buckets transferred per a tick.
+   * Gets the amount of fluid in millibuckets transferred per an update.
    *
-   * @return The amount of buckets transferred per a tick.
+   * @return The amount of millibuckets transferred per a tick.
    */
-  public int getBucketsPerTick() {
-    return bucketsPerTick;
+  public int getFluidPerUpdate() {
+    return fluidPerUpdate;
   }
 
   /**
-   * Gets the amount of energy transferred per a tick.
+   * Gets the amount of energy transferred per an update.
    *
-   * @return The amount of energy transferred per a tick.
+   * @return The amount of energy transferred per an update.
    */
-  public int getEnergyPerTick() {
-    return energyPerTick;
+  public int getEnergyPerUpdate() {
+    return energyPerUpdate;
   }
 
   /**
@@ -372,8 +372,8 @@ public class Mapping {
    *
    * @return The amount of ticks between updates.
    */
-  public int getTickDelay() {
-    return tickDelay;
+  public int getUpdateDelay() {
+    return updateDelay;
   }
 
   /**

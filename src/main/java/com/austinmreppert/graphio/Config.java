@@ -30,10 +30,10 @@ public class Config {
     public final ForgeConfigSpec.IntValue ELITE_ROUTER_ENERGY_CAPACITY;
     public final ForgeConfigSpec.IntValue ULTIMATE_ROUTER_ENERGY_CAPACITY;
 
-    public final ForgeConfigSpec.IntValue BASIC_ROUTER_ENERGY_INPUT_PER_TICK;
-    public final ForgeConfigSpec.IntValue ADVANCED_ROUTER_ENERGY_INPUT_PER_TICK;
-    public final ForgeConfigSpec.IntValue ELITE_ROUTER_ENERGY_INPUT_PER_TICK;
-    public final ForgeConfigSpec.IntValue ULTIMATE_ROUTER_ENERGY_INPUT_PER_TICK;
+    public final ForgeConfigSpec.IntValue BASIC_ROUTER_ENERGY_INPUT_PER_UPDATE;
+    public final ForgeConfigSpec.IntValue ADVANCED_ROUTER_ENERGY_INPUT_PER_UPDATE;
+    public final ForgeConfigSpec.IntValue ELITE_ROUTER_ENERGY_INPUT_PER_UPDATE;
+    public final ForgeConfigSpec.IntValue ULTIMATE_ROUTER_ENERGY_INPUT_PER_UPDATE;
 
     public final ForgeConfigSpec.IntValue BASIC_ROUTER_NUM_MAPPINGS;
     public final ForgeConfigSpec.IntValue ADVANCED_ROUTER_NUM_MAPPINGS;
@@ -60,13 +60,13 @@ public class Config {
       ITEM_TRANSFER_COST = builder
           .comment("Cost per an item.")
           .translation(GraphIO.MOD_ID + ".config.routers.transfers.item")
-          .defineInRange("item", 1000, 1, 1000000);
+          .defineInRange("item", 600, 1, 1000000);
       ENERGY_TRANSFER_COST = builder
           .comment("Efficiency %.")
           .translation(GraphIO.MOD_ID + ".config.routers.transfers.energy")
           .defineInRange("energy", 95, 1, 100);
       FLUID_TRANSFER_COST = builder
-          .comment("Cost per a bucket.")
+          .comment("Cost per a millibucket.")
           .translation(GraphIO.MOD_ID + ".config.routers.transfers.fluid")
           .defineInRange("fluid", 2000, 1, 1000000);
       builder.pop();
@@ -83,10 +83,10 @@ public class Config {
       builder
           .comment("The amount of FE a router can input per an update.")
           .push("energy_input");
-      BASIC_ROUTER_ENERGY_INPUT_PER_TICK = builder.defineInRange("basic_router", 120, 1, 1000000);
-      ADVANCED_ROUTER_ENERGY_INPUT_PER_TICK = builder.defineInRange("advanced_router", 240, 1, 1000000);
-      ELITE_ROUTER_ENERGY_INPUT_PER_TICK = builder.defineInRange("elite_router", 480, 1, 1000000);
-      ULTIMATE_ROUTER_ENERGY_INPUT_PER_TICK = builder.defineInRange("ultimate_router", 960, 1, 1000000);
+      BASIC_ROUTER_ENERGY_INPUT_PER_UPDATE = builder.defineInRange("basic_router", 120, 1, 1000000);
+      ADVANCED_ROUTER_ENERGY_INPUT_PER_UPDATE = builder.defineInRange("advanced_router", 240, 1, 1000000);
+      ELITE_ROUTER_ENERGY_INPUT_PER_UPDATE = builder.defineInRange("elite_router", 480, 1, 1000000);
+      ULTIMATE_ROUTER_ENERGY_INPUT_PER_UPDATE = builder.defineInRange("ultimate_router", 960, 1, 1000000);
       builder.pop();
 
       builder.pop();
@@ -100,7 +100,7 @@ public class Config {
   public static void onModConfigEvent(final ModConfigEvent configEvent) {
     if (configEvent.getConfig().getSpec() == Config.SERVER_SPEC) {
       RouterBlockEntity.ITEM_TRANSFER_COST = SERVER_CONFIG.ITEM_TRANSFER_COST.get();
-      RouterBlockEntity.ENERGY_TRANSFER_COST = SERVER_CONFIG.ENERGY_TRANSFER_COST.get();
+      RouterBlockEntity.ENERGY_TRANSFER_COST = SERVER_CONFIG.ENERGY_TRANSFER_COST.get()/100.0F;
       RouterBlockEntity.FLUID_TRANSFER_COST = SERVER_CONFIG.FLUID_TRANSFER_COST.get();
     }
   }

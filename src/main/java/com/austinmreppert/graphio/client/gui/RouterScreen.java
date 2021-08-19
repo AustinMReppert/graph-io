@@ -81,11 +81,12 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
   private final int TEXT_COLOR = TextColor.parseColor("#FFFFFF").getValue();
   private final ArrayList<EditBox> rawMappings;
-  private final Component ITEMS_PER_TICK = new TranslatableComponent("graphio.gui.items_per_tick");
-  private final Component BUCKETS_PER_TICK = new TranslatableComponent("graphio.gui.buckets_per_tick");
-  private final Component ENERGY_PER_TICK = new TranslatableComponent("graphio.gui.energy_per_tick");
-  private final Component TICK_DELAY = new TranslatableComponent("graphio.gui.tick_delay");
+  private final Component ITEMS_PER_UPDATE = new TranslatableComponent("graphio.gui.items_per_update");
+  private final Component FLUID_PER_UPDATE = new TranslatableComponent("graphio.gui.fluid_per_update");
+  private final Component ENERGY_PER_UPDATE = new TranslatableComponent("graphio.gui.energy_per_update");
+  private final Component UPDATE_DELAY = new TranslatableComponent("graphio.gui.update_delay");
   private final Component ENERGY = new TranslatableComponent("graphio.gui.energy");
+  private final Component TICK = new TranslatableComponent("graphio.gui.tick");
   public int inventoryRows;
   protected EditBox inputField;
   private float currentScroll;
@@ -94,8 +95,8 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private ToggleImageButton distributeCyclicallyButton;
   private ToggleImageButton distributeNaturallyButton;
   private ToggleImageButton filterSchemeButton;
-  private ImageButton decreaseStackSizeButton, increaseStackSizeButton, decreaseBucketsButton, increaseBucketsButton,
-      decreaseEnergyButton, increaseEnergyButton, decreaseTickDelay, increaseTickDelay;
+  private ImageButton decreaseStackSizeButton, increaseStackSizeButton, decreaseFluidButton, increaseFluidButton,
+      decreaseEnergyButton, increaseEnergyButton, decreaseUpdateDelay, increaseUpdateDelay;
   private int lastFocusedMapping;
   private RouterBlockEntity routerBlockEntity;
 
@@ -361,17 +362,17 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addRenderableWidget(decreaseBucketsButton = new ImageButton(this.leftPos - 80, topPos + 59, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(decreaseFluidButton = new ImageButton(this.leftPos - 80, topPos + 59, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
-        mapping.changeBucketsPerTick(-1 * (hasShiftDown() ? 1000 : 100));
+        mapping.changeFluidPerUpdate(-1 * (hasShiftDown() ? 1000 : 100));
         updateMappingGUI();
         updateMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addRenderableWidget(increaseBucketsButton = new ImageButton(this.leftPos - 50, topPos + 59, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(increaseFluidButton = new ImageButton(this.leftPos - 50, topPos + 59, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
-        mapping.changeBucketsPerTick(hasShiftDown() ? 1000 : 100);
+        mapping.changeFluidPerUpdate(hasShiftDown() ? 1000 : 100);
         updateMappingGUI();
         updateMappings();
       });
@@ -379,7 +380,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
 
     this.addRenderableWidget(decreaseEnergyButton = new ImageButton(this.leftPos - 80, topPos + 90, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
-        mapping.changeEnergyPerTick(-1 * (hasShiftDown() ? 1000 : 100));
+        mapping.changeEnergyPerUpdate(-1 * (hasShiftDown() ? 1000 : 100));
         updateMappingGUI();
         updateMappings();
       });
@@ -387,23 +388,23 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
 
     this.addRenderableWidget(increaseEnergyButton = new ImageButton(this.leftPos - 50, topPos + 90, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
-        mapping.changeEnergyPerTick(hasShiftDown() ? 100 : 1);
+        mapping.changeEnergyPerUpdate(hasShiftDown() ? 100 : 1);
         updateMappingGUI();
         updateMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addRenderableWidget(decreaseTickDelay = new ImageButton(this.leftPos - 80, topPos + 121, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(decreaseUpdateDelay = new ImageButton(this.leftPos - 80, topPos + 121, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
-        mapping.changeTickDelay(-1);
+        mapping.changeUpdateDelay(-1);
         updateMappingGUI();
         updateMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
-    this.addRenderableWidget(increaseTickDelay = new ImageButton(this.leftPos - 50, topPos + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(increaseUpdateDelay = new ImageButton(this.leftPos - 50, topPos + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
-        mapping.changeTickDelay(1);
+        mapping.changeUpdateDelay(1);
         updateMappingGUI();
         updateMappings();
       });
@@ -580,28 +581,37 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     super.renderLabels(poseStack, mouseX, mouseY);
     font.draw(poseStack, playerInventoryTitle, (float) inventoryLabelX, (float) inventoryLabelY, 4210752);
 
-    String itemsPerTickStr = "?";
-    String bucketsPerTickStr = "?";
-    String energyPerTickStr = "?";
-    String tickDelayStr = "?";
-    String energyStr = routerBlockEntity.getEnergyStorage().getEnergyStored() / 1000 + "/" + routerBlockEntity.getEnergyStorage().getMaxEnergyStored() / 1000;
+    String itemsPerUpdateStr = "?";
+    String fluidPerUpdateStr = "?";
+    String energyPerUpdateStr = "?";
+    String updateDelayStr = "?";
+    String energyStr = formatEnergy(routerBlockEntity.getEnergyStorage().getEnergyStored()) + "/" + routerBlockEntity.getEnergyStorage().getMaxEnergyStored() / 1000;
     if (getLastFocusedMapping().isPresent()) {
       Mapping focused = getLastFocusedMapping().get();
-      itemsPerTickStr = focused.getItemsPerTick() + "";
-      bucketsPerTickStr = focused.getBucketsPerTick() + "";
-      energyPerTickStr = focused.getEnergyPerTick() + "";
-      tickDelayStr = focused.getTickDelay() + "";
+      itemsPerUpdateStr = focused.getItemsPerUpdate() + "";
+      fluidPerUpdateStr = focused.getFluidPerUpdate() + "";
+      energyPerUpdateStr = focused.getEnergyPerUpdate() + "";
+      updateDelayStr = focused.getUpdateDelay() + " " + TICK.getString();
     }
-    font.draw(poseStack, ITEMS_PER_TICK, -80, 10, TEXT_COLOR);
-    font.draw(poseStack, itemsPerTickStr, -80, 19, TEXT_COLOR);
-    font.draw(poseStack, BUCKETS_PER_TICK, -80, 41, TEXT_COLOR);
-    font.draw(poseStack, bucketsPerTickStr, -80, 50, TEXT_COLOR);
-    font.draw(poseStack, ENERGY_PER_TICK, -80, 72, TEXT_COLOR);
-    font.draw(poseStack, energyPerTickStr, -80, 81, TEXT_COLOR);
-    font.draw(poseStack, TICK_DELAY, -80, 103, TEXT_COLOR);
-    font.draw(poseStack, tickDelayStr, -80, 112, TEXT_COLOR);
+    font.draw(poseStack, ITEMS_PER_UPDATE, -80, 10, TEXT_COLOR);
+    font.draw(poseStack, itemsPerUpdateStr, -80, 19, TEXT_COLOR);
+    font.draw(poseStack, FLUID_PER_UPDATE, -80, 41, TEXT_COLOR);
+    font.draw(poseStack, fluidPerUpdateStr, -80, 50, TEXT_COLOR);
+    font.draw(poseStack, ENERGY_PER_UPDATE, -80, 72, TEXT_COLOR);
+    font.draw(poseStack, energyPerUpdateStr, -80, 81, TEXT_COLOR);
+    font.draw(poseStack, UPDATE_DELAY, -80, 103, TEXT_COLOR);
+    font.draw(poseStack, updateDelayStr, -80, 112, TEXT_COLOR);
     font.draw(poseStack, ENERGY, -80, 134, TEXT_COLOR);
     font.draw(poseStack, energyStr, -80, 144, TEXT_COLOR);
+  }
+
+  /**
+   * Formats the energy string.
+   * @param energyStored The amount of energy.
+   * @return A formatted string of {@code energyStored}.
+   */
+  private String formatEnergy(final int energyStored) {
+    return String.format("%.2f", energyStored/1000.0F);
   }
 
   /**

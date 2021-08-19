@@ -1,4 +1,11 @@
 # Changelog
+## 1.0.0
+### Changed
+* Changed wording in router menu.
+* Energy transfers are now percent based.
+* Bumped major version.
+### Fixed
+* Energy transfers now works correctly.
 ## 0.3.0
 ### Changed
 * Switches to parchment mappings.

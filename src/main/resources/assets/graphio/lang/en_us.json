@@ -19,9 +19,10 @@
   "gui.graphio.white_list":  "White List",
   "gui.graphio.decrease_stack_size": "Decrease Stack Size",
   "gui.graphio.increase_stack_size": "Increase Stack Size",
-  "graphio.gui.items_per_tick": "Items/Tick:",
-  "graphio.gui.buckets_per_tick": "Buckets/Tick:",
-  "graphio.gui.energy_per_tick": "Energy/Tick:",
-  "graphio.gui.tick_delay": "Tick Delay:",
-  "graphio.gui.energy": "Energy(kj):"
+  "graphio.gui.items_per_update": "Items/Update:",
+  "graphio.gui.fluid_per_update": "mB/Update:",
+  "graphio.gui.energy_per_update": "FE/Update:",
+  "graphio.gui.update_delay": "Update Delay:",
+  "graphio.gui.tick": "Tick(s)",
+  "graphio.gui.energy": "Energy(kFE):"
 }

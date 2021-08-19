@@ -64,7 +64,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   protected Block tieredRouter;
   private int lastTick;
   public static int ITEM_TRANSFER_COST;
-  public static int ENERGY_TRANSFER_COST;
+  public static float ENERGY_TRANSFER_COST;
   public static int FLUID_TRANSFER_COST;
   private static int maxMappings;
   private int containerSize;
@@ -86,12 +86,12 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   }
 
   /**
-   * Determines whether the router should tick or not.
+   * Determines whether the router should update or not. Used only for inputting energy.
    *
-   * @return Whether the router should tick or not.
+   * @return Whether the router should update or not.
    */
-  public boolean shouldTick() {
-    if (ticks - lastTick >= tier.minTickDelay) {
+  public boolean shouldUpdate() {
+    if (ticks - lastTick >= tier.updateDelay) {
       lastTick = ticks;
       return true;
     }
@@ -110,7 +110,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       return;
 
     AtomicInteger receivedEnergy = new AtomicInteger();
-    if (shouldTick()) {
+    if (shouldUpdate()) {
       for (Direction direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
@@ -126,11 +126,11 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       }
     }
 
-    if(mappings.size() > maxMappings)
+    if (mappings.size() > maxMappings)
       return;
 
     for (Mapping mapping : mappings) {
-      if (!mapping.isValid() || !mapping.shouldTick(ticks))
+      if (!mapping.isValid() || !mapping.shouldUpdate(ticks))
         continue;
 
       SimpleContainer filterInventory = mapping.getFilterInventory();
@@ -184,13 +184,13 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
               }
               if (filtered) continue;
               for (int outputSlotIndex = 0; outputSlotIndex < outputItemHandler.getSlots(); ++outputSlotIndex) {
-                if (transferredItems >= mapping.getItemsPerTick()) return;
+                if (transferredItems >= mapping.getItemsPerUpdate()) return;
                 final ItemStack outputStack = outputItemHandler.getStackInSlot(outputSlotIndex);
                 if (outputItemHandler.isItemValid(outputSlotIndex, inputStack) && !inputStack.isEmpty() && outputStack.isEmpty() || (!inputStack.isEmpty() && inputStack.getItem() == outputStack.getItem() && outputStack.getCount() < outputStack.getMaxStackSize())) {
                   final ItemStack simulatedExtractedIS = inputItemHandler.extractItem(
                       inputSlotIndex,
                       Mth.clamp(inputStack.getCount(), 0,
-                          Math.min(mapping.getItemsPerTick() - transferredItems, energyStorage.getEnergyStored() / ITEM_TRANSFER_COST)),
+                          Math.min(mapping.getItemsPerUpdate() - transferredItems, energyStorage.getEnergyStored() / ITEM_TRANSFER_COST)),
                       true);
                   final ItemStack simulatedInsertedLeftoversIS = outputItemHandler.insertItem(outputSlotIndex, simulatedExtractedIS, true);
                   final ItemStack extractedIS = inputItemHandler.extractItem(inputSlotIndex, simulatedExtractedIS.getCount() - simulatedInsertedLeftoversIS.getCount(), false);
@@ -220,17 +220,17 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
               }
               if (filtered) continue;
               for (int outputSlotIndex = 0; outputSlotIndex < outputFluidHandler.getTanks(); ++outputSlotIndex) {
-                if (transferredFluids >= mapping.getBucketsPerTick()) return;
+                if (transferredFluids >= mapping.getFluidPerUpdate()) return;
                 final FluidStack outputStack = outputFluidHandler.getFluidInTank(outputSlotIndex);
                 if (outputFluidHandler.isFluidValid(outputSlotIndex, inputStack)) {
                   final FluidStack simulatedDrainedFS = inputFluidHandler.drain(
                       Mth.clamp(inputStack.getAmount(), 0,
-                          Math.min(mapping.getBucketsPerTick() - transferredFluids, energyStorage.getEnergyStored() / FLUID_TRANSFER_COST)),
+                          Math.min(mapping.getFluidPerUpdate() - transferredFluids, energyStorage.getEnergyStored() / FLUID_TRANSFER_COST)),
                       IFluidHandler.FluidAction.SIMULATE);
                   final int simulatedFilled = outputFluidHandler.fill(simulatedDrainedFS, IFluidHandler.FluidAction.SIMULATE);
                   final FluidStack drainedFS = inputFluidHandler.drain(simulatedFilled, IFluidHandler.FluidAction.EXECUTE);
                   final int transferredFluidsCount = outputFluidHandler.fill(drainedFS, IFluidHandler.FluidAction.EXECUTE);
-                  ;
+
                   transferredFluids += transferredFluidsCount;
                   inputBlockEntity.setChanged();
                   outputBlockEntity.setChanged();
@@ -248,15 +248,12 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             int transferredEnergy = 0;
             if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
               final int simulatedExtracted = inputEnergyHandler.extractEnergy(
-                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, Math.min(mapping.getEnergyPerTick() - transferredEnergy, energyStorage.getEnergyStored() / ENERGY_TRANSFER_COST)),
+                  (int) Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerUpdate() - transferredEnergy),
                   true);
               final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
               final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
-              final var transferredEnergyCount = outputEnergyHandler.receiveEnergy(extracted, false);
-              ;
+              final var transferredEnergyCount = outputEnergyHandler.receiveEnergy((int) (extracted*ENERGY_TRANSFER_COST), false);
               transferredEnergy += transferredEnergyCount;
-
-              energyStorage.setEnergyStored(energyStorage.getEnergyStored() - transferredEnergyCount / ENERGY_TRANSFER_COST, false);
             }
           }));
 
@@ -516,25 +513,25 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (tier.baseTier == BaseTier.BASIC) {
       tieredRouter = Blocks.BASIC_ROUTER;
       containerSize = 3;
-      energyStorage.setMaxReceive(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.BASIC_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ADVANCED) {
       tieredRouter = Blocks.ADVANCED_ROUTER;
       containerSize = 6;
-      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.ADVANCED_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ELITE) {
       tieredRouter = Blocks.ELITE_ROUTER;
       containerSize = 9;
-      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.ELITE_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ULTIMATE) {
       tieredRouter = Blocks.ULTIMATE_ROUTER;
       containerSize = 12;
-      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_INPUT_PER_TICK.get());
+      energyStorage.setMaxReceive(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.ULTIMATE_ROUTER_NUM_MAPPINGS.get();
     } else {
@@ -564,6 +561,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
 
   /**
    * Gets the maximum number of mappings this router supports.
+   *
    * @return the maximum number of mappings this router supports.
    */
   public static int getMaxMappings() {
