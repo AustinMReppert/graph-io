@@ -47,6 +47,7 @@ public class IdentifierCapability implements IIdentifierCapability {
 
   @Override
   public void deserializeNBT(final CompoundTag tag) {
+    if(tag == null) return;
     if (tag.contains("x") && tag.contains("y") && tag.contains("z"))
       setBlockPos(new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z")));
     if (tag.contains("levelLocation"))

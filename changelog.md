@@ -1,4 +1,9 @@
 # Changelog
+## 1.0.1
+### Changed
+* Bumps minor version.
+### Fixed
+* Crash caused buy null pointer in IdentifierItem.
 ## 1.0.0
 ### Changed
 * Changed wording in router menu.
