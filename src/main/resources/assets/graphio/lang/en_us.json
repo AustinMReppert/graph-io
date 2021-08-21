@@ -24,5 +24,8 @@
   "graphio.gui.energy_per_update": "FE/Update:",
   "graphio.gui.update_delay": "Update Delay:",
   "graphio.gui.tick": "Tick(s)",
-  "graphio.gui.energy": "Energy(kFE):"
+  "graphio.gui.energy": "Energy(kFE):",
+  "graphio.gui.redstone_mode_ignored":  "Ignored",
+  "graphio.gui.redstone_mode_active": "Active",
+  "graphio.gui.redstone_mode_inactive": "Inactive"
 }

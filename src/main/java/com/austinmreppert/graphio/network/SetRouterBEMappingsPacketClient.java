@@ -22,7 +22,7 @@ public class SetRouterBEMappingsPacketClient {
     final AbstractContainerMenu openContainer = playerEntity.containerMenu;
     final BlockEntity be = playerEntity.level.getBlockEntity(packet.blockPos());
     if (openContainer instanceof RouterContainer router && be instanceof RouterBlockEntity routerBlockEntity && packet.blockPos().equals(routerBlockEntity.getBlockPos())) {
-      router.getTrackedMappingsReference().set.accept(packet.routerTENBT());
+      router.setMappings(packet.routerTENBT());
     }
   }
 

@@ -16,6 +16,7 @@ public class PacketHandler {
   public static void init() {
     int i = 0;
     INSTANCE.registerMessage(i++, SetRouterBEMappingsPacket.class, SetRouterBEMappingsPacket::encode, SetRouterBEMappingsPacket::decode, SetRouterBEMappingsPacket::handle);
+    INSTANCE.registerMessage(i++, SetRouterRedstoneMode.class, SetRouterRedstoneMode::encode, SetRouterRedstoneMode::decode, SetRouterRedstoneMode::handle);
   }
 
 }

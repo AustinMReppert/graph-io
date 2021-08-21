@@ -1,5 +1,6 @@
 package com.austinmreppert.graphio.item;
 
+import com.austinmreppert.graphio.GraphIO;
 import com.austinmreppert.graphio.capabilities.Capabilities;
 import com.austinmreppert.graphio.capabilities.IdentifierCapabilityProvider;
 import com.austinmreppert.graphio.client.render.Highlighter;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class IdentifierItem extends Item {
 
-  private static final TranslatableComponent POINTS_TO = new TranslatableComponent("graphio.chat.identifier_points_to");
+  private static final TranslatableComponent POINTS_TO = new TranslatableComponent(GraphIO.MOD_ID + ".chat.identifier_points_to");
 
   public IdentifierItem(final Properties properties) {
     super(properties);
@@ -82,10 +83,11 @@ public class IdentifierItem extends Item {
   @Nullable
   @Override
   public CompoundTag getShareTag(final ItemStack is) {
-    final var nbt = new AtomicReference<>(new CompoundTag());
-
+    final var nbt = new AtomicReference<>(super.getShareTag(is));
+    if(nbt.get() == null)
+      nbt.set(new CompoundTag());
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent((final var instance) -> {
-      nbt.set(instance.serializeNBT());
+      nbt.get().put("identifierCapability", instance.serializeNBT());
     });
 
     return nbt.get();
@@ -99,9 +101,11 @@ public class IdentifierItem extends Item {
    */
   @Override
   public void readShareTag(final ItemStack is, @Nullable final CompoundTag nbt) {
-    is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent((final var instance) -> {
-      instance.deserializeNBT(nbt);
-    });
+    super.readShareTag(is, nbt);
+    if(nbt != null)
+      is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent((final var instance) -> {
+        instance.deserializeNBT(nbt.getCompound("identifierCapability"));
+      });
   }
 
   /**
@@ -114,6 +118,7 @@ public class IdentifierItem extends Item {
   @Nullable
   @Override
   public ICapabilityProvider initCapabilities(final ItemStack stack, @Nullable final CompoundTag nbt) {
+    super.initCapabilities(stack, nbt);
     return new IdentifierCapabilityProvider();
   }
 

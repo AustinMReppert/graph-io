@@ -2,12 +2,15 @@ package com.austinmreppert.graphio.container;
 
 import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
 import com.austinmreppert.graphio.client.gui.FilterSlot;
+import com.austinmreppert.graphio.client.gui.RouterScreen;
+import com.austinmreppert.graphio.data.RedstoneMode;
 import com.austinmreppert.graphio.data.mappings.Mapping;
 import com.austinmreppert.graphio.network.PacketHandler;
 import com.austinmreppert.graphio.network.SetRouterBEMappingsPacket;
-import com.google.common.collect.Lists;
+import com.austinmreppert.graphio.network.SetRouterRedstoneMode;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
@@ -15,20 +18,19 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fmllegacy.network.NetworkDirection;
+import net.minecraftforge.fmllegacy.network.PacketDistributor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Synchronizes data between client and server for the {@link com.austinmreppert.graphio.client.gui.RouterScreen}.
  */
 public class RouterContainer extends AbstractContainerMenu {
 
-  private final List<ServerPlayer> listeners;
-  private final MappingsReferenceHolder trackedMappingsReference;
+  private ArrayList<Mapping> mappings;
+  private final DataSlot redstoneMode;
 
   private final RouterBlockEntity routerBlockEntity;
   private final ArrayList<FilterSlot> filterSlots;
@@ -39,16 +41,18 @@ public class RouterContainer extends AbstractContainerMenu {
   private static final int INVENTORY_X = 108;
   private static final int INVENTORY_Y = 174;
   private static final int SLOT_SIZE = 18;
+  private ServerPlayer listener;
 
   public RouterContainer(final int windowId, final Inventory inv, final FriendlyByteBuf data) {
     this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));
-    trackedMappingsReference.set.accept(data.readNbt());
+    setMappings(data.readNbt());
   }
 
   public RouterContainer(final int windowId, final Inventory inv, final RouterBlockEntity routerBlockEntity) {
     super(ContainerTypes.ROUTER_CONTAINER, windowId);
 
-    listeners = Lists.newArrayList();
+    if(inv.player instanceof ServerPlayer serverPlayer)
+      listener = serverPlayer;
 
     this.routerBlockEntity = routerBlockEntity;
 
@@ -95,8 +99,22 @@ public class RouterContainer extends AbstractContainerMenu {
       }
     });
 
-    this.trackedMappingsReference = new MappingsReferenceHolder(routerBlockEntity::getMappings, (Tag mappingsNBT)
-        -> routerBlockEntity.readMappings((CompoundTag) mappingsNBT));
+    redstoneMode = this.addDataSlot(new DataSlot() {
+      @Override
+      public int get() {
+        return routerBlockEntity.redstoneMode.ordinal();
+      }
+
+      @Override
+      public void set(final int ordinal) {
+        routerBlockEntity.redstoneMode = RedstoneMode.valueOf(ordinal);
+        final var nbt = new CompoundTag();
+        nbt.putInt("redstoneMode", ordinal);
+        PacketHandler.INSTANCE.sendToServer(new SetRouterRedstoneMode(routerBlockEntity.getBlockPos(), nbt, windowId));
+      }
+    });
+
+    this.mappings = routerBlockEntity.getMappings();
   }
 
   /**
@@ -109,48 +127,6 @@ public class RouterContainer extends AbstractContainerMenu {
       filterSlots.get(i).setEnabled(true);
       tmpFilterInventory.setItem(i, filter.getItem(i));
     }
-  }
-
-  /**
-   * Adds a slot listener and records {@link ServerPlayer}s with the container opened.
-   *
-   * @param listener The listener.
-   */
-  @Override
-  @ParametersAreNonnullByDefault
-  public void addSlotListener(final ContainerListener listener) {
-    super.addSlotListener(listener);
-    if (listener instanceof ServerPlayer)
-      listeners.add((ServerPlayer) listener);
-  }
-
-  /**
-   * Removed a slot listener and removes the {@link ServerPlayer}s from the list of players with the container opened.
-   *
-   * @param listener The listener.
-   */
-  @Override
-  @ParametersAreNonnullByDefault
-  public void removeSlotListener(final ContainerListener listener) {
-    super.removeSlotListener(listener);
-    if (listener instanceof ServerPlayer)
-      listeners.remove(listener);
-  }
-
-  /**
-   * Sends changes to players with the container opened.
-   */
-  @Override
-  public void broadcastChanges() {
-    super.broadcastChanges();
-
-    if (trackedMappingsReference.isDirty()) {
-      SetRouterBEMappingsPacket packet = new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(trackedMappingsReference.get.get(), new CompoundTag()), containerId);
-      for (ServerPlayer containerListener : listeners) {
-        PacketHandler.INSTANCE.sendTo(packet, containerListener.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
-      }
-    }
-
   }
 
   /***
@@ -243,12 +219,12 @@ public class RouterContainer extends AbstractContainerMenu {
   }
 
   /**
-   * Gets the {@link MappingsReferenceHolder} that keeps mappings up to date.
+   * Gets the container's current list of mappings.
    *
-   * @return The {@link MappingsReferenceHolder} that keeps mappings up to date.
+   * @return The container's current list of mappings.
    */
-  public MappingsReferenceHolder getTrackedMappingsReference() {
-    return trackedMappingsReference;
+  public ArrayList<Mapping> getMappings() {
+    return mappings;
   }
 
   /**
@@ -259,6 +235,47 @@ public class RouterContainer extends AbstractContainerMenu {
   public void copySlotContents(SimpleContainer inventory) {
     for (int i = 0; i < routerBlockEntity.getTier().filterSize; ++i)
       inventory.setItem(i, tmpFilterInventory.getItem(i));
+  }
+
+  /**
+   * Gets the redstone mode of the router.
+   * @return The redstone mode of the router.
+   */
+  public DataSlot getRedstoneMode() {
+    return redstoneMode;
+  }
+
+  /**
+   * Sends mapping changes to the server.
+   */
+  public void updateMappings() {
+    PacketHandler.INSTANCE.sendToServer(new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
+  }
+
+  /**
+   * Detects and sends changes.
+   */
+  @Override
+  public void broadcastChanges() {
+    super.broadcastChanges();
+    if(routerBlockEntity.getMappings() != mappings) {
+      mappings = routerBlockEntity.getMappings();
+      if (listener != null)
+        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener), new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
+    }
+  }
+
+  /**
+   * Sets the containers mappings. If this is called client side, then the Router Screen will be updated.
+   * @param routerTENBT The nbt data of the mappings.
+   */
+  public void setMappings(final CompoundTag routerTENBT) {
+    mappings = Mapping.read(routerTENBT, routerBlockEntity.getIdentifiers(), routerBlockEntity.getTier());
+    if (listener == null) {
+      final Screen currentTmp = Minecraft.getInstance().screen;
+      if (currentTmp instanceof RouterScreen current)
+        current.update();
+    }
   }
 
 }

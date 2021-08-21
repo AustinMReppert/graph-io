@@ -11,6 +11,7 @@ import net.minecraftforge.common.util.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -42,6 +43,18 @@ public class Mapping {
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
     parseMapping(identifiers, components);
+  }
+
+  // TODO: Implement.
+  public static boolean equals(ArrayList<Mapping> mappings, ArrayList<Mapping> mappings1) {
+    if(mappings.size() == mappings1.size()) {
+      for(int i = 0; i < mappings.size(); ++i) {
+        if(!mappings.get(i).raw.equals(mappings1.get(i).raw))
+          return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -406,5 +419,18 @@ public class Mapping {
       else return null;
     }
 
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Mapping mapping = (Mapping) o;
+    return itemsPerUpdate == mapping.itemsPerUpdate && fluidPerUpdate == mapping.fluidPerUpdate && energyPerUpdate == mapping.energyPerUpdate && updateDelay == mapping.updateDelay && Objects.equals(filterInventory, mapping.filterInventory) && Objects.equals(raw, mapping.raw) && distributionScheme == mapping.distributionScheme && filterScheme == mapping.filterScheme;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(filterInventory, raw, distributionScheme, filterScheme, itemsPerUpdate, fluidPerUpdate, energyPerUpdate, updateDelay);
   }
 }

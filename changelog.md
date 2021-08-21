@@ -1,4 +1,13 @@
 # Changelog
+## 2.0.0
+### Changed
+* Routers will send packets only to those with the gui open.
+* Bumps major version. This might cause problems with old worlds.
+* Bumps forge version.
+### Fixed
+* Identifiers could not be renamed on a server.
+### Added
+* Routers now have a redstone mode.
 ## 1.0.1
 ### Changed
 * Bumps minor version.

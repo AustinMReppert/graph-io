@@ -8,6 +8,7 @@ import com.austinmreppert.graphio.capabilities.IIdentifierCapability;
 import com.austinmreppert.graphio.client.gui.RouterScreen;
 import com.austinmreppert.graphio.container.RouterContainer;
 import com.austinmreppert.graphio.container.RouterStorageContainer;
+import com.austinmreppert.graphio.data.RedstoneMode;
 import com.austinmreppert.graphio.data.mappings.Mapping;
 import com.austinmreppert.graphio.data.mappings.NodeInfo;
 import com.austinmreppert.graphio.data.tiers.BaseTier;
@@ -68,6 +69,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public static int FLUID_TRANSFER_COST;
   private static int maxMappings;
   private int containerSize;
+  public RedstoneMode redstoneMode;
 
   public RouterBlockEntity(final BlockPos pos, final BlockState state) {
     super(BlockEntityTypes.ROUTER, pos, state);
@@ -78,6 +80,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     ticks = 0;
     energyStorage = new DynamicEnergyStorage(0);
     energyCapabilityLO = LazyOptional.of(() -> energyStorage);
+    redstoneMode = RedstoneMode.IGNORED;
   }
 
   public RouterBlockEntity(final BaseTier tier, final BlockPos pos, final BlockState state) {
@@ -109,9 +112,9 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (this.level == null)
       return;
 
-    AtomicInteger receivedEnergy = new AtomicInteger();
+    final AtomicInteger receivedEnergy = new AtomicInteger();
     if (shouldUpdate()) {
-      for (Direction direction : Direction.values()) {
+      for (final var direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
         final BlockEntity blockEntity = this.level.getBlockEntity(getBlockPos().relative(direction));
@@ -130,6 +133,12 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       return;
 
     for (Mapping mapping : mappings) {
+
+      final var powered = level.hasNeighborSignal(this.getBlockPos());
+      if ((redstoneMode == RedstoneMode.ACTIVE && !powered) || (redstoneMode == RedstoneMode.INACTIVE && powered)) {
+        return;
+      }
+
       if (!mapping.isValid() || !mapping.shouldUpdate(ticks))
         continue;
 
@@ -315,6 +324,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public CompoundTag save(final CompoundTag nbtOut) {
     nbtOut.putInt("tier", tier.baseTier.ordinal());
     nbtOut.put("energyStorage", energyStorage.serializeNBT());
+    nbtOut.putInt("redstoneMode", redstoneMode.ordinal());
     writeMappingsNBT(nbtOut);
     writeInventoryNBT(nbtOut);
     return super.save(nbtOut);
@@ -342,19 +352,20 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   /**
    * Loads NBT data into the {@link RouterBlockEntity}.
    *
-   * @param nbtIn The {@link CompoundTag} to read from.
+   * @param nbt The {@link CompoundTag} to read from.
    */
   @Override
   @ParametersAreNonnullByDefault
-  public void load(final CompoundTag nbtIn) {
-    setTier(BaseTier.valueOf(nbtIn.getInt("tier")));
-    final Tag energyStorageNBT = nbtIn.get("energyStorage");
+  public void load(final CompoundTag nbt) {
+    setTier(BaseTier.valueOf(nbt.getInt("tier")));
+    final Tag energyStorageNBT = nbt.get("energyStorage");
+    redstoneMode = RedstoneMode.valueOf(nbt.getInt("redstoneMode"));
     if (energyStorageNBT != null) {
       energyStorage.deserializeNBT(energyStorageNBT);
     }
-    readInventory(nbtIn);
-    mappings = Mapping.read(nbtIn, identifiers, tier);
-    super.load(nbtIn);
+    readInventory(nbt);
+    mappings = Mapping.read(nbt, identifiers, tier);
+    super.load(nbt);
   }
 
   /**
@@ -382,12 +393,14 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public CompoundTag getUpdateTag() {
     CompoundTag nbt = super.getUpdateTag();
     nbt.putInt("tier", tier.baseTier.ordinal());
+    nbt.putInt("redstoneMode", redstoneMode.ordinal());
     return nbt;
   }
 
   @Override
   public void handleUpdateTag(CompoundTag nbt) {
     setTier(BaseTier.valueOf(nbt.getInt("tier")));
+    redstoneMode = RedstoneMode.valueOf(nbt.getInt("redstoneMode"));
     super.handleUpdateTag(nbt);
   }
 
@@ -567,4 +580,9 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public static int getMaxMappings() {
     return maxMappings;
   }
+
+  public HashMap<String, IIdentifierCapability> getIdentifiers() {
+    return identifiers;
+  }
+
 }
