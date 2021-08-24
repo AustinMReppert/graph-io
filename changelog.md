@@ -1,4 +1,12 @@
 # Changelog
+## 2.0.1
+### Changed
+* Bumps parchment version.
+* Bumps patch version.
+* Bumps forge version.
+### Fixed
+* A few minor router GUI problems.
+* Incorrect networking for a router's redstone mode button.
 ## 2.0.0
 ### Changed
 * Routers will send packets only to those with the gui open.

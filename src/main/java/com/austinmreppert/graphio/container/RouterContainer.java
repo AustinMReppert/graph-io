@@ -30,7 +30,6 @@ import java.util.ArrayList;
 public class RouterContainer extends AbstractContainerMenu {
 
   private ArrayList<Mapping> mappings;
-  private final DataSlot redstoneMode;
 
   private final RouterBlockEntity routerBlockEntity;
   private final ArrayList<FilterSlot> filterSlots;
@@ -43,9 +42,14 @@ public class RouterContainer extends AbstractContainerMenu {
   private static final int SLOT_SIZE = 18;
   private ServerPlayer listener;
 
+  /**
+   * Creates the router's container client side.
+   * @param windowId The id of the window.
+   * @param inv The player's inventory.
+   * @param data A {@link FriendlyByteBuf} containing the block pos of the router.
+   */
   public RouterContainer(final int windowId, final Inventory inv, final FriendlyByteBuf data) {
     this(windowId, inv, (RouterBlockEntity) inv.player.level.getBlockEntity(data.readBlockPos()));
-    setMappings(data.readNbt());
   }
 
   public RouterContainer(final int windowId, final Inventory inv, final RouterBlockEntity routerBlockEntity) {
@@ -55,6 +59,20 @@ public class RouterContainer extends AbstractContainerMenu {
       listener = serverPlayer;
 
     this.routerBlockEntity = routerBlockEntity;
+    this.mappings = routerBlockEntity.getMappings();
+
+    addDataSlot(new DataSlot() {
+      @Override
+      public int get() {
+        return routerBlockEntity.redstoneMode.ordinal();
+      }
+
+      @Override
+      public void set(final int ordinal) {
+        routerBlockEntity.redstoneMode = RedstoneMode.valueOf(ordinal);
+        routerBlockEntity.setChanged();
+      }
+    });
 
     tmpFilterInventory = new SimpleContainer(routerBlockEntity.getTier().filterSize);
     filterSlots = new ArrayList<>();
@@ -82,7 +100,7 @@ public class RouterContainer extends AbstractContainerMenu {
       }
 
       @Override
-      public void set(int amount) {
+      public void set(final int amount) {
         routerBlockEntity.getEnergyStorage().setEnergyStored((0xFFFF0000 & routerBlockEntity.getEnergyStorage().getEnergyStored()) | (amount & 0x0000FFFF), false);
       }
     });
@@ -94,27 +112,10 @@ public class RouterContainer extends AbstractContainerMenu {
       }
 
       @Override
-      public void set(int amount) {
+      public void set(final int amount) {
         routerBlockEntity.getEnergyStorage().setEnergyStored((amount << 16) | (0x0000FFFF & routerBlockEntity.getEnergyStorage().getEnergyStored()), true);
       }
     });
-
-    redstoneMode = this.addDataSlot(new DataSlot() {
-      @Override
-      public int get() {
-        return routerBlockEntity.redstoneMode.ordinal();
-      }
-
-      @Override
-      public void set(final int ordinal) {
-        routerBlockEntity.redstoneMode = RedstoneMode.valueOf(ordinal);
-        final var nbt = new CompoundTag();
-        nbt.putInt("redstoneMode", ordinal);
-        PacketHandler.INSTANCE.sendToServer(new SetRouterRedstoneMode(routerBlockEntity.getBlockPos(), nbt, windowId));
-      }
-    });
-
-    this.mappings = routerBlockEntity.getMappings();
   }
 
   /**
@@ -154,6 +155,9 @@ public class RouterContainer extends AbstractContainerMenu {
       super.clicked(slotId, dragType, clickType, player);
   }
 
+  /**
+   * Disables the filter slots.
+   */
   public void disableFilterSlots() {
     for (FilterSlot filterSlot : filterSlots) {
       filterSlot.setEnabled(false);
@@ -177,7 +181,7 @@ public class RouterContainer extends AbstractContainerMenu {
   @Override
   @ParametersAreNonnullByDefault
   public boolean stillValid(final Player player) {
-    return true;
+    return routerBlockEntity.stillValid(player);
   }
 
   /**
@@ -238,43 +242,60 @@ public class RouterContainer extends AbstractContainerMenu {
   }
 
   /**
-   * Gets the redstone mode of the router.
-   * @return The redstone mode of the router.
+   * Sets the router's mappings on the server.
    */
-  public DataSlot getRedstoneMode() {
-    return redstoneMode;
-  }
-
-  /**
-   * Sends mapping changes to the server.
-   */
-  public void updateMappings() {
+  public void setServerMappings() {
     PacketHandler.INSTANCE.sendToServer(new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
   }
 
   /**
-   * Detects and sends changes.
+   * Detects and sends changes. Non-slots are checked for differences by comparing the block entity and container fields.
    */
   @Override
   public void broadcastChanges() {
     super.broadcastChanges();
-    if(routerBlockEntity.getMappings() != mappings) {
-      mappings = routerBlockEntity.getMappings();
-      if (listener != null)
+    if (listener != null) {
+      if (routerBlockEntity.getMappings() != mappings) {
+        mappings = routerBlockEntity.getMappings();
         PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener), new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
+      }
     }
   }
 
   /**
-   * Sets the containers mappings. If this is called client side, then the Router Screen will be updated.
-   * @param routerTENBT The nbt data of the mappings.
+   * Sets the containers mappings on the client.
+   * @param routerBENBT The nbt data of the mappings.
+   * @param windowID This container's id.
    */
-  public void setMappings(final CompoundTag routerTENBT) {
-    mappings = Mapping.read(routerTENBT, routerBlockEntity.getIdentifiers(), routerBlockEntity.getTier());
+  public void setClientMappings(final CompoundTag routerBENBT, final int windowID) {
+    mappings = Mapping.read(routerBENBT, routerBlockEntity.getIdentifiers(), routerBlockEntity.getTier());
     if (listener == null) {
       final Screen currentTmp = Minecraft.getInstance().screen;
-      if (currentTmp instanceof RouterScreen current)
+      if (currentTmp instanceof RouterScreen current && Minecraft.getInstance().player.containerMenu.containerId == windowID)
         current.update();
+    }
+  }
+
+  /**
+   * Synchronizes the client router's redstone mode to the server.
+   * @param redstoneMode The new redstone mode.
+   */
+  public void setSeverRedstoneMode(final RedstoneMode redstoneMode) {
+    PacketHandler.INSTANCE.sendToServer(new SetRouterRedstoneMode(routerBlockEntity.getBlockPos(), redstoneMode, containerId));
+  }
+
+  /**
+   * Sends all container data to the remote container. Mainly used when opening the container.
+   */
+  @Override
+  public void sendAllDataToRemote() {
+    super.sendAllDataToRemote();
+    if (listener != null) {
+      if (routerBlockEntity.getMappings() != null) {
+        mappings = routerBlockEntity.getMappings();
+        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener),
+            new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
+      }
     }
   }
 

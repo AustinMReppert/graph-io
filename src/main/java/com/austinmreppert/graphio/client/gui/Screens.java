@@ -13,9 +13,7 @@ public class Screens {
 
   @SubscribeEvent
   public static void onFMLClientSetupEvent(final FMLClientSetupEvent event) {
-    event.enqueueWork(() -> {
-      Screens.register();
-    });
+    event.enqueueWork(Screens::register);
   }
 
   public static void register() {

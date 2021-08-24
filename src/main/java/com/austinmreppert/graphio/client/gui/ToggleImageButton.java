@@ -29,6 +29,7 @@ public class ToggleImageButton extends ImageButton {
   private final Component toolTip;
   private Component enabledToolTip;
   private final Screen screen;
+  private boolean hidden;
 
   public ToggleImageButton(final int x, final int y, final int width, final int height, final int xTexStart, final int yTexStart,
                            final int yDiffText, final ResourceLocation resourceLocation, final int textureWidth, final int textureHeight,
@@ -50,6 +51,12 @@ public class ToggleImageButton extends ImageButton {
     this.toolTip = toolTip;
     this.screen = screen;
     enabled = false;
+    hidden = false;
+  }
+
+  @Override
+  public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+    return super.mouseClicked(p_93641_, p_93642_, p_93643_);
   }
 
   /**
@@ -63,6 +70,8 @@ public class ToggleImageButton extends ImageButton {
   @Override
   @ParametersAreNonnullByDefault
   public void renderButton(final PoseStack poseStack, final int mouseX, final int mouseY, final float partialTicks) {
+    if(hidden)
+      return;
     RenderSystem.setShaderTexture(0, resourceLocation);
     int i = yTexStart;
     if (!isHovered() && enabled)
@@ -88,6 +97,8 @@ public class ToggleImageButton extends ImageButton {
   @Override
   @ParametersAreNonnullByDefault
   public void renderToolTip(final PoseStack poseStack, final int mouseX, final int mouseY) {
+    if(hidden)
+      return;
     final List<Component> list = Lists.newArrayList();
     if (enabled && enabledToolTip != null)
       list.add(enabledToolTip);
@@ -122,4 +133,7 @@ public class ToggleImageButton extends ImageButton {
     enabled = !enabled;
   }
 
+  public void setHidden(boolean hidden) {
+    this.hidden = hidden;
+  }
 }

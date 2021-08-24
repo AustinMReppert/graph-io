@@ -3,6 +3,7 @@ package com.austinmreppert.graphio.client.gui;
 import com.austinmreppert.graphio.GraphIO;
 import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
 import com.austinmreppert.graphio.container.RouterContainer;
+import com.austinmreppert.graphio.data.RedstoneMode;
 import com.austinmreppert.graphio.data.mappings.Mapping;
 import com.austinmreppert.graphio.network.SetRouterBEMappingsPacket;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -38,7 +39,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private static final ResourceLocation BACKGROUND = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/container/router.png");
   private static final ResourceLocation NATURAL_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/natural_button.png");
   private static final ResourceLocation CYCLIC_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/cyclic_button.png");
-  private static final ResourceLocation REDSTONE_MODE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/redstone_mod_button.png");
+  private static final ResourceLocation REDSTONE_MODE_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/redstone_mode_button.png");
   private static final ResourceLocation RANDOM_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/random_button.png");
   private static final ResourceLocation FILTER_SCHEME_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/filter_scheme_button.png");
   private static final ResourceLocation MINUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/decrease_stack_size_button.png");
@@ -131,10 +132,12 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       distributeCyclicallyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.CYCLIC);
       distributeRandomlyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.RANDOM);
       filterSchemeButton.setEnabled(mapping.getFilterScheme() == Mapping.FilterScheme.WHITE_LIST);
+      filterSchemeButton.setHidden(false);
     }, () -> {
       distributeNaturallyButton.setEnabled(false);
       distributeCyclicallyButton.setEnabled(false);
       distributeRandomlyButton.setEnabled(false);
+      filterSchemeButton.setHidden(true);
       // TODO: Disable buttons on the left
     });
   }
@@ -162,7 +165,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       boolean pressed = listener.charTyped(typedChar, modifiers);
       if (index != -1) {
         getMappings().get(index).setRaw(listener.getValue());
-        menu.updateMappings();
+        menu.setServerMappings();
       }
       return pressed;
     }
@@ -180,7 +183,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
       minecraft.player.closeContainer();
-    else if (keyCode == GLFW.GLFW_KEY_ENTER && routerBlockEntity.getMappings().size() < routerBlockEntity.getMaxMappings()) {
+    else if (keyCode == GLFW.GLFW_KEY_ENTER && getMappings().size() < routerBlockEntity.getMaxMappings()) {
       for (EditBox rawMapping : rawMappings)
         rawMapping.setFocus(false);
       EditBox mapping = createMappingTextField("", getMappings().size());
@@ -195,7 +198,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       scrollTo(currentScroll);
       mapping.setFocus(true);
       setFocused(mapping);
-      menu.updateMappings();
+      menu.setServerMappings();
       return true;
     } else if (keyCode == GLFW.GLFW_KEY_DELETE && getFocused() != null && getFocused() instanceof EditBox && ((EditBox) getFocused()).canConsumeInput()) {
       if (rawMappings.size() < 1) return true;
@@ -210,7 +213,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         setFocused(null);
         scrollTo(currentScroll);
         lastFocusedMapping = -1;
-        menu.updateMappings();
+        menu.setServerMappings();
         updateMappingGUI();
       }
       return true;
@@ -219,7 +222,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       boolean pressed = listener.keyPressed(keyCode, scanCode, modifiers);
       if (pressed && index != -1) {
         getMappings().get(index).setRaw(listener.getValue());
-        menu.updateMappings();
+        menu.setServerMappings();
       }
       return pressed;
     }
@@ -237,16 +240,15 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   @Override
   @ParametersAreNonnullByDefault
   public void render(final PoseStack poseStack, final int mouseX, final int mouseY, final float partialTicks) {
+    redstoneModeButton.setSelected(routerBlockEntity.redstoneMode.ordinal());
     this.renderBackground(poseStack);
     super.render(poseStack, mouseX, mouseY, partialTicks);
-
-    redstoneModeButton.setSelected(menu.getRedstoneMode().get());
 
     if (this.menu.getCarried().isEmpty() && this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
       this.renderTooltip(poseStack, this.hoveredSlot.getItem(), mouseX, mouseY);
     }
 
-    for (EditBox mapping : rawMappings)
+    for (final EditBox mapping : rawMappings)
       mapping.render(poseStack, mouseX, mouseY, partialTicks);
   }
 
@@ -293,7 +295,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent((focused) -> {
         super.slotClicked(slotIn, slotId, mouseButton, type);
         menu.copySlotContents(focused.getFilterInventory());
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     } else super.slotClicked(slotIn, slotId, mouseButton, type);
   }
@@ -312,7 +314,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.NATURAL);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.natural"), this));
 
@@ -320,7 +322,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.CYCLIC);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.cyclic"), this));
 
@@ -328,7 +330,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.setDistributionScheme(Mapping.DistributionScheme.RANDOM);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.random"), this));
 
@@ -337,8 +339,10 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     options.add(new TranslatableComponent(GraphIO.MOD_ID + ".gui.redstone_mode_active"));
     options.add(new TranslatableComponent(GraphIO.MOD_ID + ".gui.redstone_mode_inactive"));
     this.addRenderableWidget(redstoneModeButton = new OptionImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X + 24 * 3, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, REDSTONE_MODE_BUTTON_TEXTURE, 256, 256, (button) -> {
-      menu.getRedstoneMode().set(redstoneModeButton.getSelected());
+      routerBlockEntity.redstoneMode = RedstoneMode.valueOf(redstoneModeButton.getSelected());
+      menu.setSeverRedstoneMode(RedstoneMode.valueOf(redstoneModeButton.getSelected()));
     }, options, this));
+    redstoneModeButton.setSelected(routerBlockEntity.redstoneMode.ordinal());
 
     this.addRenderableWidget(filterSchemeButton = new ToggleImageButton(this.leftPos - 20, topPos + INVENTORY_Y, 20, 18, 0, 0, 19, FILTER_SCHEME_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -347,15 +351,16 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         else
           mapping.setFilterScheme(Mapping.FilterScheme.WHITE_LIST);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.black_list"), new TranslatableComponent("gui.graphio.white_list"), this));
+    filterSchemeButton.setHidden(true);
 
     this.addRenderableWidget(decreaseStackSizeButton = new ImageButton(this.leftPos - 80, topPos + 28, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeItemsPerTick(-1);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -363,7 +368,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeItemsPerTick(1);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -371,7 +376,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeFluidPerUpdate(-1 * (hasShiftDown() ? 1000 : 100));
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -379,7 +384,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeFluidPerUpdate(hasShiftDown() ? 1000 : 100);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -387,7 +392,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeEnergyPerUpdate(-1 * (hasShiftDown() ? 1000 : 100));
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -395,7 +400,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeEnergyPerUpdate(hasShiftDown() ? 100 : 1);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -403,7 +408,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeUpdateDelay(-1);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -411,7 +416,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       getLastFocusedMapping().ifPresent(mapping -> {
         mapping.changeUpdateDelay(1);
         updateMappingGUI();
-        menu.updateMappings();
+        menu.setServerMappings();
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
@@ -664,9 +669,17 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       if (highlightPos != -1)
         focused.setHighlightPos(highlightPos);
     }, () -> {
-      lastFocusedMapping = getMappings().size() - 1;
+      //lastFocusedMapping = getMappings().size() - 1;
     });
     scrollTo(currentScroll);
+  }
+
+  /**
+   * Gets the redstone mode button.
+   * @return The redstone  mode button.
+   */
+  public OptionImageButton getRedstoneModeButton() {
+    return redstoneModeButton;
   }
 
 }

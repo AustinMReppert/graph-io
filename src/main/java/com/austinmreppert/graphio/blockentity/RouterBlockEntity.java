@@ -314,7 +314,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   }
 
   /**
-   * Saves the router's data into a {@link CompoundTag}.
+   * Saves the router's data into a {@link CompoundTag}  when the {@link net.minecraft.world.level.chunk.LevelChunk} containing the BE is unloaded.
    *
    * @param nbtOut The {@link CompoundTag} to save to.
    * @return The updated {@code nbtOut}.
@@ -322,12 +322,13 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   @Override
   @Nonnull
   public CompoundTag save(final CompoundTag nbtOut) {
+    super.save(nbtOut);
     nbtOut.putInt("tier", tier.baseTier.ordinal());
     nbtOut.put("energyStorage", energyStorage.serializeNBT());
     nbtOut.putInt("redstoneMode", redstoneMode.ordinal());
     writeMappingsNBT(nbtOut);
     writeInventoryNBT(nbtOut);
-    return super.save(nbtOut);
+    return nbtOut;
   }
 
   /**
@@ -350,13 +351,14 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   }
 
   /**
-   * Loads NBT data into the {@link RouterBlockEntity}.
+   * Loads NBT data into the {@link RouterBlockEntity} when the {@link net.minecraft.world.level.chunk.LevelChunk} containing the BE is loaded.
    *
    * @param nbt The {@link CompoundTag} to read from.
    */
   @Override
   @ParametersAreNonnullByDefault
   public void load(final CompoundTag nbt) {
+    super.load(nbt);
     setTier(BaseTier.valueOf(nbt.getInt("tier")));
     final Tag energyStorageNBT = nbt.get("energyStorage");
     redstoneMode = RedstoneMode.valueOf(nbt.getInt("redstoneMode"));
@@ -365,7 +367,6 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     }
     readInventory(nbt);
     mappings = Mapping.read(nbt, identifiers, tier);
-    super.load(nbt);
   }
 
   /**
@@ -386,22 +387,6 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public void setRemoved() {
     super.setRemoved();
     energyCapabilityLO.invalidate();
-  }
-
-  @Override
-  @Nonnull
-  public CompoundTag getUpdateTag() {
-    CompoundTag nbt = super.getUpdateTag();
-    nbt.putInt("tier", tier.baseTier.ordinal());
-    nbt.putInt("redstoneMode", redstoneMode.ordinal());
-    return nbt;
-  }
-
-  @Override
-  public void handleUpdateTag(CompoundTag nbt) {
-    setTier(BaseTier.valueOf(nbt.getInt("tier")));
-    redstoneMode = RedstoneMode.valueOf(nbt.getInt("redstoneMode"));
-    super.handleUpdateTag(nbt);
   }
 
   @Override
@@ -521,7 +506,9 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    *
    * @param baseTier The tier to be set to.
    */
-  private void setTier(@Nonnull BaseTier baseTier) {
+  public void setTier(@Nonnull BaseTier baseTier) {
+    if(tier != null && baseTier == tier.baseTier)
+      return;
     this.tier = new RouterTier(baseTier);
     if (tier.baseTier == BaseTier.BASIC) {
       tieredRouter = Blocks.BASIC_ROUTER;

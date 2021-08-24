@@ -87,7 +87,6 @@ public class RouterBlock extends BaseEntityBlock {
         else
           NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) blockEntity, (packetBuffer) -> {
             packetBuffer.writeBlockPos(pos);
-            packetBuffer.writeNbt(Mapping.write(router.getMappings()));
           });
       }
       return InteractionResult.CONSUME;

@@ -149,10 +149,10 @@ public class Mapping {
       mapping.filterInventory.createTag();
       for (int i = 0; i < mapping.filterInventory.getContainerSize(); ++i) {
         if (!mapping.filterInventory.getItem(i).isEmpty()) {
-          CompoundTag CompoundTag = new CompoundTag();
-          CompoundTag.putByte("slot", (byte) i);
-          mapping.filterInventory.getItem(i).save(CompoundTag);
-          filterNBT.add(CompoundTag);
+          final var filterSlotNBT = new CompoundTag();
+          filterSlotNBT.putByte("slot", (byte) i);
+          mapping.filterInventory.getItem(i).save(filterSlotNBT);
+          filterNBT.add(filterSlotNBT);
         }
       }
       mappingNBT.put("filter", filterNBT);

@@ -1,10 +1,14 @@
 package com.austinmreppert.graphio.network;
 
 import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
+import com.austinmreppert.graphio.container.RouterContainer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
@@ -60,6 +64,27 @@ public record SetRouterBEMappingsPacket(BlockPos blockPos, CompoundTag routerTEN
     final var routerTENBT = packetBuffer.readNbt();
     final var windowID = packetBuffer.readInt();
     return new SetRouterBEMappingsPacket(routerPos, routerTENBT, windowID);
+  }
+
+  /**
+   * Handles the client side only portion of {@link SetRouterBEMappingsPacket}.
+   */
+  public class SetRouterBEMappingsPacketClient {
+
+    /**
+     * Handles a {@link SetRouterBEMappingsPacket} for the client.
+     *
+     * @param packet The packet to handle.
+     */
+    static void handle(final SetRouterBEMappingsPacket packet) {
+      final Player playerEntity = Minecraft.getInstance().player;
+      final AbstractContainerMenu openContainer = playerEntity.containerMenu;
+      final BlockEntity be = playerEntity.level.getBlockEntity(packet.blockPos());
+      if (openContainer instanceof RouterContainer router && openContainer.containerId == packet.windowID) {
+        router.setClientMappings(packet.routerTENBT(), packet.windowID);
+      }
+    }
+
   }
 
 }
