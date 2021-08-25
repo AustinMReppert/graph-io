@@ -1,27 +1,12 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'org.parchmentmc:librarian:1.+'
-    }
-}
-
 plugins {
-    id "com.matthewprenger.cursegradle" version "1.4.0"
+    id "net.minecraftforge.gradle"
+    id "org.parchmentmc.librarian.forgegradle"
+    id "com.matthewprenger.cursegradle"
 }
-
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
 
 String semVersion = "${major_version}.${minor_version}.${patch_version}";
 
-version = "${semVersion}"
+version = semVersion
 group = 'com.austinmreppert.graphio'
 archivesBaseName = 'graph-io'
 
@@ -93,7 +78,7 @@ jar {
         attributes([
                 "Specification-Title"     : "Graph IO",
                 "Specification-Vendor"    : "Austin M. Reppert",
-                "Specification-Version"   : "${semVersion}",
+                "Specification-Version"   : semVersion,
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : project.jar.archiveVersion,
                 "Implementation-Vendor"   : "Austin M. Reppert",
@@ -102,22 +87,7 @@ jar {
     }
 }
 
-
 jar.finalizedBy('reobfJar')
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
-        }
-    }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/mcmodsrepo"
-        }
-    }
-}
-
 
 def expandTomlVars = tasks.register("expandTomlVars", Copy) {
     it.outputs.upToDateWhen { false }
@@ -140,7 +110,7 @@ classes.configure {
 }
 
 curseforge {
-    apiKey = System.getenv("CURSEFORGE_KEY")
+    apiKey = System.getenv("CURSEFORGE_KEY") || ""
     project {
         id = '513951'
         addGameVersion(minecraft_version)

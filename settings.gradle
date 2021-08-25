@@ -1,0 +1,25 @@
+pluginManagement {
+
+    plugins {
+        id "net.minecraftforge.gradle"
+        id "org.parchmentmc.librarian.forgegradle" version '1.+'
+        id "com.matthewprenger.cursegradle" version "1.4.0"
+    }
+
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'net.minecraftforge.gradle')
+                useModule('net.minecraftforge.gradle:ForgeGradle:5.+')
+        }
+    }
+
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url = 'https://maven.parchmentmc.org' }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+}
+
+rootProject.name = "graph-io"
