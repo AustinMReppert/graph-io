@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.client.event.RenderLevelLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -27,12 +27,12 @@ public class Highlighter {
   /**
    * Called after the world has been rendered. Highlights all the blocks in {@code highlightedBlocks} within render distance.
    *
-   * @param e The {@link RenderWorldLastEvent}.
+   * @param e The {@link RenderLevelLastEvent}.
    */
   @SubscribeEvent
-  public static void onRenderWorld(final RenderWorldLastEvent e) {
+  public static void onRenderWorld(final RenderLevelLastEvent e) {
     for (final var highlightedBlock : highlightedBlocks)
-      highlightBlock(e.getMatrixStack(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
+      highlightBlock(e.getPoseStack(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
   }
 
   /**

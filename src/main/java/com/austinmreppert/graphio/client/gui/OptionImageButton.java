@@ -9,10 +9,11 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fmlclient.gui.GuiUtils;
+import net.minecraftforge.client.gui.GuiUtils;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * An image button that cycles through options.
@@ -89,7 +90,7 @@ public class OptionImageButton extends ImageButton {
     final List<Component> list = Lists.newArrayList();
     list.add(options.get(selected));
     final Font font = Minecraft.getInstance().font;
-    GuiUtils.drawHoveringText(poseStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);
+    screen.renderTooltip(poseStack, list, Optional.empty(), mouseX, mouseY, font);
   }
 
   /**

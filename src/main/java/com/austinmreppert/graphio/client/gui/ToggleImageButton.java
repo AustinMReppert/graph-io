@@ -9,10 +9,11 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fmlclient.gui.GuiUtils;
+import net.minecraftforge.client.gui.GuiUtils;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A toggleable image button.
@@ -74,11 +75,11 @@ public class ToggleImageButton extends ImageButton {
       return;
     RenderSystem.setShaderTexture(0, resourceLocation);
     int i = yTexStart;
-    if (!isHovered() && enabled)
+    if (!isHoveredOrFocused() && enabled)
       i += yDiffText * 2;
     else if (isHovered && !enabled)
       i += yDiffText;
-    else if (isHovered() && enabled)
+    else if (isHoveredOrFocused() && enabled)
       i += yDiffText * 3;
 
     RenderSystem.enableDepthTest();
@@ -105,7 +106,7 @@ public class ToggleImageButton extends ImageButton {
     else
       list.add(toolTip);
     final Font font = Minecraft.getInstance().font;
-    GuiUtils.drawHoveringText(poseStack, list, mouseX, mouseY, screen.width, screen.height, -1, font);
+    screen.renderTooltip(poseStack, list, Optional.empty(), mouseX, mouseY, font);
   }
 
   /**

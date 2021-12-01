@@ -3,6 +3,7 @@ package com.austinmreppert.graphio.datagen;
 import com.austinmreppert.graphio.GraphIO;
 import com.austinmreppert.graphio.block.Blocks;
 import com.austinmreppert.graphio.block.RouterBlock;
+import com.austinmreppert.graphio.blockentity.BlockEntityTypes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.data.DataGenerator;
@@ -79,7 +80,7 @@ public class LootTableProviders extends LootTableProvider {
                 .copy("tier", "BlockEntityTag.tier", CopyNbtFunction.MergeStrategy.REPLACE)
                 .copy("energyStorage", "BlockEntityTag.energyStorage", CopyNbtFunction.MergeStrategy.REPLACE)
                 .copy("mappings", "BlockEntityTag.mappings", CopyNbtFunction.MergeStrategy.REPLACE))
-            .apply(SetContainerContents.setContents()
+            .apply(SetContainerContents.setContents(BlockEntityTypes.ROUTER)
                 .withEntry(DynamicLoot.dynamicEntry(new ResourceLocation("minecraft", "contents")))));
     lootTables.put(block, LootTable.lootTable().withPool(builder));
   }

@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
@@ -73,7 +74,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private final int MAPPINGS_PER_PAGE = 8;
   private final int BACKGROUND_TEXTURE_X = 0;
   private final int BACKGROUND_TEXTURE_Y = 0;
-  private final int BACKGROUND_TEXTURE_WIDTH = 276;
+  private final int BACKGROUND_TEXTURE_WIDTH = 512;
   private final int BACKGROUND_TEXTURE_HEIGHT = 256;
   private final int SLOT_TEXTURE_X = 288;
   private final int SLOT_TEXTURE_Y = 0;
@@ -259,9 +260,9 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
    */
   public void renderScrollbar(final PoseStack poseStack) {
     if (canScroll(rawMappings.size()))
-      blit(poseStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(poseStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_TEXTURE_X, SCROLL_BAR_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 512, 256);
     else
-      blit(poseStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 512);
+      blit(poseStack, leftPos + SCROLL_BAR_X, (int) (topPos + SCROLL_BAR_Y + currentScroll * (SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT)), getBlitOffset(), SCROLL_BAR_INACTIVE_TEXTURE_X, SCROLL_BAR_INACTIVE_TEXTURE_Y, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 512, 256);
   }
 
   /**
@@ -420,6 +421,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       });
     }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
 
+    // this.leftPos = (this.width - imageWidth) / 2;
   }
 
   /**
@@ -568,13 +570,13 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     RenderSystem.setShader(GameRenderer::getPositionTexShader);
     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     RenderSystem.setShaderTexture(0, BACKGROUND);
-    blit(poseStack, leftPos, topPos, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, BACKGROUND_TEXTURE_WIDTH, BACKGROUND_TEXTURE_HEIGHT, 256, 512);
-    blit(poseStack, leftPos - 89, topPos, getBlitOffset(), 276, 27, 89, 166, 256, 512);
+    blit(poseStack, leftPos, topPos, getBlitOffset(), BACKGROUND_TEXTURE_X, BACKGROUND_TEXTURE_Y, imageWidth, imageHeight, 512, 256);
+    blit(poseStack, leftPos - 89, topPos, getBlitOffset(), 276, 27, 89, 166, 512, 256);
     renderScrollbar(poseStack);
     getLastFocusedMapping().ifPresent(mapping -> {
       // Draw the filter slots
       for (int i = 0; i < mapping.getFilterInventory().getContainerSize(); ++i)
-        blit(poseStack, leftPos + 4 + (i % 5) * SLOT_SIZE, topPos + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 256, 512);
+        blit(poseStack, leftPos + 4 + (i % 5) * SLOT_SIZE, topPos + INVENTORY_Y - 1 + (i >= 5 ? SLOT_SIZE : 0), getBlitOffset(), SLOT_TEXTURE_X, SLOT_TEXTURE_Y, SLOT_TEXTURE_WIDTH, SLOT_TEXTURE_HEIGHT, 512, 256);
     });
   }
 

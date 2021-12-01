@@ -29,7 +29,6 @@ public class GraphIO {
   }
 
   private void setup(final FMLCommonSetupEvent event) {
-    Capabilities.register();
     PacketHandler.init();
   }
 

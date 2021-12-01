@@ -4,10 +4,10 @@ import com.austinmreppert.graphio.capabilities.IIdentifierCapability;
 import com.austinmreppert.graphio.data.tiers.RouterTier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.util.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -171,7 +171,7 @@ public class Mapping {
    * @return A list of {@link Mapping}s.
    */
   public static ArrayList<Mapping> read(final CompoundTag tag, final HashMap<String, IIdentifierCapability> identifiers, final RouterTier tier) {
-    final var list = tag.getList("mappings", Constants.NBT.TAG_COMPOUND);
+    final var list = tag.getList("mappings", Tag.TAG_COMPOUND);
     final var mappings = new ArrayList<Mapping>(list.size());
     for (int i = 0; i < list.size(); ++i) {
       final CompoundTag mappingNBT = list.getCompound(i);
@@ -181,7 +181,7 @@ public class Mapping {
           mappingNBT.getInt("itemsPerUpdate"),
           mappingNBT.getInt("fluidPerUpdate"),
           mappingNBT.getInt("energyPerUpdate"), mappingNBT.getInt("updateDelay"), tier);
-      final var filterItemsNBT = mappingNBT.getList("filter", Constants.NBT.TAG_COMPOUND);
+      final var filterItemsNBT = mappingNBT.getList("filter", Tag.TAG_COMPOUND);
       for (int j = 0; j < filterItemsNBT.size(); ++j) {
         CompoundTag itemStackNBT = filterItemsNBT.getCompound(j);
         int slot = itemStackNBT.getByte("slot");

@@ -1,4 +1,7 @@
 # Changelog
+## 3.0.0
+### Changed
+* Update to 1.18.
 ## 2.0.1
 ### Changed
 * Bumps parchment version.
