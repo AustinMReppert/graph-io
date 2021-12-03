@@ -3,7 +3,7 @@
 ### Changed
 * Bumps forge version.
 ### Fixed
-* Routers should now save their state correctly.s
+* Routers should now save their state correctly.
 ## 3.0.0
 ### Changed
 * Update to 1.18.
