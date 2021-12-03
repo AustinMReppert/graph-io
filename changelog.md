@@ -1,4 +1,9 @@
 # Changelog
+## 3.0.1
+### Changed
+* Bumps forge version.
+### Fixed
+* Routers should now save their state correctly.s
 ## 3.0.0
 ### Changed
 * Update to 1.18.

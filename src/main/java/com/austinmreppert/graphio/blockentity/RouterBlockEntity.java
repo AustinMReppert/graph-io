@@ -321,14 +321,13 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    */
   @Override
   @Nonnull
-  public CompoundTag save(final CompoundTag nbtOut) {
-    super.save(nbtOut);
+  public void saveAdditional(final CompoundTag nbtOut) {
+    super.saveAdditional(nbtOut);
     nbtOut.putInt("tier", tier.baseTier.ordinal());
     nbtOut.put("energyStorage", energyStorage.serializeNBT());
     nbtOut.putInt("redstoneMode", redstoneMode.ordinal());
     writeMappingsNBT(nbtOut);
     writeInventoryNBT(nbtOut);
-    return nbtOut;
   }
 
   /**
