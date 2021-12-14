@@ -10,7 +10,7 @@ public class ItemGroups {
 
   public static final CreativeModeTab GRAPH_IO = new CreativeModeTab(GraphIO.MOD_ID) {
 
-    private static final ResourceLocation BACKGROUND_IMAGE = new ResourceLocation("textures/gui/container/creative_inventory/tab_item_search.png");
+    private static final ResourceLocation BACKGROUND_IMAGE = new ResourceLocation("textures/gui/container/creative_inventory/tab_items.png");
 
     /**
      * Creates an ItemStack to be used for the tab's icon.
@@ -27,7 +27,7 @@ public class ItemGroups {
      */
     @Override
     public boolean hasSearchBar() {
-      return true;
+      return false;
     }
 
     /**

@@ -25,7 +25,7 @@ public record SetRouterRedstoneMode(BlockPos blockPos, RedstoneMode redstoneMode
     context.get().enqueueWork(() -> {
       if (context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
         final ServerPlayer sender = context.get().getSender();
-        final BlockEntity blockEntity = sender.getCommandSenderWorld().getBlockEntity(packet.blockPos);
+        final var blockEntity = sender.getCommandSenderWorld().getBlockEntity(packet.blockPos);
         if (blockEntity instanceof RouterBlockEntity routerBlockEntity) {
           routerBlockEntity.redstoneMode = packet.redstoneMode;
           routerBlockEntity.setChanged();

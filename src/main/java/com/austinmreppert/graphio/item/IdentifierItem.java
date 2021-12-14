@@ -56,10 +56,8 @@ public class IdentifierItem extends Item {
     final ItemStack is = player.getItemInHand(hand);
     is.getCapability(Capabilities.IDENTIFIER_CAPABILITY).ifPresent((final var identifierCapability) -> {
       if (player.isCrouching() && res.getType() == BlockHitResult.Type.BLOCK) {
-        if (level.isClientSide) {
-          if (identifierCapability.getBlockPos() != null && identifierCapability.getLevel() != null)
-            Highlighter.unhighlightBlock(identifierCapability.getBlockPos(), identifierCapability.getLevel());
-        }
+        if (level.isClientSide && identifierCapability.getBlockPos() != null && identifierCapability.getLevel() != null)
+          Highlighter.unhighlightBlock(identifierCapability.getBlockPos(), identifierCapability.getLevel());
         identifierCapability.setBlockPos(res.getBlockPos());
         identifierCapability.setLevel(player.level.dimension());
       } else if (!player.isCrouching() && identifierCapability.getBlockPos() != null) {

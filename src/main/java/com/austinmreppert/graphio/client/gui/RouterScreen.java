@@ -11,7 +11,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
@@ -132,7 +131,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       distributeNaturallyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.NATURAL);
       distributeCyclicallyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.CYCLIC);
       distributeRandomlyButton.setEnabled(mappingDistributionScheme == Mapping.DistributionScheme.RANDOM);
-      filterSchemeButton.setEnabled(mapping.getFilterScheme() == Mapping.FilterScheme.WHITE_LIST);
+      filterSchemeButton.setEnabled(mapping.getFilterScheme() == Mapping.FilterScheme.ALLOW_LIST);
       filterSchemeButton.setHidden(false);
     }, () -> {
       distributeNaturallyButton.setEnabled(false);
@@ -193,7 +192,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
       else
         currentScroll = (float) rawMappings.size() / MAPPINGS_PER_PAGE;
       addRenderableWidget(mapping);
-      getMappings().add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLACK_LIST,
+      getMappings().add(new Mapping("", Mapping.DistributionScheme.NATURAL, Mapping.FilterScheme.BLOCK_LIST,
           routerBlockEntity.getTier()));
       rawMappings.add(mapping);
       scrollTo(currentScroll);
@@ -345,16 +344,16 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     }, options, this));
     redstoneModeButton.setSelected(routerBlockEntity.redstoneMode.ordinal());
 
-    this.addRenderableWidget(filterSchemeButton = new ToggleImageButton(this.leftPos - 20, topPos + INVENTORY_Y, 20, 18, 0, 0, 19, FILTER_SCHEME_BUTTON_TEXTURE, 256, 256, (button) -> {
+    this.addRenderableWidget(filterSchemeButton = new ToggleImageButton(this.leftPos - 20, topPos + INVENTORY_Y, 20, 18, 0, 0, 18, FILTER_SCHEME_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
         if (filterSchemeButton.isEnabled())
-          mapping.setFilterScheme(Mapping.FilterScheme.BLACK_LIST);
+          mapping.setFilterScheme(Mapping.FilterScheme.BLOCK_LIST);
         else
-          mapping.setFilterScheme(Mapping.FilterScheme.WHITE_LIST);
+          mapping.setFilterScheme(Mapping.FilterScheme.ALLOW_LIST);
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.black_list"), new TranslatableComponent("gui.graphio.white_list"), this));
+    }, new TranslatableComponent("gui.graphio.block_list"), new TranslatableComponent("gui.graphio.allow_list"), this));
     filterSchemeButton.setHidden(true);
 
     this.addRenderableWidget(decreaseStackSizeButton = new ImageButton(this.leftPos - 80, topPos + 28, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {

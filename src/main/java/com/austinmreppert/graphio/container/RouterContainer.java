@@ -254,11 +254,9 @@ public class RouterContainer extends AbstractContainerMenu {
   @Override
   public void broadcastChanges() {
     super.broadcastChanges();
-    if (listener != null) {
-      if (routerBlockEntity.getMappings() != mappings) {
-        mappings = routerBlockEntity.getMappings();
-        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener), new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
-      }
+    if (listener != null && routerBlockEntity.getMappings() != mappings) {
+      mappings = routerBlockEntity.getMappings();
+      PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener), new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
     }
   }
 
@@ -290,12 +288,10 @@ public class RouterContainer extends AbstractContainerMenu {
   @Override
   public void sendAllDataToRemote() {
     super.sendAllDataToRemote();
-    if (listener != null) {
-      if (routerBlockEntity.getMappings() != null) {
-        mappings = routerBlockEntity.getMappings();
-        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener),
-            new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
-      }
+    if (listener != null && routerBlockEntity.getMappings() != null) {
+      mappings = routerBlockEntity.getMappings();
+      PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> listener),
+          new SetRouterBEMappingsPacket(routerBlockEntity.getBlockPos(), Mapping.write(mappings), containerId));
     }
   }
 

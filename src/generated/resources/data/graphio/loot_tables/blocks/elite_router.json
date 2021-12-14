@@ -36,6 +36,7 @@
             },
             {
               "function": "minecraft:set_contents",
+              "type": "graphio:router",
               "entries": [
                 {
                   "type": "minecraft:dynamic",

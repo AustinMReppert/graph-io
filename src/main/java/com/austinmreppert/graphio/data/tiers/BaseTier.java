@@ -8,21 +8,15 @@ public enum BaseTier {
   ELITE,
   ULTIMATE;
 
-  public static BaseTier valueOf(int ordinal) {
-    switch (ordinal) {
-      case 0:
-        return BaseTier.INVALID;
-      case 1:
-        return BaseTier.BASIC;
-      case 2:
-        return BaseTier.ADVANCED;
-      case 3:
-        return BaseTier.ELITE;
-      case 4:
-        return BaseTier.ULTIMATE;
-      default:
-        throw new IllegalArgumentException("Unknown tier ordinal.");
-    }
+  public static BaseTier valueOf(final int ordinal) {
+    return switch (ordinal) {
+      case 0 -> BaseTier.INVALID;
+      case 1 -> BaseTier.BASIC;
+      case 2 -> BaseTier.ADVANCED;
+      case 3 -> BaseTier.ELITE;
+      case 4 -> BaseTier.ULTIMATE;
+      default -> throw new IllegalArgumentException("Unknown tier ordinal.");
+    };
   }
 
 }

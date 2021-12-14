@@ -4,12 +4,16 @@ import net.minecraft.core.Direction;
 
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Stores and parses information about a node in a mapping.
  */
 public class NodeInfo {
 
+  private static final Pattern NODE_REGEX = Pattern.compile("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?");
+  private static final Pattern SEPARATOR_REGEX = Pattern.compile("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?");
   private String identifier;
   private Direction face;
   private boolean valid;
@@ -32,16 +36,18 @@ public class NodeInfo {
    */
   public static ArrayList<NodeInfo> getNodeInfo(final String raw, final Set<String> identifiers) {
     final ArrayList<NodeInfo> nodeInfos = new ArrayList<>();
-    if (raw.matches("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?")) {
-      final String[] nodeInfoComponents = raw.split("\\.");
+    if (NODE_REGEX.matcher("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?").matches()) {
+      final String[] nodeInfoComponents = SEPARATOR_REGEX.split(raw);
       if (nodeInfoComponents.length == 2) {
-        Direction face = null;
-        if (nodeInfoComponents[1].equals("north")) face = Direction.NORTH;
-        else if (nodeInfoComponents[1].equals("east")) face = Direction.EAST;
-        else if (nodeInfoComponents[1].equals("south")) face = Direction.SOUTH;
-        else if (nodeInfoComponents[1].equals("west")) face = Direction.WEST;
-        else if (nodeInfoComponents[1].equals("up") || nodeInfoComponents[1].equals("top")) face = Direction.UP;
-        else if (nodeInfoComponents[1].equals("down") || nodeInfoComponents[1].equals("bottom")) face = Direction.DOWN;
+        Direction face = switch (nodeInfoComponents[1]) {
+          case "north" -> Direction.NORTH;
+          case "east" -> Direction.EAST;
+          case "south" -> Direction.SOUTH;
+          case "west" -> Direction.WEST;
+          case "up", "top" -> Direction.UP;
+          case "down", "bottom" -> Direction.DOWN;
+          default -> null;
+        };
         if (face != null)
           getMatchingIdentifiers(nodeInfoComponents[0], nodeInfos, identifiers, face);
         else nodeInfos.add(new NodeInfo(nodeInfoComponents[0], null, false));

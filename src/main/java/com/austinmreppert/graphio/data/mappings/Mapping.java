@@ -13,12 +13,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Stores and parses all the data needed to transfer items via a {@link com.austinmreppert.graphio.blockentity.RouterBlockEntity}.
  */
 public class Mapping {
 
+  private static final Pattern ARROW_REGEX = Pattern.compile("->");
+  private static final Pattern COMMA_REGEX = Pattern.compile(",");
   private final SimpleContainer filterInventory;
   private final RouterTier routerTier;
   public int currentInputIndex;
@@ -39,7 +42,7 @@ public class Mapping {
                  final FilterScheme filterScheme, final int itemsPerUpdate, final int fluidPerUpdate,
                  final int energyPerTick, final int updateDelay, final RouterTier tier) {
     this(raw, distributionScheme, filterScheme, itemsPerUpdate, fluidPerUpdate, energyPerTick, updateDelay, tier);
-    String[] components = raw.split("->");
+    String[] components = ARROW_REGEX.split(raw);
     inputs = new ArrayList<>();
     outputs = new ArrayList<>();
     parseMapping(identifiers, components);
@@ -66,8 +69,8 @@ public class Mapping {
   private void parseMapping(Set<String> identifiers, String[] components) {
     if (components.length != 2)
       return;
-    final String[] inputsTmp = components[0].split(",");
-    final String[] outputsTmp = components[1].split(",");
+    final String[] inputsTmp = COMMA_REGEX.split(components[0]);
+    final String[] outputsTmp = COMMA_REGEX.split(components[1]);
     final ArrayList<String> inputs = new ArrayList<>();
     final ArrayList<String> outputs = new ArrayList<>();
 
@@ -133,7 +136,7 @@ public class Mapping {
    * @param nbt          The tag to use.
    * @return A list of {@link Mapping}s stored in {@code nbt}.
    */
-  public static CompoundTag write(ArrayList<Mapping> mappingsCopy, CompoundTag nbt) {
+  public static CompoundTag write(final ArrayList<Mapping> mappingsCopy, final CompoundTag nbt) {
     final var list = new ListTag();
     for (final Mapping mapping : mappingsCopy) {
       final var mappingNBT = new CompoundTag();
@@ -183,9 +186,9 @@ public class Mapping {
           mappingNBT.getInt("energyPerUpdate"), mappingNBT.getInt("updateDelay"), tier);
       final var filterItemsNBT = mappingNBT.getList("filter", Tag.TAG_COMPOUND);
       for (int j = 0; j < filterItemsNBT.size(); ++j) {
-        CompoundTag itemStackNBT = filterItemsNBT.getCompound(j);
-        int slot = itemStackNBT.getByte("slot");
-        ItemStack is = ItemStack.of(itemStackNBT);
+        final var itemStackNBT = filterItemsNBT.getCompound(j);
+        final int slot = itemStackNBT.getByte("slot");
+        final var is = ItemStack.of(itemStackNBT);
         mapping.getFilterInventory().setItem(slot, is);
       }
       mappings.add(mapping);
@@ -410,12 +413,12 @@ public class Mapping {
    * The types of filter schemes.
    */
   public enum FilterScheme {
-    BLACK_LIST,
-    WHITE_LIST;
+    BLOCK_LIST,
+    ALLOW_LIST;
 
     public static FilterScheme valueOf(final int ordinal) {
-      if (ordinal == 0) return BLACK_LIST;
-      else if (ordinal == 1) return WHITE_LIST;
+      if (ordinal == 0) return BLOCK_LIST;
+      else if (ordinal == 1) return ALLOW_LIST;
       else return null;
     }
 

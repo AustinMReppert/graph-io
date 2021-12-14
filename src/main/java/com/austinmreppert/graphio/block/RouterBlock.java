@@ -2,7 +2,6 @@ package com.austinmreppert.graphio.block;
 
 import com.austinmreppert.graphio.blockentity.BlockEntityTypes;
 import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
-import com.austinmreppert.graphio.data.mappings.Mapping;
 import com.austinmreppert.graphio.data.tiers.BaseTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;

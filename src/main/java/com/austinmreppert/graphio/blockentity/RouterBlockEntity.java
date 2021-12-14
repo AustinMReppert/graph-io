@@ -33,7 +33,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -112,12 +111,12 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (this.level == null)
       return;
 
-    final AtomicInteger receivedEnergy = new AtomicInteger();
+    final var receivedEnergy = new AtomicInteger();
     if (shouldUpdate()) {
       for (final var direction : Direction.values()) {
         if (energyStorage.getEnergyStored() == energyStorage.getMaxEnergyStored())
           break;
-        final BlockEntity blockEntity = this.level.getBlockEntity(getBlockPos().relative(direction));
+        final var blockEntity = this.level.getBlockEntity(getBlockPos().relative(direction));
         if (blockEntity != null) {
           blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             final int simulatedReceived = energyStorage.receiveEnergy(cap.extractEnergy(energyStorage.getMaxReceive() - receivedEnergy.get(), true), true);
@@ -132,18 +131,18 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
     if (mappings.size() > maxMappings)
       return;
 
-    for (Mapping mapping : mappings) {
+    final var powered = level.hasNeighborSignal(this.getBlockPos());
+    if ((redstoneMode == RedstoneMode.ACTIVE && !powered) || (redstoneMode == RedstoneMode.INACTIVE && powered)) {
+      return;
+    }
 
-      final var powered = level.hasNeighborSignal(this.getBlockPos());
-      if ((redstoneMode == RedstoneMode.ACTIVE && !powered) || (redstoneMode == RedstoneMode.INACTIVE && powered)) {
-        return;
-      }
+    for (final var mapping : mappings) {
 
       if (!mapping.isValid() || !mapping.shouldUpdate(ticks))
         continue;
 
       SimpleContainer filterInventory = mapping.getFilterInventory();
-      Mapping.FilterScheme filterScheme = mapping.getFilterScheme();
+      final var filterScheme = mapping.getFilterScheme();
       if (mapping.getInputs().isEmpty() || mapping.getOutputs().isEmpty()) continue;
 
       final NodeInfo inputNodeInfo = mapping.getInputs().get(mapping.currentInputIndex);
@@ -160,14 +159,11 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       final ResourceKey<Level> inputLevelName = identifiers.get(inputNodeInfo.getIdentifier()).getLevel();
       final ResourceKey<Level> outputLevelName = identifiers.get(outputNodeInfo.getIdentifier()).getLevel();
 
-      if (inputLevelName == null || outputLevelName == null)
+      if (inputLevelName == null || outputLevelName == null || level.getServer() == null)
         continue;
 
-      if (level.getServer() == null)
-        continue;
-
-      final Level inputLevel = level.getServer().getLevel(inputLevelName);
-      final Level outputLevel = level.getServer().getLevel(outputLevelName);
+      final var inputLevel = level.getServer().getLevel(inputLevelName);
+      final var outputLevel = level.getServer().getLevel(outputLevelName);
 
       if (inputLevel == null || outputLevel == null)
         continue;
@@ -175,8 +171,8 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       if (!inputLevel.isLoaded(inputPos) || !outputLevel.isLoaded(outputPos))
         continue;
 
-      final BlockEntity inputBlockEntity = inputLevel.getBlockEntity(inputPos);
-      final BlockEntity outputBlockEntity = outputLevel.getBlockEntity(outputPos);
+      final var inputBlockEntity = inputLevel.getBlockEntity(inputPos);
+      final var outputBlockEntity = outputLevel.getBlockEntity(outputPos);
       if (inputBlockEntity == null || outputBlockEntity == null) return;
 
       inputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
@@ -184,7 +180,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             int transferredItems = 0;
             for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
               final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
-              boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
+              boolean filtered = filterScheme != Mapping.FilterScheme.BLOCK_LIST;
               for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
                 if (filterInventory.getItem(i).getItem() == inputStack.getItem()) {
                   filtered = !filtered;
@@ -210,6 +206,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                   outputBlockEntity.setChanged();
 
                   energyStorage.setEnergyStored(energyStorage.getEnergyStored() - ITEM_TRANSFER_COST * transferredItemsCount, false);
+                  setChanged();
                 }
               }
             }
@@ -220,7 +217,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             int transferredFluids = 0;
             for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
               final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
-              boolean filtered = filterScheme != Mapping.FilterScheme.BLACK_LIST;
+              boolean filtered = filterScheme != Mapping.FilterScheme.BLOCK_LIST;
               for (int i = 0; i < filterInventory.getContainerSize(); ++i) {
                 if (inputStack.isFluidEqual(filterInventory.getItem(i))) {
                   filtered = !filtered;
@@ -245,6 +242,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
                   outputBlockEntity.setChanged();
 
                   energyStorage.setEnergyStored(energyStorage.getEnergyStored() - FLUID_TRANSFER_COST * transferredFluidsCount, false);
+                  setChanged();
 
                   break;
                 }
@@ -257,30 +255,39 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             int transferredEnergy = 0;
             if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
               final int simulatedExtracted = inputEnergyHandler.extractEnergy(
-                  (int) Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerUpdate() - transferredEnergy),
+                  Mth.clamp(inputEnergyHandler.getEnergyStored(), 0, mapping.getEnergyPerUpdate() - transferredEnergy),
                   true);
               final int simulatedReceived = outputEnergyHandler.receiveEnergy(simulatedExtracted, true);
               final int extracted = inputEnergyHandler.extractEnergy(simulatedReceived, false);
               final var transferredEnergyCount = outputEnergyHandler.receiveEnergy((int) (extracted*ENERGY_TRANSFER_COST), false);
               transferredEnergy += transferredEnergyCount;
+
+              inputBlockEntity.setChanged();
+              outputBlockEntity.setChanged();
             }
           }));
 
-      if (mapping.getDistributionScheme() == Mapping.DistributionScheme.CYCLIC) {
-        mapping.currentInputIndex = (mapping.currentInputIndex + 1) % Math.max(mapping.getInputs().size(), 1);
-        mapping.currentOutputIndex = (mapping.currentOutputIndex + 1) % Math.max(mapping.getOutputs().size(), 1);
-      } else if (mapping.getDistributionScheme() == Mapping.DistributionScheme.NATURAL) {
-        ++mapping.currentOutputIndex;
-        if (mapping.currentOutputIndex >= mapping.getOutputs().size()) {
-          mapping.currentOutputIndex = 0;
-          ++mapping.currentInputIndex;
-          if (mapping.currentInputIndex >= mapping.getInputs().size())
-            mapping.currentInputIndex = 0;
+
+      switch (mapping.getDistributionScheme()) {
+        case CYCLIC -> {
+          mapping.currentInputIndex = (mapping.currentInputIndex + 1) % Math.max(mapping.getInputs().size(), 1);
+          mapping.currentOutputIndex = (mapping.currentOutputIndex + 1) % Math.max(mapping.getOutputs().size(), 1);
         }
-      } else if (mapping.getDistributionScheme() == Mapping.DistributionScheme.RANDOM) {
-        mapping.currentInputIndex = random.nextInt(mapping.getInputs().size());
-        mapping.currentOutputIndex = random.nextInt(mapping.getOutputs().size());
+        case NATURAL -> {
+          ++mapping.currentOutputIndex;
+          if (mapping.currentOutputIndex >= mapping.getOutputs().size()) {
+            mapping.currentOutputIndex = 0;
+            ++mapping.currentInputIndex;
+            if (mapping.currentInputIndex >= mapping.getInputs().size())
+              mapping.currentInputIndex = 0;
+          }
+        }
+        case RANDOM -> {
+          mapping.currentInputIndex = random.nextInt(mapping.getInputs().size());
+          mapping.currentOutputIndex = random.nextInt(mapping.getOutputs().size());
+        }
       }
+      setChanged();
     }
   }
 

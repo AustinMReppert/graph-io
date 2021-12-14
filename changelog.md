@@ -1,4 +1,11 @@
 # Changelog
+## 3.0.2
+### Changed
+* Updates to 1.18.1.
+* Switches back to parchment.
+* Bumps forge version.
+* Switches to allowlist/blocklist.
+* Minor code cleanup.
 ## 3.0.1
 ### Changed
 * Bumps forge version.

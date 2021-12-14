@@ -29,7 +29,7 @@ public record SetRouterBEMappingsPacket(BlockPos blockPos, CompoundTag routerTEN
     context.get().enqueueWork(() -> {
       if (context.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
         final ServerPlayer sender = context.get().getSender();
-        final BlockEntity blockEntity = sender.getCommandSenderWorld().getBlockEntity(packet.blockPos);
+        final var blockEntity = sender.getCommandSenderWorld().getBlockEntity(packet.blockPos);
         if (blockEntity instanceof RouterBlockEntity routerBlockEntity) {
           routerBlockEntity.readMappings(packet.routerTENBT);
           routerBlockEntity.setChanged();
@@ -69,7 +69,7 @@ public record SetRouterBEMappingsPacket(BlockPos blockPos, CompoundTag routerTEN
   /**
    * Handles the client side only portion of {@link SetRouterBEMappingsPacket}.
    */
-  public class SetRouterBEMappingsPacketClient {
+  public static class SetRouterBEMappingsPacketClient {
 
     /**
      * Handles a {@link SetRouterBEMappingsPacket} for the client.
@@ -79,7 +79,6 @@ public record SetRouterBEMappingsPacket(BlockPos blockPos, CompoundTag routerTEN
     static void handle(final SetRouterBEMappingsPacket packet) {
       final Player playerEntity = Minecraft.getInstance().player;
       final AbstractContainerMenu openContainer = playerEntity.containerMenu;
-      final BlockEntity be = playerEntity.level.getBlockEntity(packet.blockPos());
       if (openContainer instanceof RouterContainer router && openContainer.containerId == packet.windowID) {
         router.setClientMappings(packet.routerTENBT(), packet.windowID);
       }
