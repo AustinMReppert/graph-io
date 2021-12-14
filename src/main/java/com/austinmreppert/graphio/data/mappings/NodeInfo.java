@@ -4,7 +4,6 @@ import net.minecraft.core.Direction;
 
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -13,7 +12,7 @@ import java.util.regex.Pattern;
 public class NodeInfo {
 
   private static final Pattern NODE_REGEX = Pattern.compile("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?");
-  private static final Pattern SEPARATOR_REGEX = Pattern.compile("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?");
+  private static final Pattern SEPARATOR_REGEX = Pattern.compile("\\.");
   private String identifier;
   private Direction face;
   private boolean valid;
@@ -36,7 +35,7 @@ public class NodeInfo {
    */
   public static ArrayList<NodeInfo> getNodeInfo(final String raw, final Set<String> identifiers) {
     final ArrayList<NodeInfo> nodeInfos = new ArrayList<>();
-    if (NODE_REGEX.matcher("((\\p{L}+\\*?)|\\*)(\\.\\p{L}+)?").matches()) {
+    if (NODE_REGEX.matcher(raw).matches()) {
       final String[] nodeInfoComponents = SEPARATOR_REGEX.split(raw);
       if (nodeInfoComponents.length == 2) {
         Direction face = switch (nodeInfoComponents[1]) {
