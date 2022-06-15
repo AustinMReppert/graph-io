@@ -1,22 +1,22 @@
 {
   "type": "minecraft:crafting_shaped",
   "group": "tutorial",
+  "key": {
+    "e": {
+      "item": "minecraft:nether_star"
+    },
+    "n": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "r": {
+      "item": "graphio:elite_router_core"
+    }
+  },
   "pattern": [
     "nrn",
     "rer",
     "nrn"
   ],
-  "key": {
-    "r": {
-      "item": "graphio:elite_router_core"
-    },
-    "n": {
-      "item": "minecraft:netherite_ingot"
-    },
-    "e": {
-      "item": "minecraft:nether_star"
-    }
-  },
   "result": {
     "item": "graphio:ultimate_router_core"
   }

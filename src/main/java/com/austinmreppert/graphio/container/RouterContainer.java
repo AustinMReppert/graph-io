@@ -53,7 +53,7 @@ public class RouterContainer extends AbstractContainerMenu {
   }
 
   public RouterContainer(final int windowId, final Inventory inv, final RouterBlockEntity routerBlockEntity) {
-    super(ContainerTypes.ROUTER_CONTAINER, windowId);
+    super(ContainerTypes.ROUTER_CONTAINER.get(), windowId);
 
     if(inv.player instanceof ServerPlayer serverPlayer)
       listener = serverPlayer;
@@ -192,7 +192,7 @@ public class RouterContainer extends AbstractContainerMenu {
   @Override
   @Nonnull
   public MenuType<?> getType() {
-    return ContainerTypes.ROUTER_CONTAINER;
+    return ContainerTypes.ROUTER_CONTAINER.get();
   }
 
   /**

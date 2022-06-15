@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -31,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class IdentifierItem extends Item {
 
-  private static final TranslatableComponent POINTS_TO = new TranslatableComponent(GraphIO.MOD_ID + ".chat.identifier_points_to");
+  private static final Component POINTS_TO = Component.translatable(GraphIO.MOD_ID + ".chat.identifier_points_to");
 
   public IdentifierItem(final Properties properties) {
     super(properties);

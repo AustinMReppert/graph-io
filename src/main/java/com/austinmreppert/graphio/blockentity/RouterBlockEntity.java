@@ -33,6 +33,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -71,7 +72,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   public RedstoneMode redstoneMode;
 
   public RouterBlockEntity(final BlockPos pos, final BlockState state) {
-    super(BlockEntityTypes.ROUTER, pos, state);
+    super(BlockEntities.ROUTER.get(), pos, state);
     containerSize = 3;
     identifiers = new HashMap<>();
     random = new Random(System.currentTimeMillis());
@@ -420,9 +421,9 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    * @param is The item stack to check.
    */
   private void cacheIfIdentifier(final ItemStack is) {
-    if (is.getItem() == Items.IDENTIFIER)
+    if (is.getItem() == Items.IDENTIFIER.get())
       is.getCapability(Capabilities.IDENTIFIER_CAPABILITY, null).ifPresent(identifierCapability ->
-          identifiers.put(is.getHoverName().getContents(), identifierCapability));
+          identifiers.put(is.getHoverName().getString(), identifierCapability));
   }
 
   /**
@@ -517,25 +518,25 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       return;
     this.tier = new RouterTier(baseTier);
     if (tier.baseTier == BaseTier.BASIC) {
-      tieredRouter = Blocks.BASIC_ROUTER;
+      tieredRouter = Blocks.BASIC_ROUTER.get();
       containerSize = 3;
       energyStorage.setMaxReceive(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.BASIC_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.BASIC_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ADVANCED) {
-      tieredRouter = Blocks.ADVANCED_ROUTER;
+      tieredRouter = Blocks.ADVANCED_ROUTER.get();
       containerSize = 6;
       energyStorage.setMaxReceive(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.ADVANCED_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.ADVANCED_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ELITE) {
-      tieredRouter = Blocks.ELITE_ROUTER;
+      tieredRouter = Blocks.ELITE_ROUTER.get();
       containerSize = 9;
       energyStorage.setMaxReceive(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.ELITE_ROUTER_ENERGY_CAPACITY.get());
       maxMappings = Config.SERVER_CONFIG.ELITE_ROUTER_NUM_MAPPINGS.get();
     } else if (tier.baseTier == BaseTier.ULTIMATE) {
-      tieredRouter = Blocks.ULTIMATE_ROUTER;
+      tieredRouter = Blocks.ULTIMATE_ROUTER.get();
       containerSize = 12;
       energyStorage.setMaxReceive(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_INPUT_PER_UPDATE.get());
       energyStorage.setCapacity(Config.SERVER_CONFIG.ULTIMATE_ROUTER_ENERGY_CAPACITY.get());

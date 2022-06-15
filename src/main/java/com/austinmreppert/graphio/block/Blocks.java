@@ -2,34 +2,22 @@ package com.austinmreppert.graphio.block;
 
 import com.austinmreppert.graphio.GraphIO;
 import com.austinmreppert.graphio.data.tiers.BaseTier;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.IForgeRegistryEntry;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
-@Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Blocks {
 
-  public static final Block BASIC_ROUTER = register(new RouterBlock(BaseTier.BASIC), "basic_router");
-  public static final Block ADVANCED_ROUTER = register(new RouterBlock(BaseTier.ADVANCED), "advanced_router");
-  public static final Block ELITE_ROUTER = register(new RouterBlock(BaseTier.ELITE), "elite_router");
-  public static final Block ULTIMATE_ROUTER = register(new RouterBlock(BaseTier.ULTIMATE), "ultimate_router");
+  public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, GraphIO.MOD_ID);
+  public static final RegistryObject<Block> BASIC_ROUTER = BLOCKS.register("basic_router", () -> new RouterBlock(BaseTier.BASIC));
+  public static final RegistryObject<Block> ADVANCED_ROUTER = BLOCKS.register("advanced_router", () -> new RouterBlock(BaseTier.ADVANCED));
+  public static final RegistryObject<Block> ELITE_ROUTER = BLOCKS.register("elite_router", () -> new RouterBlock(BaseTier.ELITE));
+  public static final RegistryObject<Block> ULTIMATE_ROUTER = BLOCKS.register("ultimate_router", () -> new RouterBlock(BaseTier.ULTIMATE));
 
-  @SubscribeEvent
-  public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-    blockRegistryEvent.getRegistry().registerAll(
-        BASIC_ROUTER,
-        ADVANCED_ROUTER,
-        ELITE_ROUTER,
-        ULTIMATE_ROUTER
-    );
+  public static void register() {
+    BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
   }
-
-  public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final String name) {
-    return entry.setRegistryName(new ResourceLocation(GraphIO.MOD_ID, name));
-  }
-
 
 }

@@ -97,7 +97,7 @@ public class Highlighter {
    */
   private static void highlightBlock(final PoseStack poseStack, final BlockPos blockPos, final ResourceKey<Level> level,
                                      final float padding, final int r, final int g, final int b, final int a) {
-    if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.position(), Minecraft.getInstance().options.renderDistance * 16))
+    if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.getOnPos(), Minecraft.getInstance().options.getEffectiveRenderDistance() * 16))
       return;
     final int x = blockPos.getX();
     final int y = blockPos.getY();

@@ -1,28 +1,31 @@
 package com.austinmreppert.graphio.container;
 
 import com.austinmreppert.graphio.GraphIO;
-import net.minecraft.world.inventory.AbstractContainerMenu;
+import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.IContainerFactory;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
-@Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ContainerTypes {
 
-  public static final MenuType<RouterContainer> ROUTER_CONTAINER = ContainerTypes.register(RouterContainer::new, "router");
-  public static final MenuType<RouterStorageContainer> ROUTER_STORAGE_CONTAINER = ContainerTypes.register(RouterStorageContainer::new, "router_storage");
+  private static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, GraphIO.MOD_ID);
 
-  @SubscribeEvent
-  public static void registerContainers(final RegistryEvent.Register<MenuType<?>> event) {
-    event.getRegistry().registerAll(ROUTER_CONTAINER, ROUTER_STORAGE_CONTAINER);
+  public static final RegistryObject<MenuType<RouterContainer>> ROUTER_CONTAINER = CONTAINERS.register("router",
+      () -> IForgeMenuType.create((windowID, inventory, data) -> {
+        return new RouterContainer(windowID, inventory, (RouterBlockEntity) inventory.player.getLevel().getBlockEntity(data.readBlockPos()));
+      }));
+
+  public static final RegistryObject<MenuType<RouterStorageContainer>> ROUTER_STORAGE_CONTAINER = CONTAINERS.register("router_storage",
+      () -> IForgeMenuType.create((windowID, inventory, data) -> {
+        final var router = (RouterBlockEntity) inventory.player.getLevel().getBlockEntity(data.readBlockPos());
+        return router != null ? new RouterStorageContainer(windowID, inventory, router) : null;
+      }));
+
+  public static void register() {
+    CONTAINERS.register(FMLJavaModLoadingContext.get().getModEventBus());
   }
-
-  public static <T extends AbstractContainerMenu> MenuType<T> register(final IContainerFactory<T> factory, final String name) {
-    return (MenuType<T>) IForgeMenuType.create(factory).setRegistryName(name);
-  }
-
 
 }

@@ -1,6 +1,10 @@
 package com.austinmreppert.graphio;
 
+import com.austinmreppert.graphio.block.Blocks;
+import com.austinmreppert.graphio.blockentity.BlockEntities;
 import com.austinmreppert.graphio.capabilities.Capabilities;
+import com.austinmreppert.graphio.container.ContainerTypes;
+import com.austinmreppert.graphio.item.Items;
 import com.austinmreppert.graphio.network.PacketHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -21,6 +25,11 @@ public class GraphIO {
   public static final String MOD_ID = "graphio";
 
   public GraphIO() {
+    Blocks.register();
+    Items.register();
+    ContainerTypes.register();
+    BlockEntities.register();
+
     FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);

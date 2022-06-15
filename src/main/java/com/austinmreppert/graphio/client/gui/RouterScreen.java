@@ -16,7 +16,6 @@ import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -83,12 +82,12 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
   private final int TEXT_COLOR = TextColor.parseColor("#FFFFFF").getValue();
   private final ArrayList<EditBox> rawMappings;
-  private final Component ITEMS_PER_UPDATE = new TranslatableComponent(GraphIO.MOD_ID + ".gui.items_per_update");
-  private final Component FLUID_PER_UPDATE = new TranslatableComponent(GraphIO.MOD_ID + ".gui.fluid_per_update");
-  private final Component ENERGY_PER_UPDATE = new TranslatableComponent(GraphIO.MOD_ID + ".gui.energy_per_update");
-  private final Component UPDATE_DELAY = new TranslatableComponent(GraphIO.MOD_ID + ".gui.update_delay");
-  private final Component ENERGY = new TranslatableComponent(GraphIO.MOD_ID + ".gui.energy");
-  private final Component TICK = new TranslatableComponent(GraphIO.MOD_ID + ".gui.tick");
+  private final Component ITEMS_PER_UPDATE = Component.translatable(GraphIO.MOD_ID + ".gui.items_per_update");
+  private final Component FLUID_PER_UPDATE = Component.translatable(GraphIO.MOD_ID + ".gui.fluid_per_update");
+  private final Component ENERGY_PER_UPDATE = Component.translatable(GraphIO.MOD_ID + ".gui.energy_per_update");
+  private final Component UPDATE_DELAY = Component.translatable(GraphIO.MOD_ID + ".gui.update_delay");
+  private final Component ENERGY = Component.translatable(GraphIO.MOD_ID + ".gui.energy");
+  private final Component TICK = Component.translatable(GraphIO.MOD_ID + ".gui.tick");
   public int inventoryRows;
   protected EditBox inputField;
   private float currentScroll;
@@ -316,7 +315,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.natural"), this));
+    }, Component.translatable("gui.graphio.natural"), this));
 
     this.addRenderableWidget(distributeCyclicallyButton = new ToggleImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X + 24, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, CYCLIC_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -324,7 +323,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.cyclic"), this));
+    }, Component.translatable("gui.graphio.cyclic"), this));
 
     this.addRenderableWidget(distributeRandomlyButton = new ToggleImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X + 24 * 2, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, RANDOM_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -332,12 +331,12 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.random"), this));
+    }, Component.translatable("gui.graphio.random"), this));
 
     List<Component> options = new ArrayList<>();
-    options.add(new TranslatableComponent(GraphIO.MOD_ID + ".gui.redstone_mode_ignored"));
-    options.add(new TranslatableComponent(GraphIO.MOD_ID + ".gui.redstone_mode_active"));
-    options.add(new TranslatableComponent(GraphIO.MOD_ID + ".gui.redstone_mode_inactive"));
+    options.add(Component.translatable(GraphIO.MOD_ID + ".gui.redstone_mode_ignored"));
+    options.add(Component.translatable(GraphIO.MOD_ID + ".gui.redstone_mode_active"));
+    options.add(Component.translatable(GraphIO.MOD_ID + ".gui.redstone_mode_inactive"));
     this.addRenderableWidget(redstoneModeButton = new OptionImageButton(this.leftPos + DISTRIBUTION_BUTTONS_X + 24 * 3, topPos + DISTRIBUTION_BUTTONS_Y, 18, 18, 0, 0, 18, REDSTONE_MODE_BUTTON_TEXTURE, 256, 256, (button) -> {
       routerBlockEntity.redstoneMode = RedstoneMode.valueOf(redstoneModeButton.getSelected());
       menu.setSeverRedstoneMode(RedstoneMode.valueOf(redstoneModeButton.getSelected()));
@@ -353,7 +352,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.block_list"), new TranslatableComponent("gui.graphio.allow_list"), this));
+    }, Component.translatable("gui.graphio.block_list"), Component.translatable("gui.graphio.allow_list"), this));
     filterSchemeButton.setHidden(true);
 
     this.addRenderableWidget(decreaseStackSizeButton = new ImageButton(this.leftPos - 80, topPos + 28, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
@@ -362,7 +361,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(increaseStackSizeButton = new ImageButton(this.leftPos - 50, topPos + 28, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -370,7 +369,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(decreaseFluidButton = new ImageButton(this.leftPos - 80, topPos + 59, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -378,7 +377,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(increaseFluidButton = new ImageButton(this.leftPos - 50, topPos + 59, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -386,7 +385,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(decreaseEnergyButton = new ImageButton(this.leftPos - 80, topPos + 90, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -394,7 +393,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(increaseEnergyButton = new ImageButton(this.leftPos - 50, topPos + 90, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -402,7 +401,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(decreaseUpdateDelay = new ImageButton(this.leftPos - 80, topPos + 121, 11, 11, 0, 0, 11, MINUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -410,7 +409,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     this.addRenderableWidget(increaseUpdateDelay = new ImageButton(this.leftPos - 50, topPos + 121, 11, 11, 0, 0, 11, PLUS_BUTTON_TEXTURE, 256, 256, (button) -> {
       getLastFocusedMapping().ifPresent(mapping -> {
@@ -418,7 +417,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
         updateMappingGUI();
         menu.setServerMappings();
       });
-    }, new TranslatableComponent("gui.graphio.decrease_stack_size")));
+    }, Component.translatable("gui.graphio.decrease_stack_size")));
 
     // this.leftPos = (this.width - imageWidth) / 2;
   }
@@ -465,7 +464,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
    * @return An {@linK EditBox} with the raw contents of the {@link Mapping}.
    */
   public EditBox createMappingTextField(final String contents, final int index) {
-    EditBox mapping = new EditBox(font, leftPos + MAPPING_X, topPos + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, new TranslatableComponent("container.repair"));
+    EditBox mapping = new EditBox(font, leftPos + MAPPING_X, topPos + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, Component.translatable("container.repair"));
     mapping.setCanLoseFocus(true);
     mapping.setTextColor(TEXT_COLOR);
     mapping.setTextColorUneditable(-1);

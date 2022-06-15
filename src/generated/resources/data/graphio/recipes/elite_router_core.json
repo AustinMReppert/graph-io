@@ -1,22 +1,22 @@
 {
   "type": "minecraft:crafting_shaped",
   "group": "tutorial",
+  "key": {
+    "e": {
+      "item": "minecraft:end_crystal"
+    },
+    "g": {
+      "item": "minecraft:gold_ingot"
+    },
+    "r": {
+      "item": "graphio:advanced_router_core"
+    }
+  },
   "pattern": [
     "grg",
     "rer",
     "grg"
   ],
-  "key": {
-    "r": {
-      "item": "graphio:advanced_router_core"
-    },
-    "g": {
-      "item": "minecraft:gold_ingot"
-    },
-    "e": {
-      "item": "minecraft:end_crystal"
-    }
-  },
   "result": {
     "item": "graphio:elite_router_core"
   }

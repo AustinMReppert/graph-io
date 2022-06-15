@@ -6,6 +6,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Generates item models.
@@ -18,31 +19,31 @@ public class ItemModelProviders extends ItemModelProvider {
 
   @Override
   protected void registerModels() {
-    singleTexture(Items.IDENTIFIER.getRegistryName().getPath(),
+    singleTexture(ForgeRegistries.ITEMS.getKey(Items.IDENTIFIER.get()).getPath(),
         new ResourceLocation("item/generated"), "layer0",
-        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.IDENTIFIER.getRegistryName().getPath()));
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + ForgeRegistries.ITEMS.getKey(Items.IDENTIFIER.get()).getPath()));
 
-    singleTexture(Items.BASIC_ROUTER_CORE.getRegistryName().getPath(),
+    singleTexture(ForgeRegistries.ITEMS.getKey(Items.BASIC_ROUTER_CORE.get()).getPath(),
         new ResourceLocation("item/generated"), "layer0",
-        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.BASIC_ROUTER_CORE.getRegistryName().getPath()));
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + ForgeRegistries.ITEMS.getKey(Items.BASIC_ROUTER_CORE.get()).getPath()));
 
 
-    singleTexture(Items.ADVANCED_ROUTER_CORE.getRegistryName().getPath(),
+    singleTexture(ForgeRegistries.ITEMS.getKey(Items.ADVANCED_ROUTER_CORE.get()).getPath(),
         new ResourceLocation("item/generated"), "layer0",
-        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.ADVANCED_ROUTER_CORE.getRegistryName().getPath()));
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + ForgeRegistries.ITEMS.getKey(Items.ADVANCED_ROUTER_CORE.get()).getPath()));
 
 
-    singleTexture(Items.ELITE_ROUTER_CORE.getRegistryName().getPath(),
+    singleTexture(ForgeRegistries.ITEMS.getKey(Items.ELITE_ROUTER_CORE.get()).getPath(),
         new ResourceLocation("item/generated"), "layer0",
-        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.ELITE_ROUTER_CORE.getRegistryName().getPath()));
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + ForgeRegistries.ITEMS.getKey(Items.ELITE_ROUTER_CORE.get()).getPath()));
 
-    singleTexture(Items.ULTIMATE_ROUTER_CORE.getRegistryName().getPath(),
+    singleTexture(ForgeRegistries.ITEMS.getKey(Items.ULTIMATE_ROUTER_CORE.get()).getPath(),
         new ResourceLocation("item/generated"), "layer0",
-        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.ULTIMATE_ROUTER_CORE.getRegistryName().getPath()));
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + ForgeRegistries.ITEMS.getKey(Items.ULTIMATE_ROUTER_CORE.get()).getPath()));
 
-    singleTexture(Items.ROUTER_CIRCUIT.getRegistryName().getPath(),
+    singleTexture(ForgeRegistries.ITEMS.getKey(Items.ROUTER_CIRCUIT.get()).getPath(),
         new ResourceLocation("item/generated"), "layer0",
-        new ResourceLocation(GraphIO.MOD_ID, "item/" + Items.ROUTER_CIRCUIT.getRegistryName().getPath()));
+        new ResourceLocation(GraphIO.MOD_ID, "item/" + ForgeRegistries.ITEMS.getKey(Items.ROUTER_CIRCUIT.get()).getPath()));
   }
 
 }

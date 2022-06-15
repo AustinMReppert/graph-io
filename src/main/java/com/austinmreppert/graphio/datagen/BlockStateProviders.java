@@ -6,6 +6,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Generates block states/models.
@@ -18,25 +19,25 @@ public class BlockStateProviders extends BlockStateProvider {
 
   @Override
   protected void registerStatesAndModels() {
-    simpleBlock(Blocks.BASIC_ROUTER);
-    simpleBlock(Blocks.ADVANCED_ROUTER);
-    simpleBlock(Blocks.ELITE_ROUTER);
-    simpleBlock(Blocks.ULTIMATE_ROUTER);
+    simpleBlock(Blocks.BASIC_ROUTER.get());
+    simpleBlock(Blocks.ADVANCED_ROUTER.get());
+    simpleBlock(Blocks.ELITE_ROUTER.get());
+    simpleBlock(Blocks.ULTIMATE_ROUTER.get());
 
-    simpleBlockItem(Blocks.BASIC_ROUTER, models().getExistingFile(new ResourceLocation(
-        GraphIO.MOD_ID, "block/" + Blocks.BASIC_ROUTER.getRegistryName().getPath()
+    simpleBlockItem(Blocks.BASIC_ROUTER.get(), models().getExistingFile(new ResourceLocation(
+        GraphIO.MOD_ID, "block/" + ForgeRegistries.BLOCKS.getKey(Blocks.BASIC_ROUTER.get()).getPath()
     )));
 
-    simpleBlockItem(Blocks.ADVANCED_ROUTER, models().getExistingFile(new ResourceLocation(
-        GraphIO.MOD_ID, "block/" + Blocks.ADVANCED_ROUTER.getRegistryName().getPath()
+    simpleBlockItem(Blocks.ADVANCED_ROUTER.get(), models().getExistingFile(new ResourceLocation(
+        GraphIO.MOD_ID, "block/" + ForgeRegistries.BLOCKS.getKey(Blocks.ADVANCED_ROUTER.get()).getPath()
     )));
 
-    simpleBlockItem(Blocks.ELITE_ROUTER, models().getExistingFile(new ResourceLocation(
-        GraphIO.MOD_ID, "block/" + Blocks.ELITE_ROUTER.getRegistryName().getPath()
+    simpleBlockItem(Blocks.ELITE_ROUTER.get(), models().getExistingFile(new ResourceLocation(
+        GraphIO.MOD_ID, "block/" + ForgeRegistries.BLOCKS.getKey(Blocks.ELITE_ROUTER.get()).getPath()
     )));
 
-    simpleBlockItem(Blocks.ULTIMATE_ROUTER, models().getExistingFile(new ResourceLocation(
-        GraphIO.MOD_ID, "block/" + Blocks.ULTIMATE_ROUTER.getRegistryName().getPath()
+    simpleBlockItem(Blocks.ULTIMATE_ROUTER.get(), models().getExistingFile(new ResourceLocation(
+        GraphIO.MOD_ID, "block/" + ForgeRegistries.BLOCKS.getKey(Blocks.ULTIMATE_ROUTER.get()).getPath()
     )));
 
   }

@@ -1,22 +1,22 @@
 {
   "type": "minecraft:crafting_shaped",
   "group": "tutorial",
-  "pattern": [
-    " p ",
-    " e ",
-    " s "
-  ],
   "key": {
-    "p": {
-      "item": "minecraft:paper"
-    },
     "e": {
       "tag": "forge:ender_pearls"
+    },
+    "p": {
+      "item": "minecraft:paper"
     },
     "s": {
       "item": "minecraft:soul_torch"
     }
   },
+  "pattern": [
+    " p ",
+    " e ",
+    " s "
+  ],
   "result": {
     "item": "graphio:identifier"
   }

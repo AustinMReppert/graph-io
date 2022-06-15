@@ -1,22 +1,22 @@
 {
   "type": "minecraft:crafting_shaped",
   "group": "tutorial",
-  "pattern": [
-    "iii",
-    "ibi",
-    "ici"
-  ],
   "key": {
-    "i": {
-      "item": "minecraft:iron_ingot"
-    },
     "b": {
       "item": "graphio:basic_router_core"
     },
     "c": {
       "item": "graphio:router_circuit"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
     }
   },
+  "pattern": [
+    "iii",
+    "ibi",
+    "ici"
+  ],
   "result": {
     "item": "graphio:basic_router"
   }

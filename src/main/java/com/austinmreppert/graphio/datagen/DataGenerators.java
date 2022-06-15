@@ -16,10 +16,10 @@ public class DataGenerators {
     if (event.includeClient()) {
       final var generator = event.getGenerator();
       final var existingFileHelper = event.getExistingFileHelper();
-      generator.addProvider(new ItemModelProviders(generator, existingFileHelper));
-      generator.addProvider(new BlockStateProviders(generator, existingFileHelper));
-      generator.addProvider(new RecipeProviders(generator));
-      generator.addProvider(new LootTableProviders(generator));
+      generator.addProvider(true, new ItemModelProviders(generator, existingFileHelper));
+      generator.addProvider(true, new BlockStateProviders(generator, existingFileHelper));
+      generator.addProvider(true, new RecipeProviders(generator));
+      generator.addProvider(true, new LootTableProviders(generator));
     }
   }
 

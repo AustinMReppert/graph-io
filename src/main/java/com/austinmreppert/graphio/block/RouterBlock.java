@@ -1,6 +1,6 @@
 package com.austinmreppert.graphio.block;
 
-import com.austinmreppert.graphio.blockentity.BlockEntityTypes;
+import com.austinmreppert.graphio.blockentity.BlockEntities;
 import com.austinmreppert.graphio.blockentity.RouterBlockEntity;
 import com.austinmreppert.graphio.data.tiers.BaseTier;
 import net.minecraft.core.BlockPos;
@@ -57,7 +57,7 @@ public class RouterBlock extends BaseEntityBlock {
   @Override
   @ParametersAreNonnullByDefault
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state, final BlockEntityType<T> blockEntityType) {
-    return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntityTypes.ROUTER, (final Level routerLevel, final BlockPos blockPos, final BlockState blockState, final RouterBlockEntity routerBlockEntity) -> {
+    return level.isClientSide() ? null : createTickerHelper(blockEntityType, BlockEntities.ROUTER.get(), (final Level routerLevel, final BlockPos blockPos, final BlockState blockState, final RouterBlockEntity routerBlockEntity) -> {
       routerBlockEntity.serverTick();
     });
   }

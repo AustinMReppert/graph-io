@@ -26,7 +26,7 @@ public class RouterStorageContainer extends AbstractContainerMenu {
   }
 
   public RouterStorageContainer(final int windowID, final Inventory playerInventory, final RouterBlockEntity routerBlockEntity) {
-    super(ContainerTypes.ROUTER_STORAGE_CONTAINER, windowID);
+    super(ContainerTypes.ROUTER_STORAGE_CONTAINER.get(), windowID);
     this.routerBlockEntity = routerBlockEntity;
 
     final int rows = routerBlockEntity.getContainerSize() / 3;

@@ -3,38 +3,34 @@ package com.austinmreppert.graphio.item;
 import com.austinmreppert.graphio.GraphIO;
 import com.austinmreppert.graphio.block.Blocks;
 import com.austinmreppert.graphio.item_group.ItemGroups;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.IForgeRegistryEntry;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 @Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Items {
 
-  public static final Item IDENTIFIER = register(new IdentifierItem(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "identifier");
-  public static final Item BASIC_ROUTER_CORE = register(new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "basic_router_core");
-  public static final Item ADVANCED_ROUTER_CORE = register(new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "advanced_router_core");
-  public static final Item ELITE_ROUTER_CORE = register(new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "elite_router_core");
-  public static final Item ULTIMATE_ROUTER_CORE = register(new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "ultimate_router_core");
-  public static final Item ROUTER_CIRCUIT = register(new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)), "router_circuit");
+  private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, GraphIO.MOD_ID);
 
-  @SubscribeEvent
-  public static void onRegisterItems(final RegistryEvent.Register<Item> itemRegistryEvent) {
-    itemRegistryEvent.getRegistry().registerAll(
-        IDENTIFIER, BASIC_ROUTER_CORE, ADVANCED_ROUTER_CORE, ELITE_ROUTER_CORE, ULTIMATE_ROUTER_CORE, ROUTER_CIRCUIT,
-        register(new BlockItem(Blocks.BASIC_ROUTER, new Item.Properties().tab(ItemGroups.GRAPH_IO)), "basic_router"),
-        register(new BlockItem(Blocks.ADVANCED_ROUTER, new Item.Properties().tab(ItemGroups.GRAPH_IO)), "advanced_router"),
-        register(new BlockItem(Blocks.ELITE_ROUTER, new Item.Properties().tab(ItemGroups.GRAPH_IO)), "elite_router"),
-        register(new BlockItem(Blocks.ULTIMATE_ROUTER, new Item.Properties().tab(ItemGroups.GRAPH_IO)), "ultimate_router")
-    );
+  public static final RegistryObject<Item> IDENTIFIER = ITEMS.register("identifier", () -> new IdentifierItem(new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> BASIC_ROUTER_CORE = ITEMS.register("basic_router_core", () -> new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ADVANCED_ROUTER_CORE = ITEMS.register("advanced_router_core", () -> new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ELITE_ROUTER_CORE = ITEMS.register("elite_router_core", () -> new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ULTIMATE_ROUTER_CORE = ITEMS.register("ultimate_router_core", () -> new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ROUTER_CIRCUIT = ITEMS.register("router_circuit", () -> new Item(new Item.Properties().tab(ItemGroups.GRAPH_IO)));
 
-  }
+    public static final RegistryObject<Item> BASIC_ROUTER = ITEMS.register("basic_router", () ->new BlockItem(Blocks.BASIC_ROUTER.get(), new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ADVANCED_ROUTER = ITEMS.register("advanced_router", () -> new BlockItem(Blocks.ADVANCED_ROUTER.get(), new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ELITE_ROUTER = ITEMS.register("elite_router", () ->new BlockItem(Blocks.ELITE_ROUTER.get(), new Item.Properties().tab(ItemGroups.GRAPH_IO)));
+    public static final RegistryObject<Item> ULTIMATE_ROUTER = ITEMS.register("ultimate_router", () ->new BlockItem(Blocks.ULTIMATE_ROUTER.get(), new Item.Properties().tab(ItemGroups.GRAPH_IO)));
 
-  public static <T extends IForgeRegistryEntry<T>> T register(final T entry, final String name) {
-    return entry.setRegistryName(new ResourceLocation(GraphIO.MOD_ID, name));
-  }
+    public static void register() {
+      ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+    }
 
 }

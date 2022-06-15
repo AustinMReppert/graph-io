@@ -18,7 +18,7 @@ public class ItemGroups {
      */
     @Override
     public ItemStack makeIcon() {
-      return new ItemStack(Items.IDENTIFIER);
+      return new ItemStack(Items.IDENTIFIER.get());
     }
 
     /**
