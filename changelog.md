@@ -1,4 +1,7 @@
 # Changelog
+## 4.0.0
+### Changed
+* Updates to 1.19
 ## 3.0.2
 ### Changed
 * Updates to 1.18.1.
