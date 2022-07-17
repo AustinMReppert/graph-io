@@ -1,4 +1,7 @@
 # Changelog
+## 4.0.1
+### Changed
+* Updates forge.
 ## 4.0.0
 ### Changed
 * Updates to 1.19
