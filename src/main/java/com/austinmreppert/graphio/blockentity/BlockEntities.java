@@ -11,7 +11,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class BlockEntities {
 
-  public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, GraphIO.MOD_ID);
+  public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, GraphIO.MOD_ID);
 
   public static final RegistryObject<BlockEntityType<RouterBlockEntity>> ROUTER = BLOCK_ENTITIES.register("router", () ->
       BlockEntityType.Builder.of(RouterBlockEntity::new, Blocks.BASIC_ROUTER.get(), Blocks.ADVANCED_ROUTER.get(),

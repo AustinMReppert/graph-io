@@ -1,9 +1,9 @@
 package com.austinmreppert.graphio.datagen;
 
 import com.austinmreppert.graphio.GraphIO;
+import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
 
 /**
  * Generates assets.

@@ -82,9 +82,9 @@ public class RouterBlock extends BaseEntityBlock {
       final BlockEntity blockEntity = level.getBlockEntity(pos);
       if (blockEntity instanceof RouterBlockEntity router) {
         if (player.isCrouching())
-          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) blockEntity, pos);
+          NetworkHooks.openScreen((ServerPlayer) player, (MenuProvider) blockEntity, pos);
         else
-          NetworkHooks.openGui((ServerPlayer) player, (MenuProvider) blockEntity, (packetBuffer) -> {
+          NetworkHooks.openScreen((ServerPlayer) player, (MenuProvider) blockEntity, (packetBuffer) -> {
             packetBuffer.writeBlockPos(pos);
           });
       }

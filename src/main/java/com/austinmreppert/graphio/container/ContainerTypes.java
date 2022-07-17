@@ -11,7 +11,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class ContainerTypes {
 
-  private static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, GraphIO.MOD_ID);
+  private static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, GraphIO.MOD_ID);
 
   public static final RegistryObject<MenuType<RouterContainer>> ROUTER_CONTAINER = CONTAINERS.register("router",
       () -> IForgeMenuType.create((windowID, inventory, data) -> {
