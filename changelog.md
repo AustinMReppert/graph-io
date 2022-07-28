@@ -1,4 +1,7 @@
 # Changelog
+## 4.0.2
+### Changed
+* Updates forge.
 ## 4.0.1
 ### Changed
 * Updates forge.
