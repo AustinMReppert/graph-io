@@ -1,4 +1,7 @@
 # Changelog
+## 6.0.0
+### Changed
+* Updates to 1.19.2.
 ## 5.0.0
 ### Changed
 * Updates to 1.19.1.
