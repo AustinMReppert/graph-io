@@ -13,27 +13,27 @@ public interface IIdentifierCapability extends INBTSerializable<CompoundTag> {
    *
    * @return The level of the stored {@link BlockPos}.
    */
-  public ResourceKey<Level> getLevel();
+  ResourceKey<Level> getLevel();
 
   /**
    * Gets the stored block pos.
    *
    * @return The stored block pos.
    */
-  public BlockPos getBlockPos();
+  BlockPos getBlockPos();
 
   /**
    * Sets the stored block position.
    *
    * @param blockPos The stored block position.
    */
-  public void setBlockPos(BlockPos blockPos);
+  void setBlockPos(BlockPos blockPos);
 
   /**
    * Sets the level of the stored {@link BlockPos}.
    *
    * @param level The level of the stored {@link BlockPos}.
    */
-  public void setLevel(ResourceKey<Level> level);
+  void setLevel(ResourceKey<Level> level);
 
 }

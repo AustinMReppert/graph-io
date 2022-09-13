@@ -80,7 +80,7 @@ public class RouterBlock extends BaseEntityBlock {
                                final InteractionHand handIn, final BlockHitResult hit) {
     if (!level.isClientSide) {
       final BlockEntity blockEntity = level.getBlockEntity(pos);
-      if (blockEntity instanceof RouterBlockEntity router) {
+      if (blockEntity instanceof RouterBlockEntity) {
         if (player.isCrouching())
           NetworkHooks.openScreen((ServerPlayer) player, (MenuProvider) blockEntity, pos);
         else

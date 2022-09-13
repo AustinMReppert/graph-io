@@ -4,13 +4,16 @@ import com.austinmreppert.graphio.GraphIO;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -27,12 +30,16 @@ public class Highlighter {
   /**
    * Called after the world has been rendered. Highlights all the blocks in {@code highlightedBlocks} within render distance.
    *
-   * @param e The {@link RenderLevelLastEvent}.
+   * @param e The {@link RenderLevelStageEvent}.
    */
   @SubscribeEvent
-  public static void onRenderWorld(final RenderLevelLastEvent e) {
-    for (final var highlightedBlock : highlightedBlocks)
-      highlightBlock(e.getPoseStack(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
+  public static void drawLast(final RenderLevelStageEvent e) {
+    if(e.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) {
+      for (final var highlightedBlock : highlightedBlocks) {
+        highlightBlock(e.getPoseStack(), e.getCamera(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
+      }
+    }
+
   }
 
   /**
@@ -95,7 +102,7 @@ public class Highlighter {
    * @param b         Blue.
    * @param a         Alpha.
    */
-  private static void highlightBlock(final PoseStack poseStack, final BlockPos blockPos, final ResourceKey<Level> level,
+  private static void highlightBlock(final PoseStack poseStack, Camera camera, final BlockPos blockPos, final ResourceKey<Level> level,
                                      final float padding, final int r, final int g, final int b, final int a) {
     if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.getOnPos(), Minecraft.getInstance().options.getEffectiveRenderDistance() * 16))
       return;
@@ -103,8 +110,8 @@ public class Highlighter {
     final int y = blockPos.getY();
     final int z = blockPos.getZ();
 
-    final var tes = Tesselator.getInstance();
-    final BufferBuilder bb = tes.getBuilder();
+    MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+    var bb = buffer.getBuffer(RenderType.lightning());
 
     poseStack.pushPose();
 
@@ -114,12 +121,11 @@ public class Highlighter {
     RenderSystem.enableBlend();
     RenderSystem.defaultBlendFunc();
 
-    final Vec3 projectedView = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+    final Vec3 projectedView = camera.getPosition();
+    poseStack.pushPose();
     poseStack.translate(-projectedView.x, -projectedView.y, -projectedView.z);
 
     final Matrix4f mat = poseStack.last().pose();
-
-    bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
     final float x1 = x - padding;
     final float x2 = x + padding + 1.0F;
@@ -158,7 +164,6 @@ public class Highlighter {
     bb.vertex(mat, x1, y2, z1).color(r, g, b, a).endVertex();
     bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
-    tes.end();
     poseStack.popPose();
   }
 

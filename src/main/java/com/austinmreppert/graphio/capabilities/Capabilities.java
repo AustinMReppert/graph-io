@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = GraphIO.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Capabilities {
 
-  public static Capability<IIdentifierCapability> IDENTIFIER_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
+  public static final Capability<IIdentifierCapability> IDENTIFIER_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
 
   @SubscribeEvent
   public void registerCaps(RegisterCapabilitiesEvent event) {

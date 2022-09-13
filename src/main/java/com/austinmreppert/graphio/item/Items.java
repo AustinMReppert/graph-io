@@ -5,7 +5,6 @@ import com.austinmreppert.graphio.block.Blocks;
 import com.austinmreppert.graphio.item_group.ItemGroups;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;

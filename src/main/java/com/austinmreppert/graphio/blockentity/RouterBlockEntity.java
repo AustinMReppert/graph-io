@@ -33,17 +33,14 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.items.CapabilityItemHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -119,7 +116,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
           break;
         final var blockEntity = this.level.getBlockEntity(getBlockPos().relative(direction));
         if (blockEntity != null) {
-          blockEntity.getCapability(CapabilityEnergy.ENERGY, direction.getOpposite()).ifPresent(cap -> {
+          blockEntity.getCapability(ForgeCapabilities.ENERGY, direction.getOpposite()).ifPresent(cap -> {
             final int simulatedReceived = energyStorage.receiveEnergy(cap.extractEnergy(energyStorage.getMaxReceive() - receivedEnergy.get(), true), true);
             receivedEnergy.addAndGet(energyStorage.receiveEnergy(cap.extractEnergy(simulatedReceived, false), false));
             blockEntity.setChanged();
@@ -176,8 +173,8 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
       final var outputBlockEntity = outputLevel.getBlockEntity(outputPos);
       if (inputBlockEntity == null || outputBlockEntity == null) return;
 
-      inputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
-          outputBlockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
+      inputBlockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, inputNodeInfo.getFace()).ifPresent(inputItemHandler ->
+          outputBlockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, outputNodeInfo.getFace()).ifPresent(outputItemHandler -> {
             int transferredItems = 0;
             for (int inputSlotIndex = 0; inputSlotIndex < inputItemHandler.getSlots(); ++inputSlotIndex) {
               final ItemStack inputStack = inputItemHandler.getStackInSlot(inputSlotIndex);
@@ -213,8 +210,8 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             }
           }));
 
-      inputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, inputNodeInfo.getFace()).ifPresent(inputFluidHandler ->
-          outputBlockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
+      inputBlockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, inputNodeInfo.getFace()).ifPresent(inputFluidHandler ->
+          outputBlockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, outputNodeInfo.getFace()).ifPresent(outputFluidHandler -> {
             int transferredFluids = 0;
             for (int inputSlotIndex = 0; inputSlotIndex < inputFluidHandler.getTanks(); ++inputSlotIndex) {
               final FluidStack inputStack = inputFluidHandler.getFluidInTank(inputSlotIndex);
@@ -251,8 +248,8 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
             }
           }));
 
-      inputBlockEntity.getCapability(CapabilityEnergy.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler ->
-          outputBlockEntity.getCapability(CapabilityEnergy.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
+      inputBlockEntity.getCapability(ForgeCapabilities.ENERGY, inputNodeInfo.getFace()).ifPresent(inputEnergyHandler ->
+          outputBlockEntity.getCapability(ForgeCapabilities.ENERGY, outputNodeInfo.getFace()).ifPresent(outputEnergyHandler -> {
             int transferredEnergy = 0;
             if (inputEnergyHandler.canExtract() && outputEnergyHandler.canReceive()) {
               final int simulatedExtracted = inputEnergyHandler.extractEnergy(
@@ -325,7 +322,6 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
    * Saves the router's data into a {@link CompoundTag}  when the {@link net.minecraft.world.level.chunk.LevelChunk} containing the BE is unloaded.
    *
    * @param nbtOut The {@link CompoundTag} to save to.
-   * @return The updated {@code nbtOut}.
    */
   @Override
   @Nonnull
@@ -436,7 +432,7 @@ public class RouterBlockEntity extends RandomizableContainerBlockEntity implemen
   @Nonnull
   @Override
   public <T> LazyOptional<T> getCapability(@Nonnull final Capability<T> capability) {
-    return CapabilityEnergy.ENERGY.orEmpty(capability, energyCapabilityLO);
+    return ForgeCapabilities.ENERGY.orEmpty(capability, energyCapabilityLO);
   }
 
   /**

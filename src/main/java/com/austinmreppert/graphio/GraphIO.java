@@ -2,7 +2,6 @@ package com.austinmreppert.graphio;
 
 import com.austinmreppert.graphio.block.Blocks;
 import com.austinmreppert.graphio.blockentity.BlockEntities;
-import com.austinmreppert.graphio.capabilities.Capabilities;
 import com.austinmreppert.graphio.container.ContainerTypes;
 import com.austinmreppert.graphio.item.Items;
 import com.austinmreppert.graphio.network.PacketHandler;

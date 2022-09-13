@@ -44,43 +44,43 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private static final ResourceLocation MINUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/decrease_stack_size_button.png");
   private static final ResourceLocation PLUS_BUTTON_TEXTURE = new ResourceLocation(GraphIO.MOD_ID, "textures/gui/increase_stack_size_button.png");
   private final int HOTBAR_X = 108;
-  private final int HOTBAR_Y = 232;
-  private final int INVENTORY_X = 108;
-  private final int INVENTORY_Y = 174;
-  private final int SLOT_SIZE = 18;
-  private final int SCROLL_BAR_TEXTURE_X = 276;
-  private final int SCROLL_BAR_TEXTURE_Y = 0;
-  private final int SCROLL_BAR_INACTIVE_TEXTURE_X = 282;
-  private final int SCROLL_BAR_INACTIVE_TEXTURE_Y = 0;
-  private final int SCROLL_BAR_X = 262;
-  private final int SCROLL_BAR_Y = 18;
-  private final int SCROLL_BAR_WIDTH = 6;
-  private final int SCROLL_BAR_HEIGHT = 27;
-  private final int SCROLL_AREA_X = SCROLL_BAR_X;
-  private final int SCROLL_AREA_Y = SCROLL_BAR_Y;
-  private final int SCROLL_AREA_HEIGHT = 140;
-  private final int SCROLL_AREA_WIDTH = SCROLL_BAR_WIDTH;
-  private final int MAPPINGS_AREA_X = 5;
-  private final int MAPPINGS_AREA_Y = SCROLL_BAR_Y;
-  private final int MAPPINGS_AREA_WIDTH = 256;
-  private final int MAPPINGS_AREA_HEIGHT = SCROLL_AREA_HEIGHT;
-  private final int MAPPING_X = MAPPINGS_AREA_X + 1;
+  private static final int HOTBAR_Y = 232;
+  private static final int INVENTORY_X = 108;
+  private static final int INVENTORY_Y = 174;
+  private static final int SLOT_SIZE = 18;
+  private static final int SCROLL_BAR_TEXTURE_X = 276;
+  private static final int SCROLL_BAR_TEXTURE_Y = 0;
+  private static final int SCROLL_BAR_INACTIVE_TEXTURE_X = 282;
+  private static final int SCROLL_BAR_INACTIVE_TEXTURE_Y = 0;
+  private static final int SCROLL_BAR_X = 262;
+  private static final int SCROLL_BAR_Y = 18;
+  private static final int SCROLL_BAR_WIDTH = 6;
+  private static final int SCROLL_BAR_HEIGHT = 27;
+  private static final int SCROLL_AREA_X = SCROLL_BAR_X;
+  private static final int SCROLL_AREA_Y = SCROLL_BAR_Y;
+  private static final int SCROLL_AREA_HEIGHT = 140;
+  private static final int SCROLL_AREA_WIDTH = SCROLL_BAR_WIDTH;
+  private static final int MAPPINGS_AREA_X = 5;
+  private static final int MAPPINGS_AREA_Y = SCROLL_BAR_Y;
+  private static final int MAPPINGS_AREA_WIDTH = 256;
+  private static final int MAPPINGS_AREA_HEIGHT = SCROLL_AREA_HEIGHT;
+  private static final int MAPPING_X = MAPPINGS_AREA_X + 1;
   private final int MAPPING_Y = MAPPINGS_AREA_Y + 1;
-  private final int MAPPING_HEIGHT = 12;
-  private final int MAPPING_WIDTH = MAPPINGS_AREA_WIDTH - 2;
-  private final int MAX_SCROLL = SCROLL_BAR_Y + SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT;
+  private static final int MAPPING_HEIGHT = 12;
+  private static final int MAPPING_WIDTH = MAPPINGS_AREA_WIDTH - 2;
+  private static final int MAX_SCROLL = SCROLL_BAR_Y + SCROLL_AREA_HEIGHT - SCROLL_BAR_HEIGHT;
   private final int MAPPINGS_PER_PAGE = 8;
-  private final int BACKGROUND_TEXTURE_X = 0;
-  private final int BACKGROUND_TEXTURE_Y = 0;
-  private final int BACKGROUND_TEXTURE_WIDTH = 512;
-  private final int BACKGROUND_TEXTURE_HEIGHT = 256;
-  private final int SLOT_TEXTURE_X = 288;
-  private final int SLOT_TEXTURE_Y = 0;
-  private final int SLOT_TEXTURE_WIDTH = 18;
-  private final int SLOT_TEXTURE_HEIGHT = 18;
-  private final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
-  private final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
-  private final int TEXT_COLOR = TextColor.parseColor("#FFFFFF").getValue();
+  private static final int BACKGROUND_TEXTURE_X = 0;
+  private static final int BACKGROUND_TEXTURE_Y = 0;
+  private static final int BACKGROUND_TEXTURE_WIDTH = 512;
+  private static final int BACKGROUND_TEXTURE_HEIGHT = 256;
+  private static final int SLOT_TEXTURE_X = 288;
+  private static final int SLOT_TEXTURE_Y = 0;
+  private static final int SLOT_TEXTURE_WIDTH = 18;
+  private static final int SLOT_TEXTURE_HEIGHT = 18;
+  private static final int DISTRIBUTION_BUTTONS_X = MAPPINGS_AREA_X;
+  private static final int DISTRIBUTION_BUTTONS_Y = HOTBAR_Y - 1;
+  private static final int TEXT_COLOR = TextColor.parseColor("#FFFFFF").getValue();
   private final ArrayList<EditBox> rawMappings;
   private final Component ITEMS_PER_UPDATE = Component.translatable(GraphIO.MOD_ID + ".gui.items_per_update");
   private final Component FLUID_PER_UPDATE = Component.translatable(GraphIO.MOD_ID + ".gui.fluid_per_update");
@@ -100,7 +100,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   private ImageButton decreaseStackSizeButton, increaseStackSizeButton, decreaseFluidButton, increaseFluidButton,
       decreaseEnergyButton, increaseEnergyButton, decreaseUpdateDelay, increaseUpdateDelay;
   private int lastFocusedMapping;
-  private RouterBlockEntity routerBlockEntity;
+  private final RouterBlockEntity routerBlockEntity;
 
   public RouterScreen(final AbstractContainerMenu screenContainer, final Inventory inv, final Component titleIn) {
     super((RouterContainer) screenContainer, inv, titleIn);
@@ -114,14 +114,6 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     inventoryLabelX = 107;
     inventoryLabelY = 162;
     rawMappings = new ArrayList<>();
-  }
-
-  /**
-   * Called when a mapping's text component is changed.
-   *
-   * @param text The new text.
-   */
-  private void onTextChanged(final String text) {
   }
 
   private void updateMappingGUI() {
@@ -182,7 +174,7 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
     if (keyCode == GLFW.GLFW_KEY_ESCAPE)
       minecraft.player.closeContainer();
-    else if (keyCode == GLFW.GLFW_KEY_ENTER && getMappings().size() < routerBlockEntity.getMaxMappings()) {
+    else if (keyCode == GLFW.GLFW_KEY_ENTER && getMappings().size() < RouterBlockEntity.getMaxMappings()) {
       for (EditBox rawMapping : rawMappings)
         rawMapping.setFocus(false);
       EditBox mapping = createMappingTextField("", getMappings().size());
@@ -457,11 +449,11 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
   }
 
   /**
-   * Creates a {@linK EditBox} from a {@link Mapping}.
+   * Creates a {@link EditBox} from a {@link Mapping}.
    *
    * @param contents The raw contents of the mapping.
    * @param index    The index of the Mapping.
-   * @return An {@linK EditBox} with the raw contents of the {@link Mapping}.
+   * @return An {@link EditBox} with the raw contents of the {@link Mapping}.
    */
   public EditBox createMappingTextField(final String contents, final int index) {
     EditBox mapping = new EditBox(font, leftPos + MAPPING_X, topPos + MAPPING_Y + (index % 5) * (MAPPING_HEIGHT + 6), MAPPING_WIDTH, MAPPING_HEIGHT, Component.translatable("container.repair"));
@@ -469,7 +461,6 @@ public class RouterScreen extends AbstractContainerScreen<RouterContainer> imple
     mapping.setTextColor(TEXT_COLOR);
     mapping.setTextColorUneditable(-1);
     mapping.setBordered(true);
-    mapping.setResponder(this::onTextChanged);
     mapping.setMaxLength(40);
     mapping.setEditable(true);
     mapping.setValue(contents);

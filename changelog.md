@@ -1,4 +1,7 @@
 # Changelog
+## 6.0.1
+### Changed
+* Updates forge.
 ## 6.0.0
 ### Changed
 * Updates to 1.19.2.
