@@ -53,7 +53,7 @@ public class Highlighter {
    * @param b        Blue.
    * @param a        Alpha.
    */
-  public static void highlightBlock(final BlockPos blockPos, final ResourceKey<Level> level, final float padding,
+  public static void highlightBlock(final BlockPos blockPos, final ResourceKey<Level> level, final double padding,
                                     final int r, final int g, final int b, final int a) {
     final var highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
@@ -71,7 +71,7 @@ public class Highlighter {
    * @param b        Blue.
    * @param a        Alpha.
    */
-  public static void toggleHighlightBlock(final BlockPos blockPos, final ResourceKey<Level> level, final float padding,
+  public static void toggleHighlightBlock(final BlockPos blockPos, final ResourceKey<Level> level, final double padding,
                                           final int r, final int g, final int b, final int a) {
     final var highlightedBlock = new HighlightedBlock(blockPos, level, padding, r, g, b, a);
     if (!highlightedBlocks.contains(highlightedBlock))
@@ -103,15 +103,15 @@ public class Highlighter {
    * @param a         Alpha.
    */
   private static void highlightBlock(final PoseStack poseStack, Camera camera, final BlockPos blockPos, final ResourceKey<Level> level,
-                                     final float padding, final int r, final int g, final int b, final int a) {
+                                     final double padding, final int r, final int g, final int b, final int a) {
     if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.getOnPos(), Minecraft.getInstance().options.getEffectiveRenderDistance() * 16))
       return;
     final int x = blockPos.getX();
     final int y = blockPos.getY();
     final int z = blockPos.getZ();
 
-    MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-    var bb = buffer.getBuffer(RenderType.lightning());
+    final MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+    final var bb = buffer.getBuffer(RenderType.lightning());
 
     poseStack.pushPose();
 
@@ -122,17 +122,16 @@ public class Highlighter {
     RenderSystem.defaultBlendFunc();
 
     final Vec3 projectedView = camera.getPosition();
-    poseStack.pushPose();
     poseStack.translate(-projectedView.x, -projectedView.y, -projectedView.z);
 
     final Matrix4f mat = poseStack.last().pose();
 
-    final float x1 = x - padding;
-    final float x2 = x + padding + 1.0F;
-    final float y1 = y - padding;
-    final float y2 = y + padding + 1.0F;
-    final float z1 = z - padding;
-    final float z2 = z + padding + 1.0F;
+    final float x1 = (float) ((double)(x) - padding);
+    final float x2 = (float) ((double)x + padding + 1.0D);
+    final float y1 = (float) ((double)y - padding);
+    final float y2 = (float) ((double)y + padding + 1.0D);
+    final float z1 = (float) ((double)z - padding);
+    final float z2 = (float) ((double)z + padding + 1.0D);
 
     bb.vertex(mat, x2, y2, z1).color(r, g, b, a).endVertex();
     bb.vertex(mat, x2, y1, z1).color(r, g, b, a).endVertex();
@@ -165,9 +164,10 @@ public class Highlighter {
     bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
     poseStack.popPose();
+    buffer.endBatch(RenderType.lightning());
   }
 
-  private record HighlightedBlock(BlockPos blockPos, ResourceKey<Level> level, float padding, int r, int g, int b,
+  private record HighlightedBlock(BlockPos blockPos, ResourceKey<Level> level, double padding, int r, int g, int b,
                                   int a) {
 
     /**
