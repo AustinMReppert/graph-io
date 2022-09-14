@@ -64,7 +64,7 @@ public class IdentifierItem extends Item {
         final ResourceKey<Level> identifierLevel = identifierCapability.getLevel();
         if (level.isClientSide) {
           Minecraft.getInstance().gui.getChat().addMessage(Component.nullToEmpty(POINTS_TO.getString() + " (" + identifierPos.getX() + ", " + identifierPos.getY() + ", " + identifierPos.getZ() + ") " + (identifierLevel != null ? identifierLevel.location() : "")));
-          Highlighter.toggleHighlightBlock(identifierPos, identifierLevel, 0.01F, 255, 0, 0, 125);
+          Highlighter.toggleHighlightBlock(identifierPos, identifierLevel, 0.02F, 255, 0, 0, 125);
         }
       }
     });

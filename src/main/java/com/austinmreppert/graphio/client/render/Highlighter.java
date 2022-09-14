@@ -7,7 +7,6 @@ import com.mojang.math.Matrix4f;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -28,7 +27,7 @@ public class Highlighter {
   private static final ArrayList<HighlightedBlock> highlightedBlocks = new ArrayList<>();
 
   /**
-   * Called after the world has been rendered. Highlights all the blocks in {@code highlightedBlocks} within render distance.
+   * Called at various stages of level rendering. Highlights all the blocks in {@code highlightedBlocks} within render distance.
    *
    * @param e The {@link RenderLevelStageEvent}.
    */
@@ -103,7 +102,7 @@ public class Highlighter {
    * @param a         Alpha.
    */
   private static void highlightBlock(final PoseStack poseStack, Camera camera, final BlockPos blockPos, final ResourceKey<Level> level,
-                                     final double padding, final int r, final int g, final int b, final int a) {
+                                      final double padding, final int r, final int g, final int b, final int a) {
     if (!Minecraft.getInstance().level.dimension().equals(level) || !blockPos.closerThan(Minecraft.getInstance().player.getOnPos(), Minecraft.getInstance().options.getEffectiveRenderDistance() * 16))
       return;
     final int x = blockPos.getX();
@@ -111,7 +110,7 @@ public class Highlighter {
     final int z = blockPos.getZ();
 
     final MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-    final var bb = buffer.getBuffer(RenderType.lightning());
+    final var bb = buffer.getBuffer(GraphIORenderTypes.HIGHLIGHTER);
 
     poseStack.pushPose();
 
@@ -164,7 +163,7 @@ public class Highlighter {
     bb.vertex(mat, x1, y2, z2).color(r, g, b, a).endVertex();
 
     poseStack.popPose();
-    buffer.endBatch(RenderType.lightning());
+    buffer.endBatch(GraphIORenderTypes.HIGHLIGHTER);
   }
 
   private record HighlightedBlock(BlockPos blockPos, ResourceKey<Level> level, double padding, int r, int g, int b,
