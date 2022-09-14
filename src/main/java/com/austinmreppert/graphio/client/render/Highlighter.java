@@ -33,7 +33,7 @@ public class Highlighter {
    */
   @SubscribeEvent
   public static void drawLast(final RenderLevelStageEvent e) {
-    if(e.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) {
+    if(e.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
       for (final var highlightedBlock : highlightedBlocks) {
         highlightBlock(e.getPoseStack(), e.getCamera(), highlightedBlock.blockPos, highlightedBlock.level, highlightedBlock.padding, highlightedBlock.r, highlightedBlock.g, highlightedBlock.b, highlightedBlock.a);
       }
